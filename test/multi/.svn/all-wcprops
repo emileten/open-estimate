@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/aggregator/!svn/ver/229/trunk/test/multi
+END
+regression.py
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/aggregator/!svn/ver/275/trunk/test/multi/regression.py
+END
+reg1.csv
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/aggregator/!svn/ver/229/trunk/test/multi/reg1.csv
+END

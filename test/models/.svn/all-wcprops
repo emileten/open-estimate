@@ -1,0 +1,137 @@
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/aggregator/!svn/ver/265/trunk/test/models
+END
+test_spline.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/aggregator/!svn/ver/275/trunk/test/models/test_spline.py
+END
+example-95.csv
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/aggregator/!svn/ver/229/trunk/test/models/example-95.csv
+END
+ddp1.csv
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/aggregator/!svn/ver/229/trunk/test/models/ddp1.csv
+END
+example-gtc2.csv
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/aggregator/!svn/ver/229/trunk/test/models/example-gtc2.csv
+END
+spline-cicurve.csv
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/aggregator/!svn/ver/229/trunk/test/models/spline-cicurve.csv
+END
+bin1.csv
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/aggregator/!svn/ver/229/trunk/test/models/bin1.csv
+END
+ddp2.csv
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/aggregator/!svn/ver/229/trunk/test/models/ddp2.csv
+END
+dist-tc2.csv
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/aggregator/!svn/ver/229/trunk/test/models/dist-tc2.csv
+END
+bin2.csv
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/aggregator/!svn/ver/229/trunk/test/models/bin2.csv
+END
+ddp3.csv
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/aggregator/!svn/ver/229/trunk/test/models/ddp3.csv
+END
+spline-double-exp.csv
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/aggregator/!svn/ver/229/trunk/test/models/spline-double-exp.csv
+END
+example-tc.csv
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/aggregator/!svn/ver/229/trunk/test/models/example-tc.csv
+END
+spline-gaussian.csv
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/aggregator/!svn/ver/229/trunk/test/models/spline-gaussian.csv
+END
+example-gtc.csv
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/aggregator/!svn/ver/229/trunk/test/models/example-gtc.csv
+END
+dist-tc.csv
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/aggregator/!svn/ver/229/trunk/test/models/dist-tc.csv
+END
+test_combine.py
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/aggregator/!svn/ver/275/trunk/test/models/test_combine.py
+END
+genrel.py
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/aggregator/!svn/ver/275/trunk/test/models/genrel.py
+END
+spline-skew-gaussian.csv
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/aggregator/!svn/ver/229/trunk/test/models/spline-skew-gaussian.csv
+END
+test_distribution.py
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/aggregator/!svn/ver/275/trunk/test/models/test_distribution.py
+END
+genspline.py
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/aggregator/!svn/ver/229/trunk/test/models/genspline.py
+END
+genrel.R
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/aggregator/!svn/ver/229/trunk/test/models/genrel.R
+END
+spline-gaussian2.csv
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/aggregator/!svn/ver/229/trunk/test/models/spline-gaussian2.csv
+END
