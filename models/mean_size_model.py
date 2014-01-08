@@ -27,6 +27,7 @@ __status__ = "Production"
 __version__ = "$Revision$"
 # $Source$
 
+import math
 from scipy.interpolate import interp1d
 import numpy as np
 
@@ -55,6 +56,13 @@ class MeanSizeModel(UnivariateModel):
         self.sizes = map(lambda s: s * a, self.sizes)
         return self
 
+    def get_mean(self, x=None):
+        return self.means[self.get_xx().index(x)]
+
+    def get_sdev(self, x=None):
+        index = self.get_xx().index(x)
+        return abs(self.means[index]) / math.sqrt(self.sizes[index])
+    
     def filter_x(self, xx):
         return MeanSizeModel(self.xx_is_categorical, xx, map(lambda x: self.means[xx.index(x)], xx), map(lambda x: self.sizes[xx.index(x)], xx))
 

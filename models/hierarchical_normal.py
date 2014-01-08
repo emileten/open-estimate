@@ -13,7 +13,7 @@ def helper_params(means, varis, tau):
 
 def p_tau_given_y(tau, means, varis):
     (vari_tau_sqrs, v_mu, mu_hat) = helper_params(means, varis, tau)
-    return math.sqrt(v_mu) * np.prod(np.exp(-np.square(means - mu_hat) / (2 * vari_tau_sqrs)) / np.sqrt(vari_tau_sqrs))
+    return math.sqrt(v_mu) * np.prod((np.exp(-np.square(means - mu_hat) / (2 * vari_tau_sqrs)) / np.sqrt(vari_tau_sqrs)).astype(np.float_))
 
 #from scipy.spatial import KDTree
 #def get_random_index(F_tau, count):
@@ -44,12 +44,12 @@ def simulate_normal_model(means, serrs, count, taus=None, do_thetas=False):
 
             return results
             
-    means = np.array(means, dtype='f')
-    varis = np.square(np.array(serrs, dtype='f'))
+    means = np.array(means, dtype=np.float_)
+    varis = np.square(np.array(serrs, dtype=np.float_))
 
     if taus is None:
         taus = np.linspace(0, 2*max(serrs), 100)
-    
+
     p_tau = np.array([p_tau_given_y(tau, means, varis) for tau in taus])
     F_tau = np.cumsum(p_tau)
     F_tau = F_tau / F_tau[-1]
