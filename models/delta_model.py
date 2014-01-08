@@ -21,6 +21,10 @@ class DeltaModel(UnivariateModel):
         self.location = map(lambda loc: loc * a, self.locations)
         return self
 
+    def scale_p(self, a):
+        """Raising a delta function to a power makes no difference."""
+        return self
+
     def filter_x(self, xx):
         return DeltaModel(self.xx_is_categorical, xx, map(lambda x: self.locations[xx.index(x)], xx), scale=self.scale)
 

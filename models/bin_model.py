@@ -59,6 +59,10 @@ class BinModel(UnivariateModel):
         self.model.scale_y(a)
         return self
 
+    def scale_p(self, a):
+        self.model.scale_p(a)
+        return self
+
     def filter_x(self, xx):
         bins = []
         for x in xx:

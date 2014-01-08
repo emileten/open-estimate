@@ -51,6 +51,10 @@ class MeanSizeModel(UnivariateModel):
         self.means = map(lambda m: m * a, self.means)
         return self
 
+    def scale_p(self, a):
+        self.sizes = map(lambda s: s * a, self.sizes)
+        return self
+
     def filter_x(self, xx):
         return MeanSizeModel(self.xx_is_categorical, xx, map(lambda x: self.means[xx.index(x)], xx), map(lambda x: self.sizes[xx.index(x)], xx))
 

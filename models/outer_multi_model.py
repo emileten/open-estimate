@@ -43,6 +43,10 @@ class OuterMultiModel(MultivariateModel):
                 if xx not in self.xxs[ii]:
                     self.xxs[ii].append(xx)
 
+    def scale_p(self, a):
+        self.union.scale_p(a)
+        return self
+
     def float_condition(self, conditions):
         if conditions.count(None) <= 1:
             # Identify the 2^N or 2^N-1 values bounding the point

@@ -94,7 +94,7 @@ class DDPModel(UnivariateModel):
         else:
             return self.yy
 
-    # Can rescale non-ddp
+    # Can rescale non-ddp (that is, as sampling of continuous distribution)
     def rescale(self, as_ddp=True):
         if as_ddp or self.yy_is_categorical:
             newpp = self.lin_p()
@@ -125,6 +125,11 @@ class DDPModel(UnivariateModel):
 
         self.yy = [y * a for y in self.yy]
         return self
+
+    def scale_p(self, a):
+        self.pp = a * self.log_p()
+        self.p_format = 'ddp2'
+        return self.rescaled()
 
     def add_to_y(self, a):
         if self.yy_is_categorical:

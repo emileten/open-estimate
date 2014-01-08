@@ -89,6 +89,14 @@ class SplineModel(UnivariateModel):
 
         return self
 
+    def scale_p(self, a):
+        for conditional in self.conditionals:
+            conditional.scale_p(a)
+            if self.scaled:
+                conditional.rescale()
+
+        return self
+
     def filter_x(self, xx):
         conditionals = []
         for x in xx:
@@ -358,6 +366,11 @@ class SplineModelConditional():
                 self.coeffs[ii][1] /= a
                 if len(self.coeffs[ii]) > 2:
                     self.coeffs[ii][2] /= a*a
+
+    # Does not maintain scaling
+    def scale_p(self, a):
+        for ii in range(self.size()):
+            self.coeffs[ii] = map(lambda c: a*c, self.coeffs[ii])
 
     # Does not check for overlapping segments
     def add_segment(self, y0, y1, coeffs):

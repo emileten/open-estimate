@@ -18,6 +18,10 @@ class UnivariateModel(Model):
             self.xx_text = map(str, xx)
 
     def get_xx(self):
+        """Listing conditional values
+
+        Provide a list of all sampled conditional values.
+        """
         if self.xx_is_categorical:
             return self.xx_text
         else:
