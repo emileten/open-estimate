@@ -50,6 +50,8 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.stats import norm, expon
 from scipy.optimize import brentq, minimize
 
+from spline_model import SplineModel, SplineModelConditional
+
 class FeaturesInterpreter:
     @staticmethod
     def init_from_feature_file(spline, file, delimiter, limits, status_callback=None):
