@@ -46,6 +46,9 @@ class DeltaModel(UnivariateModel):
     def to_points_at(self, x, ys):
         return map(lambda y: self.scale if y == self.locations[self.xx.index(x)] else 0, ys)
 
+    def draw_sample(self, x=None):
+        return self.locations[self.xx.index(x)]
+
     def cdf(self, xx, yy):
         location = self.locations[self.xx.index(xx)]
         if yy < location:

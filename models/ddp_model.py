@@ -50,7 +50,7 @@ __status__ = "Production"
 __version__ = "$Revision$"
 # $Source$
 
-import csv
+import csv, random
 from numpy import *
 from scipy.interpolate import interp1d
 
@@ -284,6 +284,20 @@ class DDPModel(UnivariateModel):
         mean = sum(ps * self.yy)
         vari = sum(ps * square(self.yy - mean))
         return sqrt(vari)
+
+    def draw_sample(self, x=None):
+        if not self.scaled:
+            raise ValueError("Cannot draw sample from unscaled distribution.")
+
+        ps = self.lin_p()[self.get_closest(x), :]
+        value = random.random()
+        total = 0
+        for ii in range(len(ps)):
+            total += ps[ii]
+            if total > value:
+                return self.yy[ii]
+
+        return self.yy[-1]
     
     def init_from(self, file, delimiter, status_callback=None):
         reader = csv.reader(file, delimiter=delimiter)

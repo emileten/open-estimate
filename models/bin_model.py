@@ -103,6 +103,9 @@ class BinModel(UnivariateModel):
     def get_sdev(self, x=None):
         return self.model.get_sdev(self.get_bin_at(x))
 
+    def draw_sample(self, x=None):
+        return self.model.draw_sample(self.get_bin_at(x))
+
     def init_from_bin_file(self, file, delimiter, status_callback=None):
         line = string.strip(file.readline())
         if line != "bin1":

@@ -39,7 +39,7 @@ __status__ = "Production"
 __version__ = "$Revision$"
 # $Source$
 
-import csv, math, string
+import csv, math, string, random
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 from scipy.stats import norm
@@ -218,6 +218,10 @@ class SplineModel(UnivariateModel):
         mean = self.get_mean(x)
 
         return math.sqrt(total - mean**2)
+
+    def draw_sample(self, x=None):
+        conditional = self.get_conditional(x)
+        return conditional.draw_sample()
 
     def init_from_spline_file(self, file, delimiter, status_callback=None):
         line = string.strip(file.readline())
@@ -456,6 +460,10 @@ class SplineModelConditional():
                 break
 
         return integral
+
+    def draw_sample(self):
+        value = random.random()
+        return self.get_pval(value)
 
     def get_pval(self, p, threshold=1e-3):
         y = SplineModelConditional.ascinv(p, self.cdf, SplineModel.neginf, SplineModel.posinf, threshold)

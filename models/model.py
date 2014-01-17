@@ -1,5 +1,6 @@
 import copy
 
+
 class Model(object):
     mergers = {}
     combiners = {}
@@ -19,21 +20,21 @@ class Model(object):
 
         Returns unscaled probability density values for given values of $x$
         and $y$: $f(y | x)$."""
-        raise "to_points_at not implemented"
+        raise NotImplementedError("to_points_at not implemented")
 
     def eval_pval(self, x, p):
         """Inverse CDF Evaluation
 
         Returns the value of $y$ that corresponds to a given p-value:
         $F^{-1}(p | x)$."""
-        raise "eval_pval not implemented"
+        raise NotImplementedError("eval_pval not implemented")
 
     def scale_y(self, a):
         """Rescaling of the Parameter Dimension
 
         Produces a new conditional PDF with the $y$ dimension scaled by a
         constant: $p(z | x) = p(\frac{y}{a} | x)$."""
-        raise "scale_y not implemented"
+        raise NotImplementedError("scale_y not implemented")
 
     def scale_p(self, a):
         """Raise the distribution to the power 'a' and rescales.
@@ -41,27 +42,29 @@ class Model(object):
         Returns:
           self: modifies this model and returns it
         """
-        raise "scale_p not implemented"
+        raise NotImplementedError("scale_p not implemented")
 
     def get_mean(self, x=None):
         """E[Y | X]"""
-        if not self.scaled:
-            raise "Cannot take mean of unscaled distribution."
+        assert self.scaled, "Cannot take mean of unscaled distribution."
         
         return np.nan
 
     def get_sdev(self, x=None):
         """sqrt Var[Y | X]"""
-        if not self.scaled:
-            raise "Cannot take mean of unscaled distribution."
+        assert self.scaled, "Cannot take mean of unscaled distribution."
         
         return np.nan
+
+    def draw_sample(self, x=None):
+        """Produce a sample value of y from the conditional distribution."""
+        raise NotImplementedError("draw_sample not implemented")
 
     def attribute_list(self):
         return []
 
     def get_attribute(self, title):
-        raise title + " not available"
+        raise ValueError(title + " not available")
 
     @staticmethod
     def merge(models):
