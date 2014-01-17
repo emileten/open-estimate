@@ -266,10 +266,11 @@ class SplineModel(UnivariateModel):
     ### Class Methods
 
     @staticmethod
-    def create_gaussian(xxs):
+    def create_gaussian(xxs, order=None):
         conditionals = []
         xx = []
-        for key in xxs:
+
+        for key in (xxs if order is None else order):
             xx.append(key)
             mean = xxs[key][0]
             var = xxs[key][1]
