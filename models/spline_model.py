@@ -392,7 +392,7 @@ class SplineModelConditional():
     # Note: after calling, need to set scaled on SplineModel object
     def rescale(self):
         integral = self.cdf(SplineModel.posinf)
-        if not np.isnan(integral):
+        if not np.isnan(integral) and integral > 0:
             self.scale(1 / integral)
 
         return self
@@ -448,6 +448,8 @@ class SplineModelConditional():
             else:
                 var = -.5 / self.coeffs[ii][2]
                 mean = self.coeffs[ii][1] * var
+                if np.isnan(mean) or np.isnan(var) or var == 0:
+                    continue
                 if self.coeffs[ii][0] - (-mean*mean / (2*var) + math.log(1 / math.sqrt(2*math.pi*var))) > 100: # math domain error!
                     continue
                 rescale = math.exp(self.coeffs[ii][0] - (-mean*mean / (2*var) + math.log(1 / math.sqrt(2*math.pi*var))))
