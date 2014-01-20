@@ -81,11 +81,34 @@ class UnivariateModel(Model):
     def intersect_x(one, two):
         if one.xx_is_categorical:
             xx = UnivariateModel.intersect_get_x(True, one.xx_text, two.xx_text)
-            one = UnivariateModel.intersect_get_model(one, xx)
-            two = UnivariateModel.intersect_get_model(two, xx)
         else:
             xx = UnivariateModel.intersect_get_x(False, one.xx, two.xx)
-            one = UnivariateModel.intersect_get_model(one, xx)
-            two = UnivariateModel.intersect_get_model(two, xx)
+        one = UnivariateModel.intersect_get_model(one, xx)
+        two = UnivariateModel.intersect_get_model(two, xx)
 
         return (one, two, xx)
+
+    @staticmethod
+    def intersect_x_all(models):
+        # Check if any are categorical
+        xx_is_categorical = False
+        for model in models:
+            if model.xx_is_categorical:
+                xx_is_categorical = True
+                break
+
+        # Get a combined x from all
+        if xx_is_categorical:
+            xx = UnivariateModel.intersect_get_x(True, models[0].xx_text, models[1].xx_text)
+            for model in models[2:]:
+                xx = UnivariateModel.intersect_get_x(True, xx, model.xx_text)
+        else:
+            xx = UnivariateModel.intersect_get_x(False, models[0].xx, models[1].xx)
+            for model in models[2:]:
+                xx = UnivariateModel.intersect_get_x(False, xx, model.xx)
+
+        newmodels = []
+        for model in models:
+            newmodels.append(UnivariateModel.intersect_get_model(model, xx))
+
+        return (newmodels, xx)

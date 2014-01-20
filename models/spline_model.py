@@ -105,6 +105,15 @@ class SplineModel(UnivariateModel):
         return SplineModel(self.xx_is_categorical, xx, conditionals, scaled=self.scaled)
 
     def interpolate_x(self, newxx):
+        # Is this a subset of our values?
+        subset = True
+        for x in newxx:
+            if x not in self.get_xx():
+                subset = False
+
+        if subset:
+            return self.filter_x(newxx)
+        
         (limits, ys) = SplineModelConditional.propose_grid(self.conditionals)
         ddp_model = self.to_ddp(ys).interpolate_x(newxx)
         
@@ -288,11 +297,16 @@ class SplineModel(UnivariateModel):
         lps = ddp_model.log_p()
         
         conditionals = []
+        xx = []
         for ii in range(len(ddp_model.xx)):
-            spline = UnivariateSpline(ddp_model.yy, lps[ii,], k=2)
-            conditionals.append(SplineModelConditional.make_conditional_from_spline(spline, limits))
+            spline = UnivariateSpline(ddp_model.yy[lps[ii,] > SplineModel.neginf], lps[ii,][lps[ii,] > SplineModel.neginf], k=2)
+            try:
+                conditionals.append(SplineModelConditional.make_conditional_from_spline(spline, limits).rescale())
+                xx.append(ddp_model.get_xx()[ii])
+            except:
+                pass
 
-        return SplineModel(self.xx_is_categorical, self.get_xx(), conditionals, True).rescale()
+        return SplineModel(ddp_model.xx_is_categorical, xx, conditionals, True)
 
     @staticmethod
     def merge(models):
@@ -300,9 +314,11 @@ class SplineModel(UnivariateModel):
             if not model.scaled:
                 raise ValueError("Only scaled distributions can be merged.")
 
+        (models, xx) = UnivariateModel.intersect_x_all(models)
+
         model = SplineModel()
         
-        for ii in range(len(models[0].xx)):
+        for ii in range(len(xx)):
             conditional = SplineModelConditional()
             
             y0 = SplineModel.neginf
@@ -312,7 +328,7 @@ class SplineModel(UnivariateModel):
                 coeffs = np.zeros(3)
                 
                 for jj in range(len(models)):
-                    modcond = models[jj].conditionals[ii]
+                    modcond = models[jj].get_conditional(xx[ii])
                     for kk in range(len(modcond.y0s)):
                         if modcond.y0s[kk] <= y0 and modcond.y1s[kk] > y0:
                             if modcond.y1s[kk] < y1:
@@ -325,7 +341,7 @@ class SplineModel(UnivariateModel):
                 conditional.add_segment(y0, y1, coeffs)
                 y0 = y1
 
-            model.add_conditional(models[0].xx_text[ii], conditional.rescale())
+            model.add_conditional(xx[ii], conditional.rescale())
 
         return model
 
@@ -664,9 +680,7 @@ class SplineModelConditional():
                 while ii < len(newpp) and newpp[ii] > 0:
                     ii += 1
 
-                print np.log(newpp[i0:ii])                
                 spline = UnivariateSpline(yy[i0:ii], np.log(newpp[i0:ii]), k=2, s=(ii - i0) / 1000.0)
-                print spline(yy[i0:ii])
                 if ii < len(newpp):
                     segments = SplineModelConditional.make_conditional_from_spline(spline, (y0, yy[ii]))
                 else:
