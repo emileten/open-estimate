@@ -39,7 +39,7 @@ __status__ = "Production"
 __version__ = "$Revision$"
 # $Source$
 
-import csv, math, string, random
+import csv, math, string, random, traceback
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 from scipy.stats import norm
@@ -113,10 +113,10 @@ class SplineModel(UnivariateModel):
 
         if subset:
             return self.filter_x(newxx)
-        
+
         (limits, ys) = SplineModelConditional.propose_grid(self.conditionals)
         ddp_model = self.to_ddp(ys).interpolate_x(newxx)
-        
+
         return SplineModel.from_ddp(ddp_model, limits)
 
     # Only for categorical models
@@ -299,12 +299,18 @@ class SplineModel(UnivariateModel):
         conditionals = []
         xx = []
         for ii in range(len(ddp_model.xx)):
-            spline = UnivariateSpline(ddp_model.yy[lps[ii,] > SplineModel.neginf], lps[ii,][lps[ii,] > SplineModel.neginf], k=2)
+            lp = lps[ii,]
+            updown = np.concatenate((np.linspace(-1000, -900, np.floor(len(lp)/2)), np.linspace(-900, -1000, np.ceil(len(lp)/2))))
+            lp[lp == SplineModel.neginf] = updown[lp == SplineModel.neginf]
+            spline = UnivariateSpline(ddp_model.yy, lp, k=2)
             try:
                 conditionals.append(SplineModelConditional.make_conditional_from_spline(spline, limits).rescale())
                 xx.append(ddp_model.get_xx()[ii])
-            except:
-                pass
+            except Exception as e:
+                #print ddp_model.yy
+                #print lp
+                print e
+                print traceback.print_exc()
 
         return SplineModel(ddp_model.xx_is_categorical, xx, conditionals, True)
 
@@ -464,7 +470,7 @@ class SplineModelConditional():
             else:
                 var = -.5 / self.coeffs[ii][2]
                 mean = self.coeffs[ii][1] * var
-                if np.isnan(mean) or np.isnan(var) or var == 0:
+                if np.isnan(mean) or np.isnan(var) or var <= 0:
                     continue
                 if self.coeffs[ii][0] - (-mean*mean / (2*var) + math.log(1 / math.sqrt(2*math.pi*var))) > 100: # math domain error!
                     continue
@@ -731,7 +737,10 @@ class SplineModelConditional():
             a = derivs[2] / 2
             b = derivs[1] - derivs[2] * y
             c = derivs[0] - (a*y*y + b*y)
-            conditional.add_segment(knots[ii-1], knots[ii], [c, b, a])
+            if a > 0 and (knots[ii-1] == SplineModel.neginf or knots[ii] == SplineModel.posinf):
+                conditional.add_segment(knots[ii-1], knots[ii], [SplineModel.neginf]) # This segment failed!
+            else:
+                conditional.add_segment(knots[ii-1], knots[ii], [c, b, a])
 
         return conditional
 
@@ -761,6 +770,8 @@ class SplineModelConditional():
         rough_limits = (SplineModel.posinf, SplineModel.neginf)
         max_segments = 0
         for conditional in conditionals:
+            if conditional.y0s[0] == conditional.y1s[-1] or np.isnan(conditional.y0s[0]) or np.isnan(conditional.y1s[-1]):
+                continue
             limits = (max(limits[0], conditional.y0s[0]), min(limits[1], conditional.y1s[-1]))
             conditional_rough_limits = conditional.rough_limits()
             rough_limits = (min(rough_limits[0], conditional_rough_limits[0]), max(rough_limits[1], conditional_rough_limits[1]))
