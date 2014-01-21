@@ -85,16 +85,12 @@ CanvasToSVG = {
             case 'stroke':
                 while (currentPath.length > 0) {
                     var polyline = currentPath.shift();
-                    minx = miny = Infinity;
-                    for (var jj = 0; jj < polyline.points.length; jj++) {
-                        minx = Math.min(polyline.points[jj].x, minx);
-                        miny = Math.min(polyline.points[jj].y, miny);
-                    }
+                    var offset = CanvasToSVG.getOffset(polyline.points);
                     fabvas.add(new fabric.Polyline(polyline.points, {
                         stroke: state.strokeStyle,
                         fill: 'none',
-                        left: minx,
-                        top: miny
+                        left: offset.x,
+                        top: offset.y
                     }));
                 }
 
@@ -102,8 +98,11 @@ CanvasToSVG = {
             case 'fill':
                 while (currentPath.length > 0) {
                     var polyline = currentPath.shift();
+                    var offset = CanvasToSVG.getOffset(polyline.points);
                     fabvas.add(new fabric.Polyline(polyline.points, {
-                        fill: state.fillStyle
+                        fill: state.fillStyle,
+                        left: offset.x,
+                        top: offset.y
                     }));
                 }
                 break;
@@ -159,5 +158,15 @@ CanvasToSVG = {
 
     transformPointY: function(matrix, x, y) {
         return matrix[1] * x + matrix[3] * y + matrix[5];
+    },
+
+    getOffset: function(points) {
+        minx = miny = Infinity;
+        for (var jj = 0; jj < points.length; jj++) {
+            minx = Math.min(points[jj].x, minx);
+            miny = Math.min(points[jj].y, miny);
+        }
+
+        return {x: minx, y: miny};
     }
 };
