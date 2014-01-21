@@ -114,10 +114,15 @@ class SplineModel(UnivariateModel):
         if subset:
             return self.filter_x(newxx)
 
-        (limits, ys) = SplineModelConditional.propose_grid(self.conditionals)
-        ddp_model = self.to_ddp(ys).interpolate_x(newxx)
+        #(limits, ys) = SplineModelConditional.propose_grid(self.conditionals)
+        #ddp_model = self.to_ddp(ys).interpolate_x(newxx)
+        #return SplineModel.from_ddp(ddp_model, limits)
 
-        return SplineModel.from_ddp(ddp_model, limits)
+        conditionals = []
+        for x in newxx:
+            conditionals.append(self.get_conditional(x).copy())
+
+        return SplineModel(self.xx_is_categorical, newxx, conditionals, True)
 
     # Only for categorical models
     def recategorize_x(self, oldxx, newxx):
@@ -307,8 +312,6 @@ class SplineModel(UnivariateModel):
                 conditionals.append(SplineModelConditional.make_conditional_from_spline(spline, limits).rescale())
                 xx.append(ddp_model.get_xx()[ii])
             except Exception as e:
-                #print ddp_model.yy
-                #print lp
                 print e
                 print traceback.print_exc()
 
