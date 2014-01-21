@@ -6,13 +6,15 @@ $(function() {
         var context = $canvas[0].getContext("2d");
         CanvasToSVG.setupCanvas(context);
 
+        console.log("start");
         context.beginPath();
         context.moveTo(10, 10);
         context.lineTo(90, 90);
-        //context.lineTo(10, 90);
-        //context.moveTo(90, 10);
-        //context.lineTo(10, 90);
+        context.lineTo(10, 90);
+        context.moveTo(90, 10);
+        context.lineTo(10, 90);
         context.stroke();
+        console.log("end");
 
         $(this).next().after(CanvasToSVG.exportSVG(100, 100));
     });

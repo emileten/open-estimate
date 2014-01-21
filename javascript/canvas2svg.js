@@ -85,14 +85,19 @@ CanvasToSVG = {
             case 'stroke':
                 while (currentPath.length > 0) {
                     var polyline = currentPath.shift();
-                    initial = polyline.points[0];
+                    minx = miny = Infinity;
+                    for (var jj = 0; jj < polyline.points.length; jj++) {
+                        minx = Math.min(polyline.points[jj].x, minx);
+                        miny = Math.min(polyline.points[jj].y, miny);
+                    }
                     fabvas.add(new fabric.Polyline(polyline.points, {
                         stroke: state.strokeStyle,
                         fill: 'none',
-                        left: initial.x,
-                        top: initial.y
+                        left: minx,
+                        top: miny
                     }));
                 }
+
                 break;
             case 'fill':
                 while (currentPath.length > 0) {
