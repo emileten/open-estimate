@@ -47,6 +47,14 @@ class UnivariateModel(Model):
             else:
                 xx = set(one_xx).intersection(set(two_xx))
         else:
+            # Assume that doseless responses are constant over all values
+            if len(one_xx) == 1 and len(two_xx) > 1:
+                return two_xx
+            elif len(two_xx) == 1 and len(one_xx) > 1:
+                return one_xx
+            elif len(one_xx) == 1 and len(two_xx) == 1:
+                return ['']
+
             xx_min = max(min(one_xx), min(two_xx))
             xx_max = min(max(one_xx), max(two_xx))
 
@@ -70,7 +78,7 @@ class UnivariateModel(Model):
             else:
                 model = model.filter_x(xx)
         else:
-            if np.array_equal(model.xx, xx):
+            if np.array_equal(model.xx, xx) or len(model.xx) == 1:
                 pass
             else:
                 model = model.interpolate_x(xx)
@@ -93,7 +101,7 @@ class UnivariateModel(Model):
         # Check if any are categorical
         xx_is_categorical = False
         for model in models:
-            if model.xx_is_categorical:
+            if model.xx_is_categorical and len(model.get_xx()) > 1:
                 xx_is_categorical = True
                 break
 
@@ -103,6 +111,7 @@ class UnivariateModel(Model):
             for model in models[2:]:
                 xx = UnivariateModel.intersect_get_x(True, xx, model.xx_text)
         else:
+            # In this case, assume that doseless responses are constant over all values
             xx = UnivariateModel.intersect_get_x(False, models[0].xx, models[1].xx)
             for model in models[2:]:
                 xx = UnivariateModel.intersect_get_x(False, xx, model.xx)
