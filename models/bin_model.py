@@ -94,6 +94,9 @@ class BinModel(UnivariateModel):
     def to_points_at(self, x, ys):
         return self.model.to_points_at(self.get_bin_at(x), ys)
 
+    def eval_pval(self, x, p, threshold=1e-3):
+        return self.model.eval_pval(x, p, threshold)
+
     def cdf(self, x, y):
         return self.model.cdf(self.get_bin_at(x), y)
 

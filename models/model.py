@@ -22,7 +22,7 @@ class Model(object):
         and $y$: $f(y | x)$."""
         raise NotImplementedError("to_points_at not implemented")
 
-    def eval_pval(self, x, p):
+    def eval_pval(self, x, p, threshold=1e-3):
         """Inverse CDF Evaluation
 
         Returns the value of $y$ that corresponds to a given p-value:
