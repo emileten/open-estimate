@@ -496,7 +496,10 @@ class SplineModelConditional():
         y = SplineModelConditional.ascinv(p, self.cdf, SplineModel.neginf, SplineModel.posinf, threshold)
         if np.isnan(y):
             # Let's just give back some value
-            return self.y0s[1]
+            if self.y0s[0] < 0 and self.y1s[len(self.y1s)-1] > 0:
+                return 0
+            else:
+                return (self.y0s[0] + self.y1s[len(self.y1s)-1]) / 2
 
         return y
 

@@ -73,6 +73,6 @@ class IntegralModel(UnivariateModel):
                     integral += self.model.eval_pval(x, p, threshold) * (x - self.model.xx[ii])
                     return integral
                 else:
-                    integral += self.model.eval_pval(x, p, threshold) * (self.model.xx[ii+1] - self.model.xx[ii])
+                    integral += self.model.eval_pval((self.model.xx[ii+1] + self.model.xx[ii]) / 2, p, threshold) * (self.model.xx[ii+1] - self.model.xx[ii])
 
             return integral
