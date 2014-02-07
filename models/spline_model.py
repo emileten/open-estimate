@@ -77,6 +77,10 @@ class SplineModel(UnivariateModel):
         else:
             return self.xx
 
+    def enable_eval_pval_cache(self):
+        for conditional in self.conditionals:
+            conditional.enable_get_pval_cache()
+
     def eval_pval(self, x, p, threshold=1e-3):
         conditional = self.get_conditional(x)
         return conditional.get_pval(p, threshold)
@@ -381,6 +385,9 @@ class SplineModelConditional():
             self.y1s = np.array(y1s)
             self.coeffs = coeffs
 
+        # Memoized values
+        self.get_pval_cache = None # None = inactive
+
     def size(self):
         return len(self.y0s)
 
@@ -495,7 +502,15 @@ class SplineModelConditional():
         value = random.random()
         return self.get_pval(value)
 
+    def enable_get_pval_cache(self):
+        self.get_pval_cache = {}
+
     def get_pval(self, p, threshold=1e-3):
+        if self.get_pval_cache is not None:
+            cached = self.get_pval_cache.get(p, None)
+            if cached is not None:
+                return cached
+        
         # First figure out which spline p is in
         integral = 0
         for ii in range(len(self.y0s)):
@@ -512,9 +527,12 @@ class SplineModelConditional():
         if np.isnan(y):
             # Let's just give back some value
             if self.y0s[0] < 0 and self.y1s[len(self.y1s)-1] > 0:
-                return 0
+                y = 0
             else:
-                return (self.y0s[0] + self.y1s[len(self.y1s)-1]) / 2
+                y = (self.y0s[0] + self.y1s[len(self.y1s)-1]) / 2
+
+        if self.get_pval_cache is not None:
+            self.get_pval_cache[p] = y
 
         return y
 
