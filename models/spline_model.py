@@ -506,8 +506,8 @@ class SplineModelConditional():
                 break
             
             integral += partial
-        
-        y = SplineModelConditional.ascinv(p - partial, lambda y: self.partial_cdf(ii, y), self.y0s[ii], self.y1s[ii], threshold)
+
+        y = SplineModelConditional.ascinv(p - integral, lambda y: self.partial_cdf(ii, y), self.y0s[ii], self.y1s[ii], threshold)
         if np.isnan(y):
             # Let's just give back some value
             if self.y0s[0] < 0 and self.y1s[len(self.y1s)-1] > 0:
