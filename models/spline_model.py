@@ -446,6 +446,36 @@ class SplineModelConditional():
 
         return result
 
+    def partial_cdf(self, ii, y1):
+        if len(self.coeffs[ii]) == 0:
+            return np.nan
+            
+        if len(self.coeffs[ii]) == 1:
+            if self.coeffs[ii][0] == SplineModel.neginf:
+                return 0
+                
+            return np.exp(self.coeffs[ii][0]) * (y1 - self.y0s[ii])
+        elif len(self.coeffs[ii]) == 2:
+            return (np.exp(self.coeffs[ii][0]) / self.coeffs[ii][1]) * (np.exp(self.coeffs[ii][1] * y1) - np.exp(self.coeffs[ii][1] * self.y0s[ii]))
+        elif self.coeffs[ii][2] > 0:
+            if self.y0s[ii] == SplineModel.neginf or self.y1s[ii] == SplineModel.posinf:
+                raise ValueError("Improper area of spline")
+
+            myys = np.linspace(self.y0s[ii], y1, SplineModel.samples)
+            return sum(np.exp(np.polyval(self.coeffs[ii][::-1], myys))) * (y1 - self.y0s[ii]) / SplineModel.samples
+        else:
+            var = -.5 / self.coeffs[ii][2]
+            mean = self.coeffs[ii][1] * var
+            if np.isnan(mean) or np.isnan(var) or var <= 0:
+                return 0
+            if self.coeffs[ii][0] - (-mean*mean / (2*var) + math.log(1 / math.sqrt(2*math.pi*var))) > 100: # math domain error!
+                return 0
+            rescale = math.exp(self.coeffs[ii][0] - (-mean*mean / (2*var) + math.log(1 / math.sqrt(2*math.pi*var))))
+            below = 0
+            if float(self.y0s[ii]) != SplineModel.neginf:
+                below = norm.cdf(float(self.y0s[ii]), loc=mean, scale=math.sqrt(var))
+            return rescale * (norm.cdf(y1, loc=mean, scale=math.sqrt(var)) - below)
+
     def cdf(self, yy):
         integral = 0
         for ii in range(len(self.y0s)):
@@ -454,34 +484,7 @@ class SplineModelConditional():
             else:
                 y1 = self.y1s[ii]
 
-            if len(self.coeffs[ii]) == 0:
-                return np.nan
-            
-            if len(self.coeffs[ii]) == 1:
-                if self.coeffs[ii][0] == SplineModel.neginf:
-                    continue
-                
-                integral += np.exp(self.coeffs[ii][0]) * (y1 - self.y0s[ii])
-            elif len(self.coeffs[ii]) == 2:
-                integral += (np.exp(self.coeffs[ii][0]) / self.coeffs[ii][1]) * (np.exp(self.coeffs[ii][1] * y1) - np.exp(self.coeffs[ii][1] * self.y0s[ii]))
-            elif self.coeffs[ii][2] > 0:
-                if self.y0s[ii] == SplineModel.neginf or self.y1s[ii] == SplineModel.posinf:
-                    raise ValueError("Improper area of spline")
-
-                myys = np.linspace(self.y0s[ii], y1, SplineModel.samples)
-                integral += sum(np.exp(np.polyval(self.coeffs[ii][::-1], myys))) * (y1 - self.y0s[ii]) / SplineModel.samples
-            else:
-                var = -.5 / self.coeffs[ii][2]
-                mean = self.coeffs[ii][1] * var
-                if np.isnan(mean) or np.isnan(var) or var <= 0:
-                    continue
-                if self.coeffs[ii][0] - (-mean*mean / (2*var) + math.log(1 / math.sqrt(2*math.pi*var))) > 100: # math domain error!
-                    continue
-                rescale = math.exp(self.coeffs[ii][0] - (-mean*mean / (2*var) + math.log(1 / math.sqrt(2*math.pi*var))))
-                below = 0
-                if float(self.y0s[ii]) != SplineModel.neginf:
-                    below = norm.cdf(float(self.y0s[ii]), loc=mean, scale=math.sqrt(var))
-                integral += rescale * (norm.cdf(y1, loc=mean, scale=math.sqrt(var)) - below)
+            integral += self.partial_cdf(ii, y1)
 
             if self.y1s[ii] >= yy:
                 break
@@ -493,7 +496,18 @@ class SplineModelConditional():
         return self.get_pval(value)
 
     def get_pval(self, p, threshold=1e-3):
-        y = SplineModelConditional.ascinv(p, self.cdf, SplineModel.neginf, SplineModel.posinf, threshold)
+        # First figure out which spline p is in
+        integral = 0
+        for ii in range(len(self.y0s)):
+            if ii == len(self.y0s) - 1:
+                break # this will bring us to 1
+            partial = self.partial_cdf(ii, y1s[ii])
+            if integral + partial > p:
+                break
+            
+            integral += partial
+        
+        y = SplineModelConditional.ascinv(p - partial, lambda y: self.partial_cdf(ii, y), self.y0s[ii], self.y1s[ii], threshold)
         if np.isnan(y):
             # Let's just give back some value
             if self.y0s[0] < 0 and self.y1s[len(self.y1s)-1] > 0:
