@@ -516,7 +516,7 @@ class SplineModelConditional():
         for ii in range(len(self.y0s)):
             if ii == len(self.y0s) - 1:
                 break # this will bring us to 1
-            partial = self.partial_cdf(ii, y1s[ii])
+            partial = self.partial_cdf(ii, self.y1s[ii])
             if integral + partial > p:
                 break
             
