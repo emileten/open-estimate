@@ -278,7 +278,7 @@ class DDPModel(UnivariateModel):
         try:
             return self.xx_text.index(str(x))
         except:
-            idx = (np.abs(np.array(self.xx)-x)).argmin()
+            idx = (abs(array(self.xx)-x)).argmin()
             return idx
 
     def get_mean(self, x=None):
