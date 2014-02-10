@@ -119,6 +119,18 @@ class DDPModel(UnivariateModel):
 
         return self
 
+    def eval_pval(self, x, p, threshold=1e-3):
+        ps = self.lin_p()[self.get_closest(x), :]
+        value = p * sum(ps)
+        
+        total = 0
+        for ii in range(len(ps)):
+            total += ps[ii]
+            if total > value:
+                return self.yy[ii]
+
+        return self.yy[-1]        
+
     def scale_y(self, a):
         if self.yy_is_categorical:
             raise ValueError("Cannot scale on a categorical y")
