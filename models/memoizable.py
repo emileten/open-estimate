@@ -148,7 +148,8 @@ class MemoizedUnivariate(UnivariateModel):
         
     def get_eval_pval_spline(self, p, limits, threshold=1e-3):
         xx = np.array(self.model.get_xx())
-        yy = self.eval_pvals(xx, p, threshold)
+        yy = np.array(self.eval_pvals(xx, p, threshold))
+        yy[np.isnan(yy)] = 0
 
         xx = np.concatenate(([limits[0]], xx, [limits[1]]))
         yy = np.concatenate(([yy[0]], yy, [yy[-1]]))
