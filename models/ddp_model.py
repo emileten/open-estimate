@@ -56,8 +56,9 @@ from scipy.interpolate import interp1d
 
 from model import Model
 from univariate_model import UnivariateModel
+from memoizable import MemoizableUnivariate
 
-class DDPModel(UnivariateModel):
+class DDPModel(UnivariateModel, MemoizableUnivariate):
     def __init__(self, p_format=None, source=None, xx_is_categorical=False, xx=None, yy_is_categorical=False, yy=None, pp=None, unaccounted=None, scaled=True):
         super(DDPModel, self).__init__(xx_is_categorical, xx, scaled)
         
@@ -120,16 +121,7 @@ class DDPModel(UnivariateModel):
         return self
 
     def eval_pval(self, x, p, threshold=1e-3):
-        ps = self.lin_p()[self.get_closest(x), :]
-        value = p * sum(ps)
-        
-        total = 0
-        for ii in range(len(ps)):
-            total += ps[ii]
-            if total > value:
-                return self.yy[ii]
-
-        return self.yy[-1]        
+        return self.eval_pval_index(self.get_closest(x), p, threshold)
 
     def scale_y(self, a):
         if self.yy_is_categorical:
@@ -396,6 +388,20 @@ class DDPModel(UnivariateModel):
             return self.copy()
 
         return self.interpolate_y(ys)
+
+    ### Memoizable
+
+    def eval_pval_index(self, ii, p, threshold=1e-3):
+        ps = self.lin_p()[ii, :]
+        value = p * sum(ps)
+        
+        total = 0
+        for ii in range(len(ps)):
+            total += ps[ii]
+            if total > value:
+                return self.yy[ii]
+
+        return self.yy[-1]        
 
     ### Class methods
 

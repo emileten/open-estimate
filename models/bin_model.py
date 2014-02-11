@@ -38,9 +38,9 @@ import numpy as np
 
 from model import Model
 from univariate_model import UnivariateModel
+from memoizable import MemoizableUnivariate
 
-
-class BinModel(UnivariateModel):
+class BinModel(UnivariateModel, MemoizableUnivariate):
     def __init__(self, xx=None, model=None):
         super(BinModel, self).__init__(False, xx, model.scaled)
         
@@ -140,6 +140,14 @@ class BinModel(UnivariateModel):
         dupmodel.xx_is_categorical = False
         
         return dupmodel
+
+    ### Memoizable
+
+    def get_edges(self):
+        return self.xx
+
+    def eval_pval_index(self, ii, p, threshold=1e-3):
+        return self.model.eval_pval_index(ii, p, threshold)
 
     ### Class Methods
 

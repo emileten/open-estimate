@@ -47,8 +47,9 @@ from scipy.special import erf
 
 from model import Model
 from univariate_model import UnivariateModel
+from memoizable import MemoizableUnivariate
 
-class SplineModel(UnivariateModel):
+class SplineModel(UnivariateModel, MemoizableUnivariate):
     posinf = float('inf')
     neginf = float('-inf')
     samples = 1000
@@ -76,10 +77,6 @@ class SplineModel(UnivariateModel):
             return self.xx_text
         else:
             return self.xx
-
-    def enable_eval_pval_cache(self):
-        for conditional in self.conditionals:
-            conditional.enable_get_pval_cache()
 
     def eval_pval(self, x, p, threshold=1e-3):
         conditional = self.get_conditional(x)
@@ -285,6 +282,11 @@ class SplineModel(UnivariateModel):
 
         return DDPModel('ddp1', 'spline_model', self.xx_is_categorical, self.get_xx(), False, ys, pp, scaled=self.scaled)
 
+    ### Memoizable
+
+    def eval_pval_index(self, ii, p, threshold=1e-3):
+        return self.conditionals[ii].get_pval(p, threshold)
+
     ### Class Methods
 
     @staticmethod
@@ -384,9 +386,6 @@ class SplineModelConditional():
             self.y0s = np.array(y0s)
             self.y1s = np.array(y1s)
             self.coeffs = coeffs
-
-        # Memoized values
-        self.get_pval_cache = None # None = inactive
 
     def size(self):
         return len(self.y0s)
@@ -502,15 +501,7 @@ class SplineModelConditional():
         value = random.random()
         return self.get_pval(value)
 
-    def enable_get_pval_cache(self):
-        self.get_pval_cache = {}
-
     def get_pval(self, p, threshold=1e-3):
-        if self.get_pval_cache is not None:
-            cached = self.get_pval_cache.get(p, None)
-            if cached is not None:
-                return cached
-        
         # First figure out which spline p is in
         integral = 0
         for ii in range(len(self.y0s)):
@@ -530,9 +521,6 @@ class SplineModelConditional():
                 y = 0
             else:
                 y = (self.y0s[0] + self.y1s[len(self.y1s)-1]) / 2
-
-        if self.get_pval_cache is not None:
-            self.get_pval_cache[p] = y
 
         return y
 
