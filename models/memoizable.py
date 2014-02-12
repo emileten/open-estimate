@@ -75,7 +75,7 @@ class MemoizedUnivariate(UnivariateModel):
             for xmul in xmuls:
                 index = self.index_cache.get(xmul, None)
                 if index is None:
-                    index = np.searchsorted(self.edges, xmul / self.x_cache_multiple) - 1
+                    index = min(np.searchsorted(self.edges, xmul / self.x_cache_multiple) - 1, len(self.edges) - 2)
                     self.index_cache[xmul] = index
 
                 indexes.append(index)
