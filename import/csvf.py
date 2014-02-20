@@ -3,16 +3,20 @@ import csv, re
 class Reader:
     def __init__(self, iterable, delimiter=',', **kw):
         self.reader = csv.reader(iterable, delimiter=delimiter, **kw)
+        self.delimiter = delimiter
         self.footnotes = {}
 
     def __iter__(self):
-        for row in reader:
+        return self
+
+    def next(self):
+        for row in self.reader:
             match = re.match(r"\[(\d+)\]\s+", row[0])
             if match is not None:
-                line = delimiter.join(row)
-                footnotes[match.group(1)] = line[len(match.group(0)):]
+                line = self.delimiter.join(row)
+                self.footnotes[match.group(1)] = line[len(match.group(0)):]
             else:
-                yield map(Entry, row)
+                return map(Entry, row)
 
 class Entry:
     def __init__(self, text):
