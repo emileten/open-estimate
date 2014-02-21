@@ -336,7 +336,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.xx_is_categorical = False
         for row in reader:
             if pp is None:
-                pp = map(float, row[1:])
+                pp = array([map(float, row[1:])])
             else:
                 pp = vstack((pp, map(float, row[1:])))
                 
@@ -357,6 +357,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.pp = pp
 
         if self.scaled == True:
+            print pp
             if self.p_format == 'ddp1':
                 sums = sum(pp, axis=1)
             else:
