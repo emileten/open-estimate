@@ -47,7 +47,7 @@ class MemoizedUnivariate(UnivariateModel):
         elif self.model.xx_is_categorical:
             index = self.index_cache.get(x, None)
             if index is None:
-                index = self.model.get_xx().index(str(x))
+                index = self.model.get_xx().index(str(x)) if x is not None else 0
                 self.index_cache[x] = index
 
             return index
