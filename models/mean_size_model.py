@@ -123,23 +123,40 @@ class MeanSizeModel(UnivariateModel):
         self.sizes = sizes
 
     @staticmethod
-    def merge(models, treatment="treated-even"):
+    def merge(models, treatment="default"):
+        if treatment == 'default':
+            if 'treated' in models[0].get_xx() and 'control' in models[0].get_xx():
+                treatment = 'treated-even'
+            else:
+                treatment = 'independent'
+        
         if treatment == "independent":
-            # All need to have the same x-values
-            masterxx = models[0].get_xx()
+            # Collect the union of all x values
+            masterxx = set()
+            for model in models:
+                masterxx.update(model.get_xx())
+            masterxx = list(masterxx)
+            
             means = []
             sizes = []
             for ii in range(len(masterxx)):
+                print masterxx[ii]
                 numersum = 0
                 denomsum = 0
                 for model in models:
                     xx = model.get_xx()
-                    jj = xx.index(masterxx[ii])
-                    numersum += model.means[jj] * model.sizes[jj]
-                    denomsum += model.sizes[jj]
+                    try:
+                        jj = xx.index(masterxx[ii])
+                        numersum += model.means[jj] * model.sizes[jj]
+                        denomsum += model.sizes[jj]
+                    except:
+                        pass
 
+                print numersum, denomsum
                 means.append(numersum / float(denomsum))
                 sizes.append(denomsum)
+
+            return MeanSizeModel(models[0].xx_is_categorical, masterxx, means, sizes)
         else:
             # All need to have the same x-values
             numersum = 0
@@ -157,7 +174,7 @@ class MeanSizeModel(UnivariateModel):
             means = [numersum / float(denomsum)]
             sizes = [denomsum]
             
-        return MeanSizeModel(models[0].xx_is_categorical, ["difference"], means, sizes)
+            return MeanSizeModel(models[0].xx_is_categorical, ["difference"], means, sizes)
     
         
     @staticmethod
