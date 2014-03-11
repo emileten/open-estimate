@@ -91,10 +91,12 @@ def empirical_distribution(values, yy):
     span = yy[-1] - yy[0]
     pp = np.zeros(count)
     
+    divisions = np.array(yy) + .5 * (span / (count - 1))
+
     ii = 0
     for jj in range(count):
         i0 = ii
-        while ii < len(sorts) and sorts[ii] < yy[jj]:
+        while ii < len(sorts) and sorts[ii] < divisions[jj]:
             ii = ii + 1
         pp[jj] = (ii - i0) / ((span * len(values)) / count)
 
@@ -102,15 +104,18 @@ def empirical_distribution(values, yy):
     
 def generate_thetas(mu_counts, mu_range, tau_counts, tau_range, count):
     thetas = []
+
     for ii in range(count):
         pval = random.uniform(0, 1)
         mu = draw_from_counts(mu_counts, mu_range, pval)
         tau = draw_from_counts(tau_counts, tau_range, pval)
-        thetas.append(float(norm.rvs(size=1, loc=mu, scale=tau)))
+        if tau <= 0:
+            thetas.append(mu)
+        else:
+            thetas.append(float(norm.rvs(size=1, loc=mu, scale=tau)))
 
     return thetas
 
-# Ignores off-by-1 problem: len(x_counts) == len(x_range)
 def draw_from_counts(x_counts, x_range, pval=None):
     if pval is None:
         x = random.uniform(0, sum(x_counts))
@@ -119,7 +124,8 @@ def draw_from_counts(x_counts, x_range, pval=None):
 
     for ii in range(len(x_counts) - 1):
         if x < x_counts[ii]:
-            return x_range[ii] + (x_range[ii+1] - x_range[ii]) * x / x_counts[ii]
+            return x_range[ii] - (x_range[ii+1] - x_range[ii]) / 2 + (x_range[ii+1] - x_range[ii]) * x / x_counts[ii]
+        x -= x_counts[ii]
 
     return x_range[-1]
 
