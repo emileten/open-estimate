@@ -20,7 +20,7 @@ No.	Program focus	Program delivery	Citation...
 22	W N St P	HRA Os	Goetzel RZ, et al. Differences between descriptive and multivariate estimates of the impact of Chevron Corporation's Health Quest program on medical expenditures. J Occup Environ Med. 1998; 40: 538-545.
 * Studies of employee absenteeism
 1	Personalized	HRA Ed L	Leigh J, et al. Randomized controlled study of a retiree health promotion program: the Bank of America study. Arch Int Med. 1992; 152: 1201-1206.
-2-4	W Sm N St BP A	HRA Ed CW Pro,Shi L. Health promotion, medical care use, and costs in a sample of worksite employees. Eval Rev. 1993; 17: 475-487.
+2-4	W Sm N St BP A	HRA Ed CW Pro	Shi L. Health promotion, medical care use, and costs in a sample of worksite employees. Eval Rev. 1993; 17: 475-487.
 5	Personalized	HRA Ed CW L	Mills PR, et al. Impact of a health promotion program on employee health risks and work productivity. Am J Health Promot. 2007; 22(1): 45-53.
 6	Sm W	HRA CW I	Jeffery RW, et al. Effects of work-site health promotion on illness-related absenteeism. J Occup Med. 1993; 35(11): 1142-1146.
 7	Sm W St N BP	HRA CW	Jones RC, et al. A study of a work site health promotion program and absenteeism. J Occup Med. 1990; 32: 95-99.
