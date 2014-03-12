@@ -1,5 +1,5 @@
 import sys
-sys.path.append("../lib/models")
+sys.path.append("../../models")
 
 import numpy as np
 from scipy.stats import norm

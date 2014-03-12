@@ -474,12 +474,20 @@ class SplineModelConditional():
             mean = self.coeffs[ii][1] * var
             if np.isnan(mean) or np.isnan(var) or var <= 0:
                 return 0
-            if self.coeffs[ii][0] - (-mean*mean / (2*var) + math.log(1 / math.sqrt(2*math.pi*var))) > 100: # math domain error!
+
+            exponent = self.coeffs[ii][0] - (-mean*mean / (2*var) + math.log(1 / math.sqrt(2*math.pi*var)))
+            if exponent > 100:
+                # math domain error!
                 return 0
-            rescale = math.exp(self.coeffs[ii][0] - (-mean*mean / (2*var) + math.log(1 / math.sqrt(2*math.pi*var))))
+            rescale = math.exp(exponent)
             below = 0
             if float(self.y0s[ii]) != SplineModel.neginf:
                 below = norm.cdf(float(self.y0s[ii]), loc=mean, scale=math.sqrt(var))
+            if exponent > 20 and float(self.y0s[ii]) != SplineModel.neginf and float(self.y1s[ii]) != SplineModel.neginf and yy != SplineModel.posinf:
+                # approaching math domain error: assume constant
+                total = rescale * (norm.cdf(y1s[ii], loc=mean, scale=math.sqrt(var)) - below)
+                return total * (yy - self.y0s[ii]) / (self.y1s[ii] - self.y0s[ii])
+            
             return rescale * (norm.cdf(y1, loc=mean, scale=math.sqrt(var)) - below)
 
     def cdf(self, yy):
