@@ -483,10 +483,10 @@ class SplineModelConditional():
             below = 0
             if float(self.y0s[ii]) != SplineModel.neginf:
                 below = norm.cdf(float(self.y0s[ii]), loc=mean, scale=math.sqrt(var))
-            if exponent > 20 and float(self.y0s[ii]) != SplineModel.neginf and float(self.y1s[ii]) != SplineModel.neginf and yy != SplineModel.posinf:
+            if exponent > 20 and float(self.y0s[ii]) != SplineModel.neginf and float(self.y1s[ii]) != SplineModel.neginf and y1 != SplineModel.posinf:
                 # approaching math domain error: assume constant
                 total = rescale * (norm.cdf(y1s[ii], loc=mean, scale=math.sqrt(var)) - below)
-                return total * (yy - self.y0s[ii]) / (self.y1s[ii] - self.y0s[ii])
+                return total * (y1 - self.y0s[ii]) / (self.y1s[ii] - self.y0s[ii])
             
             return rescale * (norm.cdf(y1, loc=mean, scale=math.sqrt(var)) - below)
 
