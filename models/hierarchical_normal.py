@@ -117,10 +117,14 @@ def generate_thetas(mu_counts, mu_range, tau_counts, tau_range, count):
     return thetas
 
 def draw_from_counts(x_counts, x_range, pval=None):
+    sumcounts = sum(x_counts)
+    if sumcounts == 0:
+        return np.nan
+
     if pval is None:
         x = random.uniform(0, sum(x_counts))
     else:
-        x = sum(x_counts) * pval
+        x = sumcounts * pval
 
     for ii in range(len(x_counts) - 1):
         if x < x_counts[ii]:
