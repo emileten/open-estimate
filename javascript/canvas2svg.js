@@ -16,6 +16,7 @@ CanvasToSVG = {
             CanvasToSVG.captureMethod(context, 'strokeRect');
             CanvasToSVG.captureMethod(context, 'fillRect');
             CanvasToSVG.captureMethod(context, 'clearRect');
+            CanvasToSVG.captureMethod(context, 'fillText');
             CanvasToSVG.captureMethod(context, 'arc');
             context.isCaptured = true;
         }
@@ -47,6 +48,10 @@ CanvasToSVG = {
         };
     },
 
+    addFabricObject: function(object) {
+        CanvasToSVG.allOperations.push(['addFabricObject', this, object, null]);
+    },
+
     exportSVG: function(width, height) {
         // TODO: we will need to open up a new page later, or dialog with fabricjs loaded
         var fabvas = new fabric.Canvas('c');
@@ -60,6 +65,9 @@ CanvasToSVG = {
             var state = CanvasToSVG.allOperations[ii][3];
 
             switch (method) {
+            case 'addFabricObject':
+                fabvas.add(args);
+                break;
             case 'save':
                 orientationStack.unshift([1, 0, 0, 1, 0, 0]); //orientationStack[0]);
                 break;
@@ -132,6 +140,13 @@ CanvasToSVG = {
                     top: CanvasToSVG.transformPointY(orientationStack[0], args[0], args[1]),
                     width: args[2],
                     height: args[3]
+                }));
+                break;
+            case 'fillText':
+                console.log(args);
+                fabvas.add(new fabric.Text(args[0], {
+                    left: CanvasToSVG.transformPointX(orientationStack[0], args[1], args[2]),
+                    top: CanvasToSVG.transformPointY(orientationStack[0], args[1], args[2])
                 }));
                 break;
             case 'arc':
