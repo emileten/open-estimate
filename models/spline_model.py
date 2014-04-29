@@ -148,7 +148,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         self.conditionals.append(conditional)
 
     def get_conditional(self, x):
-        if x is None or x == '':
+        if x is None or x == '' or len(self.conditionals) == 1:
             return self.conditionals[0]
         
         try:
