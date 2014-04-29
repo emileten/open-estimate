@@ -20,8 +20,8 @@ class Model(object):
 
         Returns unscaled probability density values for given values of $x$
         and $y$: $f(y | x)$."""
-        raise NotImplementedError("to_points_at not implemented"
-)
+        raise NotImplementedError("to_points_at not implemented")
+    
     def eval_pval(self, x, p, threshold=1e-3):
         """Inverse CDF Evaluation
 
