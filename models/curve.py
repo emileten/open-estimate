@@ -2,7 +2,7 @@ from univariate_model import UnivariateModel
 
 class UnivariateCurve(UnivariateModel):
     def __init__(self, xx):
-        super(UnivariateModel, self).__init__(xx_is_categorical=False, xx, scaled=True)
+        super(UnivariateModel, self).__init__(xx_is_categorical=False, xx=xx, scaled=True)
     
     def __call__(self, x):
         raise NotImplementedError("call not implemented")
