@@ -1,6 +1,7 @@
 import numpy as np
 from univariate_model import UnivariateModel
 from scipy.interpolate import UnivariateSpline
+from statsmodels.distributions.empirical_distribution import StepFunction
 
 class UnivariateCurve(UnivariateModel):
     def __init__(self, xx):
@@ -17,18 +18,26 @@ class UnivariateCurve(UnivariateModel):
 
 class CurveCurve(UnivariateCurve):
     def __init__(self, xx, curve):
-        super(UnivariateCurve, self).__init__(xx)
+        super(CurveCurve, self).__init__(xx)
         self.curve = curve
     
     def __call__(self, x):
         return self.curve(x)
 
     @staticmethod
-    def make_curve(xx, yy, limits):
+    def make_linear_spline_curve(xx, yy, limits):
         xx = np.concatenate(([limits[0]], xx, [limits[1]]))
         yy = np.concatenate(([yy[0]], yy, [yy[-1]]))
 
         return UnivariateSpline(xx, yy, s=0, k=1)
+
+class StepCurve(CurveCurve):
+    def __init__(self, xxlimits, yy):
+        step_function = StepFunction(xxlimits[1:-1], yy[1:], ival=yy[0])
+        super(StepCurve, self).__init__((xx[0:-1] + xx[1:]) / 2, step_function)
+
+        self.xxlimits = xxlimits
+        self.yy = yy
 
 class AdaptableCurve(UnivariateCurve):
     def __init__(self, xx):
