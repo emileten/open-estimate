@@ -1,4 +1,6 @@
+import numpy as np
 from univariate_model import UnivariateModel
+from scipy.interpolate import UnivariateSpline
 
 class UnivariateCurve(UnivariateModel):
     def __init__(self, xx):
@@ -20,6 +22,13 @@ class CurveCurve(UnivariateCurve):
     
     def __call__(self, x):
         return self.curve(x)
+
+    @staticmethod
+    def make_curve(xx, yy, limits):
+        xx = np.concatenate(([limits[0]], xx, [limits[1]]))
+        yy = np.concatenate(([yy[0]], yy, [yy[-1]]))
+
+        return UnivariateSpline(xx, yy, s=0, k=1)
 
 class AdaptableCurve(UnivariateCurve):
     def __init__(self, xx):
