@@ -5,7 +5,7 @@ from statsmodels.distributions.empirical_distribution import StepFunction
 
 class UnivariateCurve(UnivariateModel):
     def __init__(self, xx):
-        super(UnivariateModel, self).__init__(xx_is_categorical=False, xx=xx, scaled=True)
+        super(UnivariateCurve, self).__init__(xx_is_categorical=False, xx=xx, scaled=True)
     
     def __call__(self, x):
         raise NotImplementedError("call not implemented")
@@ -14,6 +14,9 @@ class UnivariateCurve(UnivariateModel):
         return self.xx
     
     def eval_pval(self, x, p, threshold=1e-3):
+        return self(x)
+
+    def eval_pvals(self, x, p, threshold=1e-3):
         return self(x)
 
 class CurveCurve(UnivariateCurve):
@@ -34,7 +37,7 @@ class CurveCurve(UnivariateCurve):
 class StepCurve(CurveCurve):
     def __init__(self, xxlimits, yy):
         step_function = StepFunction(xxlimits[1:-1], yy[1:], ival=yy[0])
-        super(StepCurve, self).__init__((xx[0:-1] + xx[1:]) / 2, step_function)
+        super(StepCurve, self).__init__((np.array(xxlimits[0:-1]) + np.array(xxlimits[1:])) / 2, step_function)
 
         self.xxlimits = xxlimits
         self.yy = yy
