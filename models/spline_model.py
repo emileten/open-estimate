@@ -510,6 +510,12 @@ class SplineModelConditional():
         return self.get_pval(value)
 
     def get_pval(self, p, threshold=1e-3):
+        # Use finer thresholds later on
+        if p < .1:
+            threshold = threshold * p * 10
+        elif p > .9:
+            threshold = threshold * (1 - p) * 10
+
         # First figure out which spline p is in
         integral = 0
         for ii in range(len(self.y0s)):
