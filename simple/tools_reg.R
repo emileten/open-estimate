@@ -1,3 +1,9 @@
+### Simple Robust Standard Errors Library for R
+## Usage:
+## source("tools_reg.R")
+## mod ~ lm(satell ~ width + factor(color)) # assuming we have these data
+## get.coef.clust(mod, color)
+
 ### Calculate heteroskedastically-robust standard errors
 ## mod: the result of a call to lm()
 ##      e.g., lm(satell ~ width + factor(color))
