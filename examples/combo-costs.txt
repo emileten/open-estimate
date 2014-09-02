@@ -1,0 +1,40 @@
+Aldana 1993
+#Aldana,N,-16.0%[2]
+#Aldana,N,7.0%
+Baun 1986
+Bly 1986
+#Bly,N,-7.4%[3]
+Bowne,-20.1%,-45.7%
+Chapman,-49.1%,-32.4%[4]
+Dalton,N,-18.4%
+Foote 1991
+Fries 1994
+Fries 1998
+#Fries,-23.3%,-26.7%
+#Fries,-35.2%,-48.8%
+#Fries,N,-30.4%
+Gibbs 1985
+#Gibbs,N,-24.2%
+Goetzel 1998
+Goetzel 1998
+#Goetzel,N,-14.2%
+#Goetzel,N,-32.4%
+Harvey,N,50.1%
+Leigh 1992
+#Leigh,-12.1%,-32.0%
+Lorig,N,-7.2%
+Musich 2000
+#Musich,N,-19.6%
+Naydeck 2008
+Ozminkowski 1999
+#Ozminkowski,N,-41.0%
+#Ozminkowski,N,-9.7%
+Sciacca 1993
+#Sciacca,N,-12.0%[10]
+Serxner 2003
+Shephard 1982
+#Shephard,N,-34.5%
+Shi 1993
+#Shi,-21.7%,-28.4%
+Stave 2003
+Wheat,N,-31.0%

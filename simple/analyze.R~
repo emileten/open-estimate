@@ -1,0 +1,3 @@
+setwd("~/projects/dmas/simple")
+
+tbl <- read.csv("data.csv")

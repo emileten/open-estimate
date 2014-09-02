@@ -1,0 +1,39 @@
+Aldana 2005
+Baun 1986
+Bertera 1990
+Bertera 1993
+#Bertera,-12.2%,N
+#Bertera,-14.0%,N
+Blair 1986
+#Blair,-24.0%,N
+Bly,N,-7.4%[3]
+Bowne,-20.1%,-45.7%
+Chapman,-49.1%,-32.4%[4]
+Fries 1998
+#Fries,-23.3%,-26.7%
+#Fries,-35.2%,-48.8%
+Golaszewski[6],-19.0%,N
+Henritze,-68.2%,N
+Henritze[8],-68.2%,N
+Jeffery 1993
+#Jeffery,-22.0%,N
+Jones 1990
+#Jones,-31.6%[9],N
+Knight 1994
+#Knight,-33.5%,N
+Lechner 1997
+#Lechner,-52.4%,N
+Leigh 1992
+#Leigh,-12.1%,-32.0%
+Lynch 1990
+#Lynch,-13.8%,N
+Mills 2007
+Schultz 2002
+Serxner 2001
+Shephard 1982
+Shi 1993
+#Shi,-21.7%,-28.4%
+Stave 2003
+Stein 2000
+Wood 1989
+#Wood,-36.3%,N
