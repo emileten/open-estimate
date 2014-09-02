@@ -6,4 +6,4 @@ mod <- lm(satell ~ width + factor(color), data=tbl)
 
 source("tools_reg.R")
 
-get.coef.clust(mod)
+get.coef.clust(mod, tbl$color)
