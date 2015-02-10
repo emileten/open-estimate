@@ -1,5 +1,26 @@
-import copy
+# -*- coding: utf-8 -*-
+################################################################################
+# Copyright 2014, Distributed Meta-Analysis System
+################################################################################
 
+"""
+Top level Model class, from which all specific model derive.  All
+models should implement most of these functions (with the notable
+exceptions of merge and combine).
+"""
+
+__copyright__ = "Copyright 2014, Distributed Meta-Analysis System"
+
+__author__ = "James Rising"
+__credits__ = ["James Rising", "Solomon Hsiang"]
+__maintainer__ = "James Rising"
+__email__ = "jar2234@columbia.edu"
+
+__status__ = "Production"
+__version__ = "$Revision$"
+# $Source$
+
+import copy
 
 class Model(object):
     mergers = {}
@@ -121,3 +142,15 @@ class Model(object):
                     sofar = Model.combiners[scaled.kind() + "+" + sofar.kind()](scaled, sofar)
 
         return sofar
+
+class Attribute(object):
+    """An attribute is an arbitrary piece of information about a
+    model, available from the attribute functions on Model."""
+    def __init__(self, title, description, reference, subtitle, value, comments, source):
+        self.title = title
+        self.description = description
+        self.reference = reference
+        self.subtitle = subtitle
+        self.value = value
+        self.comments = comments
+        self.source = source
