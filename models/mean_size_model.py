@@ -27,13 +27,12 @@ __status__ = "Production"
 __version__ = "$Revision$"
 # $Source$
 
-import math
+import math, csv
 from scipy.interpolate import interp1d
 import numpy as np
 
-from model import Model
+from model import Model, Attribute
 from univariate_model import UnivariateModel
-from attribute import Attribute
 
 class MeanSizeModel(UnivariateModel):
     def __init__(self, xx_is_categorical=False, xx=None, means=None, sizes=None):
@@ -114,8 +113,8 @@ class MeanSizeModel(UnivariateModel):
                 xx.append(len(xx))
                 self.xx_is_categorical = True
 
-            self.means.append(float(row[1]))
-            self.sizes.append(float(row[2]))
+            means.append(float(row[1]))
+            sizes.append(float(row[2]))
 
         self.xx = xx
         self.xx_text = xx_text

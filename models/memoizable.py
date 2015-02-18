@@ -146,7 +146,7 @@ class MemoizedUnivariate(UnivariateModel):
 
         return ys
         
-    def get_eval_pval_spline(self, p, limits, threshold=1e-3):
+    def get_eval_pval_spline(self, p, limits, threshold=1e-3, linextrap=False):
         if len(self.get_xx()) == 1:
             xx = self.model.get_xx()
             yy = np.array(self.eval_pvals(xx, p, threshold))
@@ -157,8 +157,9 @@ class MemoizedUnivariate(UnivariateModel):
             
         yy[np.isnan(yy)] = 0
 
-        xx = np.concatenate(([limits[0]], xx, [limits[1]]))
-        yy = np.concatenate(([yy[0]], yy, [yy[-1]]))
+        if not linextrap or len(xx) == 1:
+            xx = np.concatenate(([limits[0]], xx, [limits[1]]))
+            yy = np.concatenate(([yy[0]], yy, [yy[-1]]))
         spline = UnivariateSpline(xx, yy, s=0, k=1)
         return spline
 
