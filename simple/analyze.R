@@ -44,10 +44,11 @@ library(rstan)
 
 #means <- c(0.3201, 0.3866, 0.5798)
 #serrs <- c(0.2315, 0.3325, 0.1395)
-pooled.mean <- 0.8036
-pooled.serr <- 0.1063
 means <- c(0.6905, 0.8651, 0.9015)
 serrs <- c(0.0899, 0.2019, 0.2531)
+pooled.vals <- pooled(means, serrs)
+pooled.mean <- pooled.vals[1]
+pooled.serr <- pooled.vals[2]
 
 ggplot(tbl, aes(y=Sepal.length, x=Sepal.width, colour=Species, shape=Species)) +
     geom_point() + xlab("Sepal Width") + ylab("Sepal Length") +
@@ -133,13 +134,13 @@ data <- data.frame(spine=specie, median=medians, lower=lowers, upper=uppers, ymi
 ggplot(data, aes(x=spine)) +
     geom_boxplot(aes(ymin=ymin, lower=lower, middle=median, upper=upper, ymax=ymax, fill=color), stat='identity') +
     facet_grid(. ~ facet, scales="free_x") +
-    guides(fill=FALSE) + xlab("Sepal width-length Relationship Estimate")
+    guides(fill=FALSE) + xlab("Sepal width-length Relationship Estimate") + scale_fill_manual(values=c("#f8766d", "#a3a500", "#02bf7d", "#01b0f6"))
 
 # Display with addition
 
 newserr <- .025
-useserr <- .025 #sqrt(newserr^2 / .1)
-newmean <- pooled(means, serrs)[1] #1.5
+useserr <- sqrt(newserr^2 / .1) #.025
+newmean <- 1.5 #pooled(means, serrs)[1]
 schools_dat <- list(J = 4, y = c(means, newmean), sigma = c(serrs, useserr))
 
 fit <- stan(fit=fit, data = schools_dat, 
@@ -177,3 +178,38 @@ if (newserr == useserr) {
                 guides(fill=FALSE) + theme(legend.position="none") +
                     xlab("Sepal width-length Relationship Estimate")
 }    
+
+### Construct a distribution
+
+xxs <- seq(0, 2, length.out=1000)
+ddp1 <- dnorm(xxs, means[1], serrs[1])
+ddp2 <- dnorm(xxs, means[2], serrs[2])
+ddp3 <- dnorm(xxs, means[3], serrs[3])
+
+garden1 <- c(.5, .25, .25)
+garden2 <- c(.25, .25, .5)
+
+irises <- rbind(ddp1, ddp2, ddp3)
+gardens <- rbind(garden1, garden2)
+
+results <- t(irises) %*% t(gardens)
+
+distdata <- data.frame(garden=c(rep("Garden 1", 3), rep("Garden 2", 3)), species=c("I. setosa", "I. versicolor", "I. virginica", "I. setosa", "I. versicolor", "I. virginica"), portion=c(garden1, garden2))
+
+ggplot(distdata, aes(garden, weight=portion, fill=species)) +
+  geom_bar() + ylab("Portion for Species") + xlab("") + scale_fill_manual(name="Species", values=c("#a3a500", "#02bf7d", "#01b0f6"))
+
+edf1 <- cumsum(results[,1]) / sum(results[,1])
+edf2 <- cumsum(results[,2]) / sum(results[,2])
+
+medians <- xxs[c(min(which(edf1 > .5)), min(which(edf2 > .5)))]
+lowers <- xxs[c(min(which(edf1 > .25)), min(which(edf2 > .25)))]
+uppers <- xxs[c(min(which(edf1 > .75)), min(which(edf2 > .75)))]
+ymins <- xxs[c(min(which(edf1 > .1)), min(which(edf2 > .1)))]
+ymaxs <- xxs[c(min(which(edf1 > .9)), min(which(edf2 > .9)))]
+
+data <- data.frame(garden=c("Garden 1", "Garden 2"), median=medians, lower=lowers, upper=uppers, ymin=ymins, ymax=ymaxs)
+
+ggplot(data, aes(x=garden)) +
+    geom_boxplot(aes(ymin=ymin, lower=lower, middle=median, upper=upper, ymax=ymax), stat='identity') +
+    guides(fill=FALSE) + xlab("")
