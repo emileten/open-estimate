@@ -5,9 +5,10 @@ args apikey infoid
 
 disp as txt "Uploading to DMAS..."
 
-tempvar Xstr Vstr Bstr urlstr result
+tempvar Xstr Vstr Bstr result
 
 gen `Xstr' = "apikey=`apikey'&infoid=`infoid'&N=`e(N)'&df_m=`e(df_m)'&df_r=`e(df_r)'&F=`e(F)'&r2=`e(r2)'&rmse=`e(rmse)'&mss=`e(mss)'&rss=`e(rss)'&r2_a=`e(r2_a)'&ll=`e(ll)'&ll_0=`e(ll_0)'&rank=`e(rank)'&cmdline=`e(cmdline)'&title=`e(title)'&marginsok=`e(marginsok)'&vce=`e(vce)'&depvar=`e(depvar)'&cmd=`e(cmd)'&properties=`e(properties)'&predict=`e(predict)'&model=`e(model)'&estat_cmd=`e(estat_cmd)'"
+replace `Xstr' = subinstr(`Xstr', " ", "+", .)
 
 gen `Vstr' = ""
 matrix V = e(V)
@@ -25,10 +26,12 @@ forval ii = 1/`= colsof(B)' {
   qui replace `Bstr' = `Bstr' + "," + "`Bij'"
 }
 
-gen `urlstr' = "http://dmas.berkeley.edu/api/put_stata_estimate?" + `Xstr' + "&V=" + `Vstr' + "&b=" + `Bstr'
-disp as txt `urlstr'
+local dmas_urlstr = "http://dmas.berkeley.edu/api/put_stata_estimate?" + `Xstr' + "&V=" + `Vstr' + "&b=" + `Bstr'
+disp as txt "`dmas_urlstr'"
 
-gen `result' = fileread(`urlstr')
+tempfile resfile
+copy "`dmas_urlstr'" "`resfile'"
+gen `result' = fileread("`resfile'")
 
 display as txt "Response:"
 display as txt `result'
