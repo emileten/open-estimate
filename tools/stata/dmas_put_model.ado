@@ -26,7 +26,11 @@ forval ii = 1/`= colsof(B)' {
   qui replace `Bstr' = `Bstr' + "," + "`Bij'"
 }
 
-local dmas_urlstr = "http://dmas.berkeley.edu/api/put_stata_estimate?" + `Xstr' + "&V=" + `Vstr' + "&b=" + `Bstr'
+mat b = e(b)
+local names: colnames b
+local names2 = subinstr("`names'", " ", ",", .)
+
+local dmas_urlstr = "http://dmas.berkeley.edu/api/put_stata_estimate?" + `Xstr' + "&V=" + `Vstr' + "&b=" + `Bstr' + "&names=" + `names2'
 disp as txt "`dmas_urlstr'"
 
 tempfile resfile
