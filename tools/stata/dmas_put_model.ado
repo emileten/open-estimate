@@ -3,8 +3,6 @@ program dmas_put_model
 version 13.1
 args apikey infoid
 
-local server = "http://127.0.0.1:8080/" //"http://dmas.berkeley.edu/"
-
 disp as txt "Uploading to DMAS..."
 
 tempvar Xstr Vstr Bstr result
@@ -34,14 +32,8 @@ mat b = e(b)
 local names: colnames b
 local names2 = subinstr(subinstr("`names'", " ", ",", .), "#", "%23", .)
 
-local dmas_urlstr = "`server'api/put_stata_estimate?" + `Xstr' + "&V=" + `Vstr' + "&b=" + `Bstr' + "&names=" + "`names2'"
-disp as txt "`dmas_urlstr'"
+local dmas_urlstr = "put_stata_estimate?" + `Xstr' + "&V=" + `Vstr' + "&b=" + `Bstr' + "&names=" + "`names2'"
 
-tempfile resfile
-copy "`dmas_urlstr'" "`resfile'"
-gen `result' = fileread("`resfile'")
-
-display as txt "Response:"
-display as txt `result'
+dmas_get_api "`dmas_urlstr'", as_model(0)
 
 end

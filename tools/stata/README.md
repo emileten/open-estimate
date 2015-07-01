@@ -158,10 +158,9 @@ gen y= w + 3*z + 4*x - x^2 + .1*x^3 + e
 plot_rcspline y x, save_data_file(example.dta)
 dmas_put_model 4sW2Txtsn8o3bkwY NA
 
-adopath + /Users/jrising/projects/dmas/lib/tools/stata
 use example, clear
 line mean_est_nl indep_var
 
-dmas_extract_predict indep_var mean_est_nl ci_bot_nl ci_top_nl, apikey(4sW2Txtsn8o3bkwY) infoid(NA) id(558c8dd5b4a69c02298c2072)
+dmas_extract_predict indep_var mean_est_nl ci_bot_nl ci_top_nl, apikey(4sW2Txtsn8o3bkwY) infoid(NA) id(55931edb6253ea1a3315d9bb)
 ```
 

@@ -4,9 +4,7 @@ version 13.1
 
 syntax varlist(min=4 max=4 numeric ts), [apikey(string) infoid(string) id(string)]
 
-local server = "http://127.0.0.1:8080/" /* "http://dmas.berkeley.edu/" */
-
-loc asformat = "%7.3g"
+loc asformat = "%7.4g"
 
 loc indep_var = word("`varlist'", 1)
 loc mean_est = word("`varlist'", 2)
@@ -42,22 +40,8 @@ forvalues ii = 1/`N' {
     qui replace `citopStr' = `citopStr' + "," + `ci_topStr'[`ii']
 }
 
-local dmas_urlstr = "`server'api/extract_stata_predict?apikey=`apikey'&infoid=`infoid'&id=`id'&ts=$S_TIME&level=5&x=" + `indepStr' + "&mean=" + `meanStr' + "&cibot=" + `cibotStr' + "&citop=" + `citopStr'
-
-disp as txt "`dmas_urlstr'"
-
-tempfile resfile
-tempvar result
-copy "`dmas_urlstr'" "`resfile'"
-gen `result' = fileread("`resfile'")
-
-display as txt "Response:"
-if (substr(`result', 1, 6) == "ERROR:") {
-    display as txt `result'
-}
-else {
-    local final_urlstr = "`server'model/view?id=" + `result'
-    display as txt "`final_urlstr'"
-}
+dmas_get_api "make_queue", as_model(0)
+dmas_get_api "queue_arguments?apikey=`apikey'&infoid=`infoid'&id=`id'&x=" + `indepStr' + "&mean=" + `meanStr', as_model(0)
+dmas_get_api "call_with_queue?method=extract_stata_predict&level=5&cibot=" + `cibotStr' + "&citop=" + `citopStr', as_model(1)
 
 end
