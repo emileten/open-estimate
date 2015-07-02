@@ -3,8 +3,7 @@ program dmas_get_api
 version 13.1
 syntax anything(name=methodargs), as_model(integer)
 
-local server = "http://127.0.0.1:8080"
-* "http://dmas.berkeley.edu"
+local server = "http://dmas.berkeley.edu"
 
 local dmas_urlstr = "`server'/api/" + `methodargs'
 
