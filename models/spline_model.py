@@ -56,7 +56,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
 
     def __init__(self, xx_is_categorical=False, xx=None, conditionals=None, scaled=True):
         super(SplineModel, self).__init__(xx_is_categorical, xx, scaled)
-        
+
         if conditionals is not None:
             self.conditionals = conditionals
         else:
@@ -69,7 +69,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         conditionals = []
         for conditional in self.conditionals:
             conditionals.append(conditional.copy())
-            
+
         return SplineModel(self.xx_is_categorical, list(self.get_xx()), conditionals, scaled=self.scaled)
 
     def get_xx(self):
@@ -102,7 +102,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         conditionals = []
         for x in xx:
             conditionals.append(self.get_conditional(x))
-        
+
         return SplineModel(self.xx_is_categorical, xx, conditionals, scaled=self.scaled)
 
     def interpolate_x(self, newxx):
@@ -144,13 +144,13 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         if self.xx_is_categorical:
             self.xx_text.append(x)
             self.xx.append(len(self.xx))
-            
+
         self.conditionals.append(conditional)
 
     def get_conditional(self, x):
         if x is None or x == '' or len(self.conditionals) == 1:
             return self.conditionals[0]
-        
+
         try:
             return self.conditionals[self.xx_text.index(str(x))]
         except Exception as e:
@@ -165,7 +165,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
             file.write("spp1\n")
         else:
             file.write("spv1\n")
-        
+
         writer = csv.writer(file, delimiter=delimiter)
 
         for ii in range(len(self.xx)):
@@ -275,7 +275,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
     def to_ddp(self, ys=None):
         if ys is None:
             (limits, ys) = SplineModelConditional.propose_grid(self.conditionals)
-            
+
         pp = np.ones((len(self.xx), len(ys)))
         for ii in range(len(self.xx)):
             pp[ii,] = self.to_points_at(self.xx[ii], ys)
@@ -290,7 +290,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
     ### Class Methods
 
     @staticmethod
-    def create_gaussian(xxs, order=None):
+    def create_gaussian(xxs, order=None, xx_is_categorical=True):
         conditionals = []
         xx = []
 
@@ -301,12 +301,12 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
             conditional = SplineModelConditional.make_gaussian(SplineModel.neginf, SplineModel.posinf, mean, var)
             conditionals.append(conditional)
 
-        return SplineModel(True, xx, conditionals, True)
+        return SplineModel(xx_is_categorical, xx, conditionals, True)
 
     @staticmethod
     def from_ddp(ddp_model, limits):
         lps = ddp_model.log_p()
-        
+
         conditionals = []
         xx = []
         for ii in range(len(ddp_model.xx)):
@@ -332,16 +332,16 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         (models, xx) = UnivariateModel.intersect_x_all(models)
 
         model = SplineModel()
-        
+
         for ii in range(len(xx)):
             conditional = SplineModelConditional()
-            
+
             y0 = SplineModel.neginf
             # Loop through each segment
             while y0 != SplineModel.posinf:
                 y1 = SplineModel.posinf
                 coeffs = np.zeros(3)
-                
+
                 for jj in range(len(models)):
                     modcond = models[jj].get_conditional(xx[ii])
                     for kk in range(len(modcond.y0s)):
@@ -352,7 +352,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
 
                 while len(coeffs) > 0 and coeffs[-1] == 0:
                     coeffs = coeffs[0:-1]
-                    
+
                 conditional.add_segment(y0, y1, coeffs)
                 y0 = y1
 
@@ -419,7 +419,7 @@ class SplineModelConditional():
             self.y0s = self.y0s[indexes]
             self.y1s = self.y1s[indexes]
             self.coeffs = [self.coeffs[index] for index in indexes]
-        
+
     # Note: after calling, need to set scaled on SplineModel object
     def rescale(self):
         integral = self.cdf(SplineModel.posinf)
@@ -455,11 +455,11 @@ class SplineModelConditional():
     def partial_cdf(self, ii, y1):
         if len(self.coeffs[ii]) == 0:
             return np.nan
-            
+
         if len(self.coeffs[ii]) == 1:
             if self.coeffs[ii][0] == SplineModel.neginf:
                 return 0
-                
+
             return np.exp(self.coeffs[ii][0]) * (y1 - self.y0s[ii])
         elif len(self.coeffs[ii]) == 2:
             return (np.exp(self.coeffs[ii][0]) / self.coeffs[ii][1]) * (np.exp(self.coeffs[ii][1] * y1) - np.exp(self.coeffs[ii][1] * self.y0s[ii]))
@@ -487,7 +487,7 @@ class SplineModelConditional():
                 # approaching math domain error: assume constant
                 total = rescale * (norm.cdf(self.y1s[ii], loc=mean, scale=math.sqrt(var)) - below)
                 return total * (y1 - self.y0s[ii]) / (self.y1s[ii] - self.y0s[ii])
-            
+
             return rescale * (norm.cdf(y1, loc=mean, scale=math.sqrt(var)) - below)
 
     def cdf(self, yy):
@@ -524,7 +524,7 @@ class SplineModelConditional():
             partial = self.partial_cdf(ii, self.y1s[ii])
             if integral + partial > p:
                 break
-            
+
             integral += partial
 
         y = SplineModelConditional.ascinv(p - integral, lambda y: self.partial_cdf(ii, y), self.y0s[ii], self.y1s[ii], threshold)
@@ -553,7 +553,7 @@ class SplineModelConditional():
                 midpoint = (minx + 1.0) * 2
             else:
                 midpoint = (minx + maxx) / 2.0
-            
+
             error = func(midpoint) - y
             if abs(error) < threshold:
                 return midpoint
@@ -582,7 +582,7 @@ class SplineModelConditional():
     def gaussian_sdev(self, ii):
         if len(self.coeffs[ii]) == 0:
             return 0
-        
+
         return 1/math.sqrt(-2*self.coeffs[ii][2])
 
     def gaussian_mean(self, ii):
@@ -655,7 +655,7 @@ class SplineModelConditional():
     # returns (yy, val)
     def find_mode(self):
         maxmax = (None, SplineModel.neginf)
-        
+
         for ii in range(self.size()):
             mymax = self.segment_max(ii)
             if mymax[1] > maxmax[1]:
@@ -732,7 +732,7 @@ class SplineModelConditional():
                     segments = SplineModelConditional.make_conditional_from_spline(spline, (y0, yy[ii]))
                 else:
                     segments = SplineModelConditional.make_conditional_from_spline(spline, (y0, yy[-1]))
-                    
+
                 for jj in range(segments.size()):
                     conditional.add_segment(segments.y0s[jj], segments.y1s[jj], segments.coeffs[jj])
                 if ii < len(newpp):
@@ -743,7 +743,7 @@ class SplineModelConditional():
             return conditional
         else:
             spline = UnivariateSpline(yy, np.log(newpp), k=2)
-        
+
             return SplineModelConditional.make_conditional_from_spline(spline, (2*limits[0], 2*limits[1]))
 
     @staticmethod
@@ -753,7 +753,7 @@ class SplineModelConditional():
     @staticmethod
     def make_gaussian(y0, y1, mean, var):
         return SplineModelConditional.make_single(y0, y1, [-mean*mean/(2*var) - np.log(np.sqrt(2*math.pi*var)), mean/var, -1/(2*var)])
-    
+
     @staticmethod
     def make_conditional_from_spline(spline, limits):
         conditional = SplineModelConditional()
@@ -796,7 +796,7 @@ class SplineModelConditional():
             return conditionals[0]
 
         (limits, ys) = SplineModelConditional.propose_grid(conditionals)
-        
+
         ps = np.zeros(len(ys))
         for ii in range(len(conditionals)):
             ps = ps + conditionals[ii].to_points(ys)
@@ -816,9 +816,9 @@ class SplineModelConditional():
             limits = (max(limits[0], conditional.y0s[0]), min(limits[1], conditional.y1s[-1]))
             conditional_rough_limits = conditional.rough_limits()
             rough_limits = (min(rough_limits[0], conditional_rough_limits[0]), max(rough_limits[1], conditional_rough_limits[1]))
-            
+
             max_segments = max(max_segments, sum(map(lambda cc: len(cc), conditional.coeffs)))
-        
+
         num_points = 100 * max_segments / (1 + np.log(len(conditionals)))
 
         ys = np.linspace(rough_limits[0], rough_limits[1], num_points)

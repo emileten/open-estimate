@@ -71,7 +71,7 @@ class FeaturesInterpreter:
                 val = float(header[ii])
                 header[ii] = val
             except ValueError:
-                pass        
+                pass
 
         spline.xx = []
         spline.xx_text = []
@@ -87,7 +87,7 @@ class FeaturesInterpreter:
                 conditional = FeaturesInterpreter.make_conditional_respecting(header, row, limits)
                 last_row = row
                 last_conditional = conditional
-            
+
             spline.add_conditional(row[0], conditional)
 
             if status_callback:
@@ -109,7 +109,7 @@ class FeaturesInterpreter:
                 mean = float(row[header.index(.5)])
             if mean is None:
                 return None
-            
+
             if 'var' in header:
                 var = float(row[header.index('var')])
             elif 'sdev' in header:
@@ -133,7 +133,7 @@ class FeaturesInterpreter:
             if 'mean' in header:
                 mean = float(row.pop(header.index('mean')))
                 header.remove('mean')
-                
+
             elif 'mode' in header:
                 mean = float(row.pop(header.index('mode')))
                 header.remove('mode')
@@ -147,8 +147,9 @@ class FeaturesInterpreter:
             row = map(float, row[0:2])
             if np.all(np.isnan(row)):
                 return SplineModelConditional.make_single(mean, mean, [])
-                
-            if header[1] == 1 - header[0] and abs(row[1] - mean - (mean - row[0])) < abs(row[1] - row[0]) / 1000.0:
+
+            if header[1] == 1 - header[0] and abs(row[1] - mean - (mean - row[0])) < abs(row[1] - row[0]) / 100.0:
+                print "HERE"
                 lowp = min(header)
                 lowv = np.array(row)[np.array(header) == lowp][0]
 
@@ -174,7 +175,7 @@ class FeaturesInterpreter:
                 low_sdev = brentq(lambda sdev: norm.cdf(lowv, mean, sdev) - lowp, lowerbound, upperbound)
                 if float(limits[0]) > mean - 3*low_sdev:
                     return None
-                
+
                 low_segment = SplineModelConditional.make_gaussian(float(limits[0]), lowv, mean, low_sdev*low_sdev)
 
                 highp = max(header)
@@ -199,6 +200,7 @@ class FeaturesInterpreter:
                 #bounds = [norm.logpdf(mean, mean, low_sdev), norm.logpdf(mean, mean, high_sdev)]
 
                 result = minimize(lambda lpmean: FeaturesInterpreter.skew_gaussian_evaluate(ys, np.append(np.append(lps0, [lpmean]), lps1), low_segment, high_segment, mean, lowp, highp), .5, method='Nelder-Mead')
+                print "Skew Gaussian"
                 print np.append(np.append(lps0, result.x), lps1)
                 return FeaturesInterpreter.skew_gaussian_construct(ys, np.append(np.append(lps0, result.x), lps1), low_segment, high_segment)
 
@@ -228,7 +230,7 @@ class FeaturesInterpreter:
         # Discontinuities:
         error += np.square(conditional.evaluate(0, low_segment.y1s[0]) - conditional.evaluate(1, low_segment.y1s[0]))
         error += np.square(conditional.evaluate(conditional.size() - 2, high_segment.y0s[0]) - conditional.evaluate(conditional.size() - 1, high_segment.y0s[0]))
-        
+
         # Mean:
         error += np.square(mean - conditional.approximate_mean((low_segment.y0s[0], high_segment.y1s[0])))
 
@@ -288,7 +290,7 @@ class FeaturesInterpreter:
             model.add_segment(limits[0], low, [SplineModel.neginf])
 
             return model
-        
+
         if high is not None:
             model = FeaturesInterpreter.make_conditional(header, row, (limits[0], high))
             model.add_segment(high, limits[1], [SplineModel.neginf])
@@ -322,7 +324,7 @@ class FeaturesInterpreter:
         """Find the knot furthest from existing knots"""
         if len(knots) == 0:
             return newknots[0]
-        
+
         scores = np.zeros(len(newknots))
         for ii in range(len(newknots)):
             scores[ii] = min(abs(np.array(knots) - newknots[0]))
@@ -382,7 +384,7 @@ class FeaturesInterpreter:
             elif limits[0] < ys[0]:
                 ys.insert(0, limits[0])
                 lps.insert(0, -6 - 1/(1 - random.random()))
-            
+
             if limits[1] == SplineModel.posinf:
                 ys.insert(0, ys[-1] + 1/(1 - random.random()))
                 lps.insert(0, -7)
@@ -412,7 +414,7 @@ class FeaturesInterpreter:
             mean = sum(ps * ys)
         if 'var' in header or 'skew' in header:
             var = sum(ps * np.square(ys - mean))
-        
+
         error = 0
         for ii in range(1, len(header)):
             if isinstance(header[ii], float):
