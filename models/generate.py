@@ -1,6 +1,4 @@
 import math
-import numpy as np
-from numpy import linalg
 from spline_model import SplineModel, SplineModelConditional
 
 def uniform_doseless(start, end, height=None):
@@ -8,12 +6,12 @@ def uniform_doseless(start, end, height=None):
     if height is None:
         height = 1 / (end - start)
         scaled = True
-
+    
     conditional = SplineModelConditional()
     conditional.add_segment(SplineModel.neginf, start, [SplineModel.neginf])
     conditional.add_segment(start, end, [math.log(height)])
     conditional.add_segment(end, SplineModel.posinf, [SplineModel.neginf])
-
+        
     return SplineModel(True, [''], [conditional], scaled)
 
 # Generate constant uniform
@@ -31,20 +29,20 @@ def uniform_constant(xx, yy, min, max):
 
     return table
 
-def polynomial(lowbound, highbound, betas, covas):
+def polynomial(lowbound, highbound, betas, covas, num=40):
     betas = np.array(betas)
     covas = np.mat(covas)
 
     if covas.shape[0] != covas.shape[1] and len(betas) != covas.shape[0]:
-        return "Please provide a complete covariance matrix."
+        return "Error: Please provide a complete covariance matrix."
     if np.any(linalg.eig(covas)[0] < 0):
-        return "Covariance matrix is not positive definite."
+        return "Error: Covariance matrix is not positive definite."
 
-    xx = np.linspace(lowbound, highbound, num=40)
+    xx = np.linspace(lowbound, highbound, num=num)
     xxs = {}
     for x in xx:
         xvec = np.mat([[1, x, x**2, x**3][0:len(betas)]])
         serr = np.sqrt(xvec * covas * np.transpose(xvec))
         xxs[x] = (betas.dot(np.squeeze(np.asarray(xvec))), serr[0,0])
-
-    return SplineModel.create_gaussian(xxs, xx, xx_is_categorical=False)
+        
+    return SplineModel.create_gaussian(xxs, xx)
