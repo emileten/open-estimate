@@ -42,6 +42,8 @@ Now that you have everything set up to add models, the following walks you thoug
 
   *This will call DMAS with all of the information in your regression, displaying both the URL used and the result, which will be a DMAS ID for your regression.*
 
+  *Note: If the model includes fixed effects or other dummy variables, the upload time can be greatly improved by adding an option "coefficient count" to the `dmas_put_model` command, specifying that only that many coefficients should be uploaded to DMAS.*
+
 4. Record the hexidecimal value it returns, as you will need this in step 6.  If you are sharing this with the GCP community, fill in the DMAS ID returned by dmas_put_model into the master spreadsheet.
   https://docs.google.com/spreadsheets/d/1lyvAeoUTji-FGH_Fz-hGWQOnEWJb2EMhWgc7LKz2ix0/edit
 
