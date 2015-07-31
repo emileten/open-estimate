@@ -15,7 +15,21 @@ if (!`quietly') {
 
 tempfile resfile
 tempvar result
-copy "`dmas_urlstr'" "`resfile'"
+
+* Repeat the request until we get a non-network error
+local rc = 2
+while inlist(`rc', 2, 631, 677) {
+    capture copy "`dmas_urlstr'" "`resfile'"
+    local rc = _rc
+    if (`rc' != 0) {
+        disp "Connection error.  Waiting and trying again..."
+        sleep 1000
+    }
+}
+if (`rc' != 0) {
+    error `rc'
+}
+
 gen `result' = fileread("`resfile'")
 
 if (!`quietly' | `result' != "OK") {
