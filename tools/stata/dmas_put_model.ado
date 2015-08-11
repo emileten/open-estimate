@@ -18,9 +18,10 @@ if ("`varnum'" == "") {
 }
 
 dmas_get_api "make_queue", as_model(0) quietly(1)
-local progressV = 100 * 4/6
-local progressB = 100 * 1/6
-local progressOther = 100 * 1/6
+local progressV = 100 * 4/7
+local progressB = 100 * 1/7
+local progressNames = 100 * 1/7
+local progressOther = 100 * 1/7
 
 tempvar Xstr Vstr Bstr result
 
@@ -71,6 +72,13 @@ if (`varnum' < wordcount("`names'")) {
     local names = substr("`names'", 1, strpos("`names'", " ") - 1)
 }
 local names2 = subinstr(subinstr("`names'", " ", ",", .), "#", "%23", .)
+
+while (strlen("`names2'") > 800) {
+    local sendnames = substr("`names2'", 1, 800)
+    dmas_get_api "queue_arguments?names=`sendnames'", as_model(0) quietly(1)
+    local names2 = substr("`names2'", 801, strlen("`names2'"))
+    disp "Progress:", `progressV' + `progressB' + `progressNames' * 800 / max(800, strlen("`names2'"))
+}
 
 if (strlen(`Xstr') + strlen(`Vstr') + strlen(`Bstr') + strlen("`names2'") > 800) {
     if (strlen(`Xstr') > 250) {
