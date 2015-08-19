@@ -101,6 +101,8 @@ A binned variable model describes a non-linear response, using data that falls i
 **Syntax:**
 ```dmas_extract_binned [Your API Key] [End Points, Comma Delimited] [Coefficients, Comma Delimited] [GCP Spreadsheet Key] [DMAS Estimate ID]```
 
+Use the coefficient name `drop` for the bin that is dropped.
+
 **Example:**
 ```
 clear

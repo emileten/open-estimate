@@ -1,7 +1,7 @@
 program dmas_get_api
 
 version 13.1
-syntax anything(name=methodargs), as_model(integer) quietly(integer)
+syntax anything(name=methodargs), as_model(integer) [quietly(integer 1)]
 
 * Change the server for all commands here
 local server = "http://dmas.berkeley.edu"
