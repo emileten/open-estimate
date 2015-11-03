@@ -61,10 +61,10 @@ from memoizable import MemoizableUnivariate
 class DDPModel(UnivariateModel, MemoizableUnivariate):
     def __init__(self, p_format=None, source=None, xx_is_categorical=False, xx=None, yy_is_categorical=False, yy=None, pp=None, unaccounted=None, scaled=True):
         super(DDPModel, self).__init__(xx_is_categorical, xx, scaled)
-        
+
         self.p_format = p_format
         self.source = source
-                    
+
         self.yy_is_categorical = yy_is_categorical
         if yy_is_categorical:
             self.yy = range(len(yy))
@@ -169,13 +169,13 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
             header = ['ddv1']
         elif self.p_format == 'ddp2':
             header = ['ddv2']
-            
+
         if self.yy_is_categorical:
             header.extend(self.yy_text)
         else:
             header.extend(self.yy)
         writer.writerow(header)
-        
+
         for ii in range(len(self.xx)):
             if self.xx_is_categorical:
                 row = [self.xx_text[ii]]
@@ -208,7 +208,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         newpp = ones((len(xx), len(self.yy)))
         for ii in range(len(xx)):
             newpp[ii,] = self.pp[self.get_xx() == xx,]
-            
+
         return DDPModel(self.p_format, 'filter_x', self.xx_is_categorical, xx, self.yy_is_categorical, self.get_yy(), newpp, scaled=self.scaled)
 
     def interpolate_x(self, newxx, kind='quadratic'):
@@ -256,7 +256,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
                 fx = interp1d(self.yy, pp[ii,:], 'linear')
             else:
                 fx = interp1d(self.yy, pp[ii,:], kind)
-                
+
             newpp[ii,:] = fx(newyy)
             if self.scaled:
                 newpp[ii,] = newpp[ii,] / sum(newpp[ii,])
@@ -302,7 +302,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
                 return self.yy[ii]
 
         return self.yy[-1]
-    
+
     def init_from(self, file, delimiter, status_callback=None):
         reader = csv.reader(file, delimiter=delimiter)
         header = reader.next()
@@ -339,7 +339,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
                 pp = array([map(float, row[1:])])
             else:
                 pp = vstack((pp, map(float, row[1:])))
-                
+
             xx_text.append(row[0])
             try:
                 xx.append(float(row[0]))
@@ -368,6 +368,8 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
             self.unaccounted = 1 - sums
 
+        return self
+
     def init_from_other(self, ddp):
         self.p_format = ddp.p_format
         self.source = ddp.source
@@ -395,14 +397,14 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
     def eval_pval_index(self, ii, p, threshold=1e-3):
         ps = self.lin_p()[ii, :]
         value = p * sum(ps)
-        
+
         total = 0
         for ii in range(len(ps)):
             total += ps[ii]
             if total > value:
                 return self.yy[ii]
 
-        return self.yy[-1]        
+        return self.yy[-1]
 
     ### Class methods
 
@@ -438,7 +440,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
                 raise ValueError('Merge only handles ddp models')
             if not model.scaled:
                 raise ValueError("Only scaled distributions can be merged.")
-        
+
             xx = concatenate((xx, model.xx))
             yy = concatenate((yy, model.yy))
 
@@ -492,7 +494,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
             two = two.interpolate_y(yy_two)
         pp_one = one.lin_p()
         pp_two = two.lin_p()
-        
+
         newpp = ones((len(xx), len(yy_one) + len(yy_two) - 1))
         for ii in range(len(xx)):
             newpp[ii,] = convolve(pp_one[ii,], pp_two[ii,])

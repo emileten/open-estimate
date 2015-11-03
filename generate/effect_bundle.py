@@ -114,7 +114,7 @@ def send_fips_complete(make_generator):
 
     print "Complete the FIPS"
     try:
-        make_generator(FIPS_COMPLETE, None, None).next()
+        iterator = make_generator(FIPS_COMPLETE, None, None).next()
         print "Success"
     except StopIteration, e:
         pass
@@ -271,6 +271,25 @@ def make_tar_ncdf(name, weather_ncdf, var, make_generator, targetdir=None, colla
 
     # Remove the working directory
     exit_local_tempdir(tempdir)
+
+def yield_given(name, yyyyddd, weather, make_generator):
+    """Yields (as an iterator) rows of the result of applying make_generator to the given weather.
+
+    name: the name of the effect bundle.
+    yyyyddd: YYYYDDD formated date values.
+    weather: a dictionary to call generator with {variable: data}.
+    make_generator(fips, times, daily): returns an iterator of (year, effect).
+    """
+    generator = make_generator(0, yyyyddd, weather)
+    if generator is None:
+        return
+
+    # Call targetfunc with the result
+    for values in generator:
+        yield values
+
+    # Signal the end of the counties
+    send_fips_complete(make_generator)
 
 def call_with_generator(name, weather_ncdf, var, make_generator, targetfunc):
     """Helper function for calling make_generator with each variable

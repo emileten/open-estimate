@@ -1,3 +1,6 @@
+import numpy as np
+import effect_bundle
+
 def make_scale(make_generator, scale_dict, func=lambda x, y: x*y):
     """Scale the results by the value in scale_dict, or the mean value (if it is set).
     make_generator: we encapsulate this function, passing in data and opporting on outputs
@@ -26,7 +29,7 @@ def make(handler, make_generator, *handler_args, **handler_kw):
 
     # The make_generator function to return
     def generate(fips, yyyyddd, temps, *args, **kw):
-        if fips == FIPS_COMPLETE:
+        if fips == effect_bundle.FIPS_COMPLETE:
             # Pass on signal for end
             print "completing make"
             make_generator(fips, yyyyddd, temps, *args, **kw).next()
@@ -174,6 +177,12 @@ def make_product(vars, make_generators):
     """
 
     def generate(fips, yyyyddd, weather, **kw):
+        if fips == effect_bundle.FIPS_COMPLETE:
+            # Pass on signal for end
+            for make_generator in make_generators:
+                make_generator(fips, yyyyddd, weather, **kw).next()
+            return
+
         # Construct a list of generators from make_generators
         generators = [make_generators[ii](fips, yyyyddd, weather[vars[ii]], **kw) for ii in range(len(make_generators))]
 
