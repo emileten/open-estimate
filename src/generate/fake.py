@@ -1,12 +1,8 @@
 import os, csv, random
 import numpy as np
 from scipy.interpolate import UnivariateSpline
-
-import aggregator
-from aggregator.lib.acra.iam import effect_bundle, weather
-from aggregator.model.meta_model import MetaModel
-from aggregator.lib.bayes.memoizable import MemoizedUnivariate
-import config
+import effect_bundle, weather
+from ..models.memoizable import MemoizedUnivariate
 
 def make_generator_linear(zero, baseline, minslope, maxslope):
     slope = minslope + (maxslope - minslope) * random.random()
@@ -40,7 +36,7 @@ def make_generator_bilinear(zero, baseline, minslope_neg, maxslope_neg, minslope
 def make_print_bymonthdaybins(model, func=lambda x: x, weather_change=lambda temps: temps - 273.15, limits=[-40, 100], pval=.5):
     model = MemoizedUnivariate(model)
     model.set_x_cache_decimals(1)
-    spline_orig = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2, linextrap=config.linear_extrapolation)
+    spline_orig = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
 
     xx = model.get_xx()
     yy = range(len(xx))
@@ -52,7 +48,7 @@ def make_print_bymonthdaybins(model, func=lambda x: x, weather_change=lambda tem
     def generate(fips, yyyyddd, temps, **kw):
         for (year, temps) in weather.yearly_daily_ncdf(yyyyddd, temps):
             temps = weather_change(temps)
-            
+
             results_orig = spline_orig(temps)
 
             results = spline(temps)
