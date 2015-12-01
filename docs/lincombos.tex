@@ -1,0 +1,88 @@
+\documentclass[12pt, oneside]{amsart}
+\usepackage[margin=1in]{geometry}
+\geometry{letterpaper}
+\usepackage[parfill]{parskip}
+\usepackage{url}
+\usepackage{graphicx}
+
+\begin{document}
+
+{\bf Handling migration, crop indexes, and other combinations}
+
+The problem that we have with some papers reporting bilateral
+migration and others reporting net migration outflows is isomorphic to
+the problem with crop indexes and demographically combined impacts:
+responses are reported for linear combinations of coefficients, where
+we are most interested in individual terms and have some estimates of
+the individual terms.
+
+We decompose the problem as follows.  Suppose that study $i$ reports
+an estimate of the value $\beta_i$.  The underlying, disaggregated
+coefficients are several values $\alpha_j$, and
+$\beta_i = \sum_j a_{ij} \alpha_j$ for known coefficients $a_{ij}$.
+Where study $i$ reports a fully disaggregated coefficient, $a_J = 1$
+for some $J$ and $a_j = 0\,\,\,\forall\, j \ne J$.
+
+In the case of migration, $j$ indexes all combinations of two
+countries, $k \rightarrow l$.  Where only net outflows are reported,
+$a_{K \rightarrow l} = 1$ for some $K$ and all $l$, and all else are
+0.
+
+We allow that the reported coefficient are not the true coefficient
+being estimated.  Let the reported coefficient of the true study
+coefficient $\beta_i$ be $y_i$, with a standard error
+$\sigma_i$.
+
+Under full pulling, the result is a multivariate normal distribution:
+\begin{align*}
+  p(\{\alpha_j\}) &\sim \mathcal{N}\left(\mu, \Sigma\right) \\
+                  &\propto \prod_i \mathcal{N}\left(y_i | \sum_j a_{ij}
+                    \alpha_j, \sigma_i\right) \\
+\end{align*}
+
+We can group terms together to get,
+\begin{align*}
+  \Sigma^{-1}_{jk} &= \sum_i \frac{a_{ij} a_{ik}}{\sigma_i^2} \\
+  \mu &= \Sigma b \\
+  b_j &= \sum_i \frac{y_i a_{ij}}{\sigma_i^2}
+\end{align*}
+which reduces to the normal pooling expression for disaggregated
+coefficient estimates.
+
+For Bayesian hierarchical modeling, we make a minor change to the
+normal hierarchical modeling system to get
+\begin{align*}
+  y_i & \sim \mathcal{N}\left(\beta_i, \sigma_i\right) \\
+  \beta_i & \sim \mathcal{N}\left(\sum_j a_{ij} \alpha_j, \sum_j a_{ij} \tau_j\right) \\
+\end{align*}
+
+The posterior distribution for this system follows
+\[
+p(\{\alpha_j, \tau_j\}, \{\beta_i\} | \{y_i\}) \propto
+p(\{\alpha_j, \tau_j\}) \prod_i \mathcal{N}\left(\beta_i | \sum_j
+  a_{ij} \alpha_j, \sum_j a_{ij} \tau_j\right)
+\mathcal{N}\left(y_i | \beta_i, \sigma_i\right)
+\]
+
+This system can be solved by the same simplified process as the normal
+Bayesian hierarchical model, as follows:
+\begin{align*}
+  \hat\beta_i &= \frac{\frac{1}{\sigma_i^2} \beta_i + \frac{1}{\sum_j
+                a_{ij} \sigma_j^2} \sum_j a_{ij} \alpha_j}
+                {\frac{1}{\sigma_i^2} + \frac{1}{\sum_j a_{ij}
+                \sigma_j^2}} \\
+  V_i &= \frac{1}{\frac{1}{\sigma_i^2} + \frac{1}{\sum_j a_{ij}
+        \sigma_j^2}} \\
+\end{align*}
+
+TODO
+
+\begin{enumerate}
+\item Compute
+\begin{align*}
+\hat\alpha_j = \frac{\sum_i \frac{1}{\sigma_i^2}}{1}
+\end{align*}
+\item Draw all $\tau_j$ from $p(\{tau_j\} | \{y_i\}) =$
+\end{enumerate}
+
+\end{document}

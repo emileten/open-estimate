@@ -1,0 +1,64 @@
+\documentclass[]{article}
+\usepackage{amsmath}
+\usepackage[parfill]{parskip}
+
+\begin{document}
+
+\section{Traditional Pooling and Partial Pooling}
+
+Let $\beta_k$ be a parameter estimated by the $k$\textsuperscript{th} study, and $\beta$ the desired combined parameter.
+
+Full pooling can be applied to random variables drawn from any distribution.
+
+If $\beta_k \sim F_k(\cdot)$, then the pooled $\beta \sim \prod_k F_k(\cdot)$.
+
+Traditional partial pooling assumes a Gaussian form:
+
+\begin{align*}
+\theta_k &\sim \mathcal{N}(\mu, \sigma^2) \\
+\beta_k &\sim \mathcal{N}(\theta_k, \tau_k^2) \\
+\end{align*}
+
+where $\tau_k^2$ is the standard error of $\beta_k$.
+
+\section{Simple Output Partial Pooling}
+
+Suppose two OLS expressions are estimated with the same L.H.S. variable but different R.H.S. variables.
+\begin{align*}
+\Delta y_i &= X \beta_1 + \epsilon_i \\
+\Delta y_i &= Z \beta_2 + \eta_i \\
+\end{align*}
+
+The L.H.S. is $\Delta y_i$, to allow a different constant baseline to be removed from each estimate.  Here, $\beta_1$ and $\beta_2$ are not expected to describe the same parameters, but we would like to have predictions informed by both estimates:
+\[
+\Delta \hat{y} \sim F(\hat{X}, \hat{Z})
+\]
+
+We can determine, for every $\hat{X}$ and $\hat{Z}$, the standard error of $\Delta \hat{y}$ under each expression, and we get back the original partial pooling model:
+
+\begin{align*}
+\gamma_1(\hat{X}, \hat{Z}) &\sim \mathcal{N}(\Delta \hat{y}(\hat{X}, \hat{Z}), \sigma^2) \\
+\gamma_2(\hat{X}, \hat{Z}) &\sim \mathcal{N}(\Delta \hat{y}(\hat{X}, \hat{Z}), \sigma^2) \\
+\Delta \hat{y}_1(\hat{X}) &\sim \mathcal{N}(\gamma_1(\hat{X}, \hat{Z}), \tau_1^2(\hat{X})) \\
+\Delta \hat{y}_2(\hat{Z}) &\sim \mathcal{N}(\gamma_2(\hat{X}, \hat{Z}), \tau_2^2(\hat{X})) \\
+\end{align*}
+
+\section{General Case Partial Pooling}
+
+Suppose that each model is a unique function of a superset of inputs $X$:
+\[
+y = f_k(X)
+\]
+
+We want to partially pool the marginal effects.  If we were to assume that the difference between two estimates is just a fixed effect, we could still use full pooling (described above).  Assume that there is a true marginal effect $\frac{\partial f}{\partial x_j}$.
+
+\begin{align*}
+\frac{\partial f_k}{\partial x_j} &\sim \mathcal{N}(\frac{\partial f}{\partial x_j}, \sigma_j^2) \\
+\frac{\partial \hat{f}_k}{\partial x_j} &\sim F_{jk}(\frac{\partial f_k}{\partial x_j})
+\end{align*}
+
+Where $F_{jk}(\cdot)$ is an arbitrary distribution which reflects the uncertainty in estimate of the partial derivative $\frac{\partial \hat{f}_k}{\partial x_j}$.
+
+Then we can recover $\Delta y$ by integrated over $\frac{\partial f}{\partial x_j}$.
+
+\end{document}
