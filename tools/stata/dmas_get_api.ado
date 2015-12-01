@@ -13,12 +13,17 @@ if (!`quietly') {
     disp as txt "`dmas_urlstr'"
 }
 
+* This is no more reliable
+* mata: fh = fopen(st_local("dmas_urlstr"), "r")
+* mata: st_local("result", fget(fh))
+* mata: fclose(fh)
+
 tempfile resfile
 tempvar result
 
 * Repeat the request until we get a non-network error
 local rc = 2
-while inlist(`rc', 2, 631, 677) {
+while inlist(`rc', 2, 631, 672, 675, 677) {
     capture copy "`dmas_urlstr'" "`resfile'"
     local rc = _rc
     if (`rc' != 0) {
