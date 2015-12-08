@@ -4,6 +4,11 @@ version 13.1
 
 syntax varlist(min=4 max=4 numeric ts), [apikey(string) infoid(string) id(string)]
 
+if ("`id'" == "") {
+    disp as txt "id not provided; using last result"
+    local id = "$DMAS_LAST_RESULT"
+}
+
 loc asformat = "%7.4g"
 
 loc indep_var = word("`varlist'", 1)

@@ -41,6 +41,10 @@ if (!`quietly' | `result' != "OK") {
     display as txt "Response:"
     if (!`as_model' | substr(`result', 1, 6) == "ERROR:") {
         display as txt `result'
+        if (substr(`result', 1, 6) != "ERROR:") {
+            * Assume this is an ID to be used later
+            global DMAS_LAST_RESULT = `result'
+        }
     }
     else {
         local final_urlstr = "`server'/model/view?id=" + `result'
