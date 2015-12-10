@@ -445,7 +445,7 @@ class SplineModelConditional():
 
     # Similar to evaluate
     def to_points(self, ys):
-        result = np.array(ys)
+        result = np.array(ys) * 0
         for ii in range(len(self.y0s)):
             valid = np.logical_and(ys >= self.y0s[ii], ys <= self.y1s[ii])
             result[valid] = np.exp(np.polyval(self.coeffs[ii][::-1], ys[valid]))

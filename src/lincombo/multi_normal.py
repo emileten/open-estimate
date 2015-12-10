@@ -7,14 +7,8 @@ class MultivariateNormal(multi_rv_frozen):
     def __init__(self, means, big_sigma):
         #super(MultivariateNormal, self).__init__([False] * len(means), True)
         self.means = means
+        # Variance-covariance matrix
         self.big_sigma = big_sigma
-
-    def means(self):
-        return self.means
-
-    def big_sigma(self):
-        """Variance-covariance matrix."""
-        return self.big_sigma
 
     def rvs(self, size=1, random_state=None):
         return multivariate_normal.rvs(self.means, self.big_sigma, size=size, random_state=random_state)

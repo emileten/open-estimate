@@ -1,7 +1,10 @@
 from lincombo.hiernorm import *
 from numpy.testing import *
 
-def test_tau_no_alpha():
+lincombo_hiernorm = lincombo_hiernorm_taubybeta
+#lincombo_hiernorm = lincombo_hiernorm_taubyalpha
+
+def test_tau_no_alpha1():
     """One requirement of the simplified method we use is that the expression p(tau | y) does not depend on alpha.  Check that this is the case."""
     betas, stdvars, portions = helpers.check_arguments([0, 1, 0], [1, 1, 10], [[1, 0], [.5, .5], [0, 1]])
     probability_prior_taus = MultivariateUniform([0, 0], [1e6, 1e6])
@@ -30,9 +33,17 @@ def test_single():
 
 def test_other(draws=100):
     alltaus, allalphas, allbetahats = lincombo_hiernorm([0, 1], [1, 1], [[1, 0], [.5, .5]], draws=draws)
+    #alltaus, allalphas, allbetahats = lincombo_hiernorm([0, 1], [1, 1], [[1, 0], [.5, .5]], maxtau=0, draws=draws)
     assert_almost_equal(np.mean(allalphas, axis=0), [0, 2], decimal=0)
 
     return alltaus, allalphas, allbetahats
+
+#def test_healthlike(draws=100):
+# alpha0 = 0, alpha1 = 1
+#alltaus, allalphas, allbetahats = lincombo_hiernorm([.5, 1], [.5, 1], [[.5, .5], [0, 1]], draws=draws)
+#print np.mean(allalphas, axis=0)
+#print np.std(allalphas, axis=0)
+#assert_almost_equal(np.mean(allalphas, axis=0), [0, 1], decimal=0)
 
 def test_8schools():
     betas = [28,  8, -3,  7, -1,  1, 18, 12]
@@ -43,7 +54,7 @@ def test_8schools():
     alltaus, allalphas, allbetahats = lincombo_hiernorm(betas, stderrs, portions, draws=draws)
 
     for ii in range(portions.shape[1]):
-        print np.mean(get_sampled_column(allalphas, ii)), np.mean(get_sampled_column(alltaus, ii))
+        print np.mean(get_sampled_column(allalphas, ii))
 
 if __name__ == '__main__':
     import cProfile, pstats, StringIO

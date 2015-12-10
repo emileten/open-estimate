@@ -43,7 +43,7 @@ def simulate_normal_model(means, serrs, count, taus=None, do_thetas=False):
                 results[:,1] = means[ii]
 
             return results
-            
+
     means = np.array(means, dtype=np.float_)
     varis = np.square(np.array(serrs, dtype=np.float_))
 
@@ -60,7 +60,7 @@ def simulate_normal_model(means, serrs, count, taus=None, do_thetas=False):
         results = np.zeros((count, 2))
 
     rands = get_random(taus, F_tau, count)
-    
+
     for ii in range(count):
         tau = rands[ii]
         (vari_tau_sqrs, v_mu, mu_hat) = helper_params(means, varis, tau)
@@ -80,28 +80,11 @@ def simulate_normal_model(means, serrs, count, taus=None, do_thetas=False):
                 theta_hats = (means / varis + mu / tau_sqr) / denoms
 
                 thetas = norm.rvs(loc=theta_hats, scale=vs)
-        
+
             results[ii, 2:] = thetas
 
     return results
 
-def empirical_distribution(values, yy):
-    sorts = np.sort(values)
-    count = len(yy)
-    span = yy[-1] - yy[0]
-    pp = np.zeros(count)
-    
-    divisions = np.array(yy) + .5 * (span / (count - 1))
-
-    ii = 0
-    for jj in range(count):
-        i0 = ii
-        while ii < len(sorts) and sorts[ii] < divisions[jj]:
-            ii = ii + 1
-        pp[jj] = (ii - i0) / ((span * len(values)) / count)
-
-    return pp
-    
 def generate_thetas(mu_counts, mu_range, tau_counts, tau_range, count):
     thetas = []
 

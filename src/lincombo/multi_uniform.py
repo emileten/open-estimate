@@ -16,6 +16,7 @@ class MultivariateUniform(multi_rv_frozen):
     def maxs(self):
         return self.maxs
 
+    # XXX: This doesn't handle size properly
     def rvs(self, size=1, random_state=None):
         return uniform.rvs(self.mins, self.maxs - self.mins, size=size, random_state=random_state)
 

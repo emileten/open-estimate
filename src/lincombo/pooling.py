@@ -19,3 +19,32 @@ def lincombo_pooled(betas, stderrs, portions):
 
     return MultivariateNormal(alphas, sigma)
 
+def estimated_maxtau(betas, stderrs, portions):
+    """For use with hiernorm by-alpha."""
+    mv = lincombo_pooled(betas, stderrs, portions)
+    poolbetas = []
+    for ii in range(portions.shape[0]):
+        poolbetas.append(sum(portions[ii, :] * mv.means))
+
+    # If all of this is attributed to tau, how big would tau be?
+    return np.std(np.array(betas) - np.array(poolbetas))
+
+def estimated_maxlintaus(betas, stderrs, portions):
+    """For use with hiernorm by-beta."""
+    mv = lincombo_pooled(betas, stderrs, portions)
+    poolbetas = []
+    for ii in range(portions.shape[0]):
+        poolbetas.append(sum(portions[ii, :] * mv.means))
+
+    betas = np.array(betas)
+
+    # If all of this is attributed to tau, how big would tau be?
+    tau0 = np.std(betas - np.array(poolbetas))
+
+    # If tau0 where 0, how big would this be?
+    tau1 = np.std((betas - np.array(poolbetas)) / betas)
+
+    if np.isnan(tau1) or tau1 > tau0:
+        tau1 = tau0
+
+    return [tau0, tau1]
