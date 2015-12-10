@@ -80,7 +80,7 @@ def lincombo_hiernorm_taubyalpha(betas, stderrs, portions, maxtau=None, guess_ra
             values = []
             for ii in range(len(taus[0])):
                 ## Observation taus
-                obstaus = [sum(portions[ii, :] * transtaus[ii]) for ii in range(portions.shape[0])]
+                obstaus = np.array([sum(portions[ii, :] * transtaus[ii]) for ii in range(portions.shape[0])])
 
                 # Requires alphas, but is invarient to them
                 values.append(probability_tau([np.mean(betas)] * numalphas, transtaus[ii], obstaus, betas, stdvars, portions, probability_prior_taus))
@@ -100,7 +100,7 @@ def lincombo_hiernorm_taubyalpha(betas, stderrs, portions, maxtau=None, guess_ra
 
     print "Sampling alphas..."
 
-    taus2obstaus = lambda taus: [sum(portions[ii, :] * taus) for ii in range(portions.shape[0])]
+    taus2obstaus = lambda taus: np.array([sum(portions[ii, :] * taus) for ii in range(portions.shape[0])])
     return sample_posterior(betas, stderrs, portions, dist, taus2obstaus, draws)
 
 def lincombo_hiernorm_taubybeta(betas, stderrs, portions, maxtaus=None, guess_range=False, draws=100):
