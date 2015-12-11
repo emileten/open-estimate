@@ -33,6 +33,8 @@ being estimated.  Let the reported coefficient of the true study
 coefficient $\beta_i$ be $y_i$, with a standard error
 $\sigma_i$.
 
+{\bf Full Pooling}
+
 Under full pulling, the result is a multivariate normal distribution:
 \begin{align*}
   p(\{\alpha_j\}) &\sim \mathcal{N}\left(\mu, \Sigma\right) \\
@@ -49,6 +51,8 @@ We can group terms together to get,
 which reduces to the normal pooling expression for disaggregated
 coefficient estimates.
 
+{\bf Bayesian Hierarchical Model}
+
 For Bayesian hierarchical modeling, we make a minor change to the
 normal hierarchical modeling system to get
 \begin{align*}
@@ -58,31 +62,41 @@ normal hierarchical modeling system to get
 
 The posterior distribution for this system follows
 \[
-p(\{\alpha_j, \tau_j\}, \{\beta_i\} | \{y_i\}) \propto
-p(\{\alpha_j, \tau_j\}) \prod_i \mathcal{N}\left(\beta_i | \sum_j
+p(\alpha, \tau, \beta | y_i) \propto
+p(\alpha_j, \tau_j) \prod_i \mathcal{N}\left(\beta_i | \sum_j
   a_{ij} \alpha_j, \sum_j a_{ij} \tau_j\right)
 \mathcal{N}\left(y_i | \beta_i, \sigma_i\right)
 \]
 
-This system can be solved by the same simplified process as the normal
-Bayesian hierarchical model, as follows:
+This system can be solved in a direct sampling process similar to the normal
+Bayesian hierarchical model.  We first define ``observation-specific''
+hyper-variances:
+\[
+\nu_i = \sum_j a_{ij} \tau_j
+\]
+
+Now, taking the values of $\tau$ as given we can define
 \begin{align*}
-  \hat\beta_i &= \frac{\frac{1}{\sigma_i^2} \beta_i + \frac{1}{\sum_j
-                a_{ij} \sigma_j^2} \sum_j a_{ij} \alpha_j}
-                {\frac{1}{\sigma_i^2} + \frac{1}{\sum_j a_{ij}
-                \sigma_j^2}} \\
-  V_i &= \frac{1}{\frac{1}{\sigma_i^2} + \frac{1}{\sum_j a_{ij}
-        \sigma_j^2}} \\
+  p(\hat\beta_i | \tau) & \sim \mathcal{N}\left(y_i, \sigma_i^2 +
+                              \nu_i^2\right) \\
+  p(\alpha | \tau) & \sim \mathcal{N}\left(\hat\alpha, V\right)
 \end{align*}
 
-TODO
-
-\begin{enumerate}
-\item Compute
+where
 \begin{align*}
-\hat\alpha_j = \frac{\sum_i \frac{1}{\sigma_i^2}}{1}
+  \left(V^{-1}\right)_{jk} &= \sum_i \frac{a_{ij} a_{ik}}{\sigma_i^2 +
+                             \nu_i^2} \\
+  b_j &= \sum_i \frac{y_i a_{ij}}{\sigma_i^2 + \nu_i^2} \\
+  \hat\alpha &= V b
 \end{align*}
-\item Draw all $\tau_j$ from $p(\{tau_j\} | \{y_i\}) =$
-\end{enumerate}
+
+From these, the distribution of $\tau$ is exactly
+\[
+p(\tau | y) = p(\tau) \frac{p(\hat\beta | \tau)}{p(\alpha | \tau)}
+\]
+
+The posterior can be sampled by first sampling $\tau$ from its
+posterior, and then applying that value to the posteriors for
+$\hat\beta$ and $\alpha$.
 
 \end{document}

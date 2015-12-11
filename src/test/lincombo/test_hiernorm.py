@@ -1,8 +1,8 @@
 from lincombo.hiernorm import *
 from numpy.testing import *
 
-lincombo_hiernorm = lincombo_hiernorm_taubybeta
-#lincombo_hiernorm = lincombo_hiernorm_taubyalpha
+#lincombo_hiernorm = lincombo_hiernorm_taubybeta
+lincombo_hiernorm = lincombo_hiernorm_taubyalpha
 
 def test_tau_no_alpha1():
     """One requirement of the simplified method we use is that the expression p(tau | y) does not depend on alpha.  Check that this is the case."""
@@ -15,7 +15,8 @@ def test_tau_no_alpha1():
     prob_check = None
     for ii in range(10):
         alphas = probability_prior_alphas.rvs()
-        prob = probability_tau(alphas, taus, betas, stdvars, portions, probability_prior_taus)
+        obstaus = np.array([sum(portions[ii, :] * taus) for ii in range(portions.shape[0])])
+        prob = probability_tau(alphas, taus, obstaus, betas, stdvars, portions, probability_prior_taus)
 
         if prob_check is None:
             prob_check = prob
