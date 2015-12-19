@@ -288,7 +288,19 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         return self.conditionals[ii].get_pval(p, threshold)
 
     ### Class Methods
+    
+    @staticmethod
+    def create_single(xxs, y0s, y1s, coeffss, order=None, xx_is_categorical=True):
+        conditionals = []
+        xx = []
 
+        for key in (xxs if order is None else order):
+            xx.append(key)
+            conditional = SplineModelConditional.make_single(y0s[key], y1s[key], coeffss[key])
+            conditionals.append(conditional)
+
+        return SplineModel(xx_is_categorical, xx, conditionals, True)
+    
     @staticmethod
     def create_gaussian(xxs, order=None, xx_is_categorical=True):
         conditionals = []
@@ -302,7 +314,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
             conditionals.append(conditional)
 
         return SplineModel(xx_is_categorical, xx, conditionals, True)
-
+    
     @staticmethod
     def from_ddp(ddp_model, limits):
         lps = ddp_model.log_p()
