@@ -6,6 +6,11 @@ args apikey infoid varnum
 disp as txt "Uploading to DMAS..."
 
 set more off
+preserve
+* Put in dummy data, so we have one row
+clear
+set obs 1
+gen OK = 3
 
 /* Improvements:
  * Drop all fixed effects: anything that shows up in cmdline as i.X
@@ -14,6 +19,9 @@ set more off
 
 matrix B = e(b)
 if ("`varnum'" == "") {
+    local varnum = `= colsof(B)'
+}
+if (`varnum' > `= colsof(B)') {
     local varnum = `= colsof(B)'
 }
 
@@ -102,5 +110,7 @@ if (strlen(`Xstr') + strlen(`Vstr') + strlen(`Bstr') + strlen("`names2'") > 800)
 disp "Completing model..."
 
 dmas_get_api "call_with_queue?method=put_stata_estimate&" + `Xstr' + "&V=" + `Vstr' + "&b=" + `Bstr' + "&names=" + "`names2'", as_model(0) quietly(1)
+
+restore
 
 end

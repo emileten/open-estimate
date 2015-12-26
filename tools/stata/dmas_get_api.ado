@@ -5,7 +5,7 @@ syntax anything(name=methodargs), as_model(integer) [quietly(integer 1)]
 
 * Change the server for all commands here
 local server = "http://dmas.berkeley.edu"
-* Local: "http://127.0.0.1:8080/"
+* Local: "http://127.0.0.1:8080"
 
 local dmas_urlstr = "`server'/api/" + `methodargs'
 
