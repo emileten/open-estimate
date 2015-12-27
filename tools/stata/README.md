@@ -30,7 +30,7 @@ This document walks you through how to import a model from Stata to the Distribu
 
 Now that you have everything set up to add models, the following walks you though adding one.  We will assume that you are sharing your estimate with the GCP community.
 
-1. Identify the "Unique ID" on the Master DMAS Information spreadsheet for the estimate you will be adding, or add a new one.
+1. Identify the "Unique ID" on the Master DMAS Information spreadsheet for the estimate you will be adding, or add a new one.  Switch to the "Models" sheet to find and add unique IDs.
   https://docs.google.com/spreadsheets/d/1lyvAeoUTji-FGH_Fz-hGWQOnEWJb2EMhWgc7LKz2ix0/edit
 
   *This spreadsheet has all of the meta-information for the estimate, like publication and units.  If you don't have a specific item you want to add, choose any Unique ID.*
