@@ -1,4 +1,5 @@
 import math
+import numpy as np
 from numpy import linalg
 from spline_model import SplineModel, SplineModelConditional
 
