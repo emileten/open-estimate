@@ -4,6 +4,12 @@ version 13.1
 
 syntax varlist(min=4 max=4 numeric ts), [apikey(string) infoid(string) id(string)]
 
+preserve
+* Put in dummy data, so we have one row
+clear
+set obs 1
+gen OK = 3
+
 if ("`id'" == "") {
     disp as txt "id not provided; using last result"
     local id = "$DMAS_LAST_RESULT"
@@ -48,5 +54,7 @@ forvalues ii = 1/`N' {
 dmas_get_api "make_queue", as_model(0)
 dmas_get_api "queue_arguments?apikey=`apikey'&infoid=`infoid'&id=`id'&x=" + `indepStr' + "&mean=" + `meanStr', as_model(0)
 dmas_get_api "call_with_queue?method=extract_stata_predict&level=5&cibot=" + `cibotStr' + "&citop=" + `citopStr', as_model(1)
+
+restore
 
 end

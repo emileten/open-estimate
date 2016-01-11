@@ -6,6 +6,11 @@ args apikey infoid varnum
 disp as txt "Uploading to DMAS..."
 
 set more off
+preserve
+* Put in dummy data, so we have one row
+clear
+set obs 1
+gen OK = 3
 
 /* Improvements:
  * Drop all fixed effects: anything that shows up in cmdline as i.X
@@ -14,6 +19,9 @@ set more off
 
 matrix B = e(b)
 if ("`varnum'" == "") {
+    local varnum = `= colsof(B)'
+}
+if (`varnum' > `= colsof(B)') {
     local varnum = `= colsof(B)'
 }
 
@@ -25,7 +33,7 @@ local progressOther = 100 * 1/7
 
 tempvar Xstr Vstr Bstr result
 
-local cmdline2 = subinstr("`e(cmdline)'", "#", "%32", .)
+local cmdline2 = substr(subinstr("`e(cmdline)'", "#", "%32", .), 1, 100)
 
 gen `Xstr' = "apikey=`apikey'&infoid=`infoid'&N=`e(N)'&df_m=`e(df_m)'&df_r=`e(df_r)'&F=`e(F)'&r2=`e(r2)'&rmse=`e(rmse)'&mss=`e(mss)'&rss=`e(rss)'&r2_a=`e(r2_a)'&ll=`e(ll)'&ll_0=`e(ll_0)'&rank=`e(rank)'&cmdline=`cmdline2'&title=`e(title)'&marginsok=`e(marginsok)'&vce=`e(vce)'&depvar=`e(depvar)'&cmd=`e(cmd)'&properties=`e(properties)'&predict=`e(predict)'&model=`e(model)'&estat_cmd=`e(estat_cmd)'"
 * Cluster and xtreg-specific results
@@ -102,5 +110,7 @@ if (strlen(`Xstr') + strlen(`Vstr') + strlen(`Bstr') + strlen("`names2'") > 800)
 disp "Completing model..."
 
 dmas_get_api "call_with_queue?method=put_stata_estimate&" + `Xstr' + "&V=" + `Vstr' + "&b=" + `Bstr' + "&names=" + "`names2'", as_model(0) quietly(1)
+
+restore
 
 end
