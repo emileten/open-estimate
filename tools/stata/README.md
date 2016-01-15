@@ -67,7 +67,9 @@ Now that you have everything set up to add models, the following walks you thoug
 A single variable model describes a coefficient through its probability distribution (a Gaussian at the estimated value, with the standard error as its standard deviation).
 
 **Syntax:**
-```dmas_extract_single [Your API Key] [Coefficient Name] [GCP Spreadsheet Key] [DMAS Estimate ID]```
+```dmas_extract_single [Your API Key] [Coefficient Name] [GCP Spreadsheet Key] <DMAS Estimate ID>```
+
+If you do not specify the last argument (the ID), the most recent result from `dmas_put_model` will be used.
 
 **Example:**
 ```
@@ -83,7 +85,9 @@ dmas_extract_single 4sW2Txtsn8o3bkwY displacement FUNKY-TOWN 558329c30e703251ff4
 Polynomial estimates have some collection of coefficients for an N-order polynomial.
 
 **Syntax:**
-dmas_extract_polynomial [Your API Key] [Coefficients, Comma Delimited] [Lower Bound] [Upper Bound] [GCP Spreadsheet ID] [DMAS Estimate ID]
+dmas_extract_polynomial [Your API Key] [Coefficients, Comma Delimited] [Lower Bound] [Upper Bound] [GCP Spreadsheet ID] <DMAS Estimate ID>
+
+If you do not specify the last argument (the ID), the most recent result from `dmas_put_model` will be used.
 
 **Example:**
 ```
@@ -99,9 +103,11 @@ dmas_extract_polynomial 4sW2Txtsn8o3bkwY _cons,weight,c.weight#c.weight,c.weight
 A binned variable model describes a non-linear response, using data that falls into specific independent variable bins.
 
 **Syntax:**
-```dmas_extract_binned [Your API Key] [End Points, Comma Delimited] [Coefficients, Comma Delimited] [GCP Spreadsheet Key] [DMAS Estimate ID]```
+```dmas_extract_binned [Your API Key] [End Points, Comma Delimited] [Coefficients, Comma Delimited] [GCP Spreadsheet Key] <DMAS Estimate ID>```
 
 Use the coefficient name `drop` for the bin that is dropped.
+
+If you do not specify the last argument (the ID), the most recent result from `dmas_put_model` will be used.
 
 **Example:**
 ```
@@ -146,7 +152,9 @@ dmas_extract_binned 4sW2Txtsn8o3bkwY -inf,.2,.4,.6,.8,inf c1,c2,drop,c4,c5 NA 55
 Predicted curves are arbitrary nonlinear curves, with estimated values and standard errors that change with some independent variable.
 
 **Syntax:**
-```dmas_extract_predict [Independent Variable] [Mean Estimate] [Bottom Confidence Interval] [Top Confidence Interval], apikey([Your API Key]) infoid([GCP Spreadsheet ID]) id(DMAS Estimate ID)```
+```dmas_extract_predict [Independent Variable] [Mean Estimate] [Bottom Confidence Interval] [Top Confidence Interval], apikey([Your API Key]) infoid([GCP Spreadsheet ID]) id(<DMAS Estimate ID>)```
+
+If you do not specify the last argument (the ID), the most recent result from `dmas_put_model` will be used.
 
 **Example:**
 ```
