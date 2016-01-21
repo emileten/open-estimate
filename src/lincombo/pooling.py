@@ -8,13 +8,25 @@ def lincombo_pooled(betas, stderrs, portions):
     numalphas = portions.shape[1]
 
     ## Fill in the inverse sigma matrix
+    overvars = 1.0 / stdvars
+    if helpers.issparse(portions): # BUG in sparse.multiply: need same shape
+        overvars = overvars.reshape((portions.shape[0], 1))
     invsigma = np.zeros((numalphas, numalphas))
     for jj in range(numalphas):
         for kk in range(numalphas):
-            invsigma[jj, kk] = sum(portions[:, jj] * portions[:, kk] / stdvars)
+            print jj, kk
+            if helpers.issparse(portions):
+                invsigma[jj, kk] = sum(portions[:, jj].multiply(portions[:, kk]).multiply(overvars))
+            else:
+                invsigma[jj, kk] = sum(portions[:, jj] * portions[:, kk] * overvars)
 
+    if helpers.issparse(portions):
+        bb = [sum(portions[:, jj].multiply(betas).multiply(stdvars)) for jj in range(numalphas)]
+    else:
+        bb = [sum(betas * portions[:, jj] / stdvars) for jj in range(numalphas)]
+
+    print "Begin inversion...", invsigma.shape
     sigma = np.linalg.inv(invsigma)
-    bb = [sum(betas * portions[:, jj] / stdvars) for jj in range(numalphas)]
     alphas = np.dot(sigma, np.transpose(bb))
 
     return MultivariateNormal(alphas, sigma)
