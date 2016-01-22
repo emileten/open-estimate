@@ -1,6 +1,24 @@
 import numpy as np
 from multi_normal import MultivariateNormal
 import helpers
+import time # XXX
+
+def sum_multiply(sparsecol, densevec):
+    indices = sparsecol.nonzero()[0] # just take rows
+    total = 0
+    for index in indices:
+        total += sparsecol[index, 0] * densevec[index]
+    return total
+
+def sum_multiply2(sparse, col1, col2, densevec):
+    rows1 = sparse.indices[sparse.indptr[col1]:sparse.indptr[col1+1]]
+    rows2 = sparse.indices[sparse.indptr[col2]:sparse.indptr[col2+1]]
+    # Can improve by construct 'matches': list of (index1, index2) which are the same row, then using to index into data
+    rows = set(rows1).intersection(rows2)
+    total = 0
+    for row in rows:
+        total += sparse[row, col1] * sparse[row, col2] * densevec[row]
+    return total
 
 def lincombo_pooled(betas, stderrs, portions):
     betas, stdvars, portions = helpers.check_arguments(betas, stderrs, portions)
@@ -9,19 +27,17 @@ def lincombo_pooled(betas, stderrs, portions):
 
     ## Fill in the inverse sigma matrix
     overvars = 1.0 / stdvars
-    if helpers.issparse(portions): # BUG in sparse.multiply: need same shape
-        overvars = overvars.reshape((portions.shape[0], 1))
     invsigma = np.zeros((numalphas, numalphas))
     for jj in range(numalphas):
+        print "Row", jj
         for kk in range(numalphas):
-            print jj, kk
             if helpers.issparse(portions):
-                invsigma[jj, kk] = sum(portions[:, jj].multiply(portions[:, kk]).multiply(overvars))
+                invsigma[jj, kk] = sum_multiply2(portions, jj, kk, overvars)
             else:
                 invsigma[jj, kk] = sum(portions[:, jj] * portions[:, kk] * overvars)
 
     if helpers.issparse(portions):
-        bb = [sum(portions[:, jj].multiply(betas).multiply(stdvars)) for jj in range(numalphas)]
+        bb = [sum_multiply(portions[:, jj], betas * overvars) for jj in range(numalphas)]
     else:
         bb = [sum(betas * portions[:, jj] / stdvars) for jj in range(numalphas)]
 
