@@ -34,9 +34,9 @@ class CurveCurve(UnivariateCurve):
 
         return UnivariateSpline(xx, yy, s=0, k=1)
 
-class FlagCurve(CurveCurve):
+class FlatCurve(CurveCurve):
     def __init__(self, yy):
-        super(StepCurve, self).__init__([], lambda x: yy)
+        super(FlatCurve, self).__init__([-40, 0, 80], lambda x: yy)
 
 class StepCurve(CurveCurve):
     def __init__(self, xxlimits, yy):
