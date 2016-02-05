@@ -7,7 +7,7 @@
 
 \begin{document}
 
-{\bf Handling migration, crop indexes, and other combinations}
+\section{Handling migration, crop indexes, and other combinations}
 
 The problem that we have with some papers reporting bilateral
 migration and others reporting net migration outflows is isomorphic to
@@ -24,16 +24,16 @@ Where study $i$ reports a fully disaggregated coefficient, $a_J = 1$
 for some $J$ and $a_j = 0\,\,\,\forall\, j \ne J$.
 
 In the case of migration, $j$ indexes all combinations of two
-countries, $k \rightarrow l$.  Where only net outflows are reported,
-$a_{K \rightarrow l} = 1$ for some $K$ and all $l$, and all else are
-0.
+countries, $k \rightarrow l$.  Where only net migration flows are
+reported, $a_{K \rightarrow l} = 1$ for a given $K$ and all $l$,
+$a_{l \rightarrow K} = -1$, and all else are 0.
 
 We allow that the reported coefficient are not the true coefficient
 being estimated.  Let the reported coefficient of the true study
 coefficient $\beta_i$ be $y_i$, with a standard error
 $\sigma_i$.
 
-{\bf Full Pooling}
+\subsection{Full Pooling}
 
 Under full pulling, the result is a multivariate normal distribution:
 \begin{align*}
@@ -51,7 +51,23 @@ We can group terms together to get,
 which reduces to the normal pooling expression for disaggregated
 coefficient estimates.
 
-{\bf Bayesian Hierarchical Model}
+\subsubsection{The Regression Formulation}
+
+The same outcome can be produced by a regression formulation, as
+follows:
+\[
+\beta_i = \sum_j a_{ij} \alpha_j + \sigma_i \epsilon_i
+\]
+where $\epsilon_i \sim \mathcal{N}(0, 1)$.  We define $A =
+\left(a_{ij}\right)$ and $\Sigma = diag\left(\frac{1}{\sigma_i^2}\right)$.
+
+The solution to this is
+\[
+\hat\alpha = \left(A' \Sigma A\right)^{-1} A' \Sigma \beta
+\]
+which is equivalent to the solution above.
+
+\subsection{Bayesian Hierarchical Model}
 
 For Bayesian hierarchical modeling, we make a minor change to the
 normal hierarchical modeling system to get
