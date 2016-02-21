@@ -1,48 +1,55 @@
 import os, csv, random
 import numpy as np
-import effect_bundle, weather
+import effectset, weather, latextools
+from calculation import Calculation, Application
 from ..models.model import Model
 from ..models.spline_model import SplineModel
 from ..models.memoizable import MemoizedUnivariate
 
 # Generate integral over daily temperature
 
-def make_daily_bymonthdaybins(model, func=lambda x: x, pval=.5, weather_change=lambda temps: temps - 273.15):
-    model = MemoizedUnivariate(model)
-    model.set_x_cache_decimals(1)
-    spline = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
+class MonthlyDayBins(Calculation):
+    def __init__(self, model, pval=.5, weather_change=lambda temps: temps - 273.15):
+        model = MemoizedUnivariate(model)
+        model.set_x_cache_decimals(1)
+        spline = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
 
-    def generate(fips, yyyyddd, temps, **kw):
-        if fips == effect_bundle.FIPS_COMPLETE:
-            return
+        self.spline = spline
+        self.weather_change = weather_change
 
-        for (year, temps) in weather.yearly_daily_ncdf(yyyyddd, temps):
-            temps = weather_change(temps)
-            results = spline(temps)
+    def apply(self, fips):
+        def generate(fips, year, temps, **kw):
+            temps = self.weather_change(temps)
+            results = self.spline(temps)
 
             result = np.sum(results) / 12
 
             if not np.isnan(result):
-                yield (year, func(result))
+                yield (year, result)
 
-    return generate
+        return ApplicationByYear(fips, generate)
 
-def make_daily_yearlydaybins(model, func=lambda x: x, pval=.5):
-    model = MemoizedUnivariate(model)
-    model.set_x_cache_decimals(1)
-    spline = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
+class YearlyDayBins(Calculation):
+    def __init__(self, model, pval=.5):
+        self.model = model
+        memomodel = MemoizedUnivariate(model)
+        memomodel.set_x_cache_decimals(1)
+        self.spline = memomodel.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
 
-    def generate(fips, yyyyddd, temps, **kw):
-        if fips == effect_bundle.FIPS_COMPLETE:
-            return
+    def latex(self):
+        funcvar = latextools.get_function()
+        yield ("Equation", r"\sum_{d \in y(t)} %s(T_d)" % (funcvar))
+        yield ("T_d", "Temperature (C)")
+        yield ("%s(\cdot)" % (funcvar), self.model)
 
-        for (year, temps) in weather.yearly_daily_ncdf(yyyyddd, temps):
+    def apply(self, fips):
+        def generate(fips, year, temps, **kw):
             result = np.sum(spline(temps - 273.15))
 
             if not np.isnan(result):
-                yield (year, func(result))
+                yield (year, result)
 
-    return generate
+        return ApplicationByYear(fips, generate)
 
 def make_daily_averagemonth(model, func=lambda x: x, pval=.5):
     days_bymonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -53,7 +60,7 @@ def make_daily_averagemonth(model, func=lambda x: x, pval=.5):
     spline = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
 
     def generate(fips, yyyyddd, temps, **kw):
-        if fips == effect_bundle.FIPS_COMPLETE:
+        if fips == effectset.FIPS_COMPLETE:
             return
 
         for (year, temps) in weather.yearly_daily_ncdf(yyyyddd, temps):
@@ -71,7 +78,7 @@ def make_daily_averagemonth(model, func=lambda x: x, pval=.5):
 
 def make_daily_percentwithin(endpoints):
     def generate(fips, yyyyddd, temps, **kw):
-        if fips == effect_bundle.FIPS_COMPLETE:
+        if fips == effectset.FIPS_COMPLETE:
             return
 
         for (year, temps) in weather.yearly_daily_ncdf(yyyyddd, temps):

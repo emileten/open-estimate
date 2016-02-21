@@ -68,6 +68,7 @@ except:
     pass
 
 FIPS_COMPLETE = '__complete__' # special FIPS code for the last county
+LATEX_STRING = '__latexstr__' # special FIPS code for making a LaTeX representation
 
 ### Effect Bundle Generation
 

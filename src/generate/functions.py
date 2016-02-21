@@ -1,24 +1,37 @@
 import numpy as np
-import effect_bundle
+import effectset, latextools, calculation
 
-def make_scale(make_generator, scale_dict, func=lambda x, y: x*y):
-    """Scale the results by the value in scale_dict, or the mean value (if it is set).
-    make_generator: we encapsulate this function, passing in data and opporting on outputs
-    func: default operation is to multiple (scale), but can do other things (e.g., - for re-basing)
-    """
+"""Scale the results by the value in scale_dict, or the mean value (if it is set).
+make_generator: we encapsulate this function, passing in data and opporting on outputs
+func: default operation is to multiple (scale), but can do other things (e.g., - for re-basing)
+"""
+class Scale(calculation.Calculation):
+    def __init__(self, subcalc, scale_dict, func=lambda x, y: x*y, latexpair=(r"\bar{I}", "Region-specific scaling")):
+        self.subcalc = subcalc
+        self.scale_dict = scale_dict
+        self.func = func
+        self.latexpair = latexpair
 
-    def generate(fips, yyyyddd, temps, **kw):
-        # Prepare the generator from our encapsulated operations
-        generator = make_generator(fips, yyyyddd, temps, **kw)
-        # Scale each result
-        for (year, result) in generator:
-            if fips in scale_dict:
-                yield (year, func(result, scale_dict[fips]))
+    def latex(self, *args, **kwargs):
+        for (equation, latex) in self.subcalc.latex(*args, **kwargs):
+            if equation == "Equation":
+                for eqnstr in latextools.call(self.func, "Scaling function", latex, self.latexpair[0]):
+                    yield eqnstr
             else:
-                yield (year, func(result, scale_dict['mean']))
+                yield (equation, latex)
 
-    return generate
+        yield self.latexpair
 
+    def apply(self, region, *args, **kwargs):
+        def generate(year, result):
+            if region in self.scale_dict:
+                return self.func(result, self.scale_dict[region])
+            else:
+                return self.func(result, self.scale_dict['mean'])
+
+        # Prepare the generator from our encapsulated operations
+        subapp = self.subcalc.apply(region, *args, **kwargs)
+        return ApplicationPassCall(region, subapp, generate)
 
 ## make-apply logic for generating make_generators
 
@@ -26,6 +39,12 @@ def make(handler, make_generator, *handler_args, **handler_kw):
     """Construct a generator from a function, operating on the results of another generator.
     handler(generator, *handler_args, **handler_kw) takes an enumerator and returns an enumerator
     """
+
+    if 'latexhandler' in handler_kw:
+        latexhandler = handler_kw['latexhandler']
+        del handler_kw['latexhandler']
+    else:
+        latexhandler = handler
 
     # The make_generator function to return
     def generate(fips, yyyyddd, temps, *args, **kw):
@@ -37,37 +56,23 @@ def make(handler, make_generator, *handler_args, **handler_kw):
 
         # Pass on data
         generator = make_generator(fips, yyyyddd, temps, *args, **kw)
+
+        if fips == effect_bundle.LATEX_STRING:
+            for equation, latex in generator:
+                if equation == "Equation":
+                    for (equation2, latex2) in latexhandler(latex, *handler_args, **handler_kw):
+                        yield (equation2, latex2)
+                else:
+                    yield (equation, latex)
+            return
+
         # Apply function to results of data
         for yearresult in handler(generator, *handler_args, **handler_kw):
             yield yearresult
 
     return generate
 
-def apply(generator, func, unshift=False):
-    """Apply a non-enumerator to all elements of a function.
-    if unshift, tack on the result to the front of a sequence of results.
-    Calls func with each year and value; returns the newly computed value
-    """
-
-    for yearresult in generator:
-        # Call func to get a new value
-        newresult = func(yearresult[0], yearresult[1])
-
-        # Construct a new year, value result
-        if unshift:
-            yield [yearresult[0], newresult] + yearresult[1:]
-        else:
-            yield (yearresult[0], newresult)
-
-def make_instabase(make_generator, baseyear, func=lambda x, y: x / y):
-    """Re-base the results of make_generator(...) to the values in baseyear
-    Default func constructs a porportional change; x - y makes simple difference.
-    """
-
-    # Use the instabase function to do operations
-    return make(instabase, make_generator, baseyear, func)
-
-def instabase(generator, baseyear, func=lambda x, y: x / y, skip_on_missing=True):
+class Instabase(calculation.CustomFunctionalCalculation):
     """Re-base the results of make_generator(...) to the values in baseyear
     baseyear is the year to use as the 'denominator'; None for the first year
     Default func constructs a porportional change; x - y makes simple difference.
@@ -76,32 +81,42 @@ def instabase(generator, baseyear, func=lambda x, y: x / y, skip_on_missing=True
     Tacks on the value to the front of the results
     """
 
-    denom = None # The value in the baseyear
-    pastresults = [] # results before baseyear
+    def __init__(self, subcalc, baseyear, func=lambda x, y: x / y, skip_on_missing=True):
+        super(Instabase, self).__init__(subcalc, baseyear, func, skip_on_missing)
+        self.denom = None # The value in the baseyear
+        self.pastresults = [] # results before baseyear
 
-    for yearresult in generator:
-        year = yearresult[0]
-        result = yearresult[1]
+    def latexhandler(self, equation, baseyear, func, skip_on_missing):
+        for eqnstr in latextools.call(func, "Re-basing function", equation, "[%s]_{t = %d}" % (equation, baseyear)):
+            yield eqnstr
 
-        # Should we base everything off this year?
-        if year == baseyear or (baseyear is None and denom is None):
-            denom = result
+    def pushhandler(self, yyyyddd, weather, baseyear, func, skip_on_missing):
+        """
+        Returns an interator of (yyyy, value, ...).
+        """
+        for yearresult in self.subapp.push(yyyyddd, weather):
+            year = yearresult[0]
+            result = yearresult[1]
 
-            # Print out all past results, relative to this year
+            # Should we base everything off this year?
+            if year == baseyear or (baseyear is None and self.denom is None):
+                self.denom = result
+
+                # Print out all past results, relative to this year
+                for self.pastresult in pastresults:
+                    yield [self.pastresult[0], func(self.pastresult[1], self.denom)] + list(self.pastresult[1:])
+
+            if self.denom is None:
+                # Keep track of this until we have a base
+                self.pastresults.append(yearresult)
+            else:
+                # calculate this and tack it on
+                yield [year, func(result, self.denom)] + list(yearresult[1:])
+
+        if self.denom is None and skip_on_missing:
+            # Never got to this year: just write out results
             for pastresult in pastresults:
-                yield [pastresult[0], func(pastresult[1], denom)] + list(pastresult[1:])
-
-        if denom is None:
-            # Keep track of this until we have a base
-            pastresults.append(yearresult)
-        else:
-            # calculate this and tack it on
-            yield [year, func(result, denom)] + list(yearresult[1:])
-
-    if denom is None and skip_on_missing:
-        # Never got to this year: just write out results
-        for pastresult in pastresults:
-            yield pastresult
+                yield pastresult
 
 def make_runaverage(make_generator, priors, weights, unshift=False):
     """Generate results as an N-year running average;
