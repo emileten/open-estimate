@@ -53,17 +53,21 @@ class Application(object):
         raise NotImplementedError()
 
 class CustomFunctionalCalculation(FunctionalCalculation, Application):
-    def __init__(self, subcalc, *handler_args, **handler_kwargs):
-        super(CustomFunctionalCalculation, self).__init__(subcalc, *handler_args, **handler_kwargs)
+    def __init__(self, subcalc, *handler_args, **handler_kw):
+        super(CustomFunctionalCalculation, self).__init__(subcalc, *handler_args, **handler_kw)
+        self.subapp = None
 
     def apply(self, region, *args, **kwargs):
         # Prepare the generator from our encapsulated operations
         subapp = self.subcalc.apply(region, *args, **kwargs)
-        allargs = [subapp] + handler_args + args
-        allkwargs = handler_kwargs.copy()
+        allargs = list(self.handler_args) + list(args)
+        allkwargs = self.handler_kw.copy()
         allkwargs.update(kwargs)
 
-        return self.__class__(self.subcalc, subapp, *allargs, **allkwargs)
+        app = self.__class__(self.subcalc, *allargs, **allkwargs)
+        app.subapp = subapp
+
+        return app
 
     def push(self, yyyyddd, weather):
         self.pushhandler(yyyyddd, weather, *allargs, **allkwargs)

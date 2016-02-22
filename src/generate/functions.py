@@ -31,7 +31,7 @@ class Scale(calculation.Calculation):
 
         # Prepare the generator from our encapsulated operations
         subapp = self.subcalc.apply(region, *args, **kwargs)
-        return ApplicationPassCall(region, subapp, generate)
+        return calculation.ApplicationPassCall(region, subapp, generate)
 
 ## make-apply logic for generating make_generators
 
