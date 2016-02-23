@@ -2,6 +2,9 @@ import copy
 import weather
 
 class Calculation(object):
+    def __init__(self, unitses):
+        self.unitses = unitses
+
     def latex(self, *args, **kwargs):
         raise NotImplementedError()
 
@@ -11,8 +14,13 @@ class Calculation(object):
     def cleanup(self):
         pass
 
+    def column_info(self):
+        raise NotImplementedError()
+
 class FunctionalCalculation(Calculation):
-    def __init__(self, subcalc, *handler_args, **handler_kw):
+    def __init__(self, subcalc, from_units, to_units, *handler_args, **handler_kw):
+        super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses[1:])
+        assert(subcalc.unitses[0] == from_units)
         self.subcalc = subcalc
         self.handler_args = handler_args
         self.handler_kw = handler_kw
@@ -52,6 +60,9 @@ class Application(object):
         """
         raise NotImplementedError()
 
+    def done(self):
+        pass
+
 class CustomFunctionalCalculation(FunctionalCalculation, Application):
     def __init__(self, subcalc, *handler_args, **handler_kw):
         super(CustomFunctionalCalculation, self).__init__(subcalc, *handler_args, **handler_kw)
@@ -70,10 +81,16 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
         return app
 
     def push(self, yyyyddd, weather):
-        self.pushhandler(yyyyddd, weather, *allargs, **allkwargs)
+        return self.pushhandler(yyyyddd, weather, *self.handler_args, **self.handler_kw)
 
     def pushhandler(self, yyyyddd, weather, *allargs, **allkwargs):
         raise NotImplementedError()
+
+    def done(self):
+        return self.donehandler(*self.handler_args, **self.handler_kw)
+
+    def donehandler(self, *allargs, **allkwargs):
+        pass
 
 class ApplicationPassCall(Application):
     """Apply a non-enumerator to all elements of a function.
@@ -101,12 +118,12 @@ class ApplicationPassCall(Application):
         """
         for (year, result) in self.subapp.push(yyyyddd, weather):
             # Call handler to get a new value
-            newresult = handler(year, result, *self.handler_args, **self.handler_kw)
+            newresult = self.handler(year, result, *self.handler_args, **self.handler_kw)
             if isinstance(newresult, tuple):
                 yield tuple
             else:
                 # Construct a new year, value result
-                if unshift:
+                if self.unshift:
                     yield [year, newresult] + yearresult[1:]
                 else:
                     yield (year, newresult)
@@ -115,19 +132,18 @@ class ApplicationByChunks(Application):
     def __init__(self, region):
         super(ApplicationByChunks, self).__init__(region)
         self.saved_yyyyddd = []
-        self.saved_weather = []
+        self.saved_values = []
 
-    def push(self, yyyyddd, weather):
+    def push(self, yyyyddd, values):
         self.saved_yyyyddd.extend(yyyyddd)
-        self.saved_weather.extend(weather)
-        return self.push_saved(self.saved_yyyyddd, self.saved_weather)
+        self.saved_values.extend(values)
+        return self.push_saved(self.saved_yyyyddd, self.saved_values)
 
-    def push_saved(self, yyyyddd, weather):
+    def push_saved(self, yyyyddd, values):
         """
         Returns an interator of (yyyy, value, ...).
-        Removes used daily weather from saved.
+        Removes used daily values from saved.
         """
-
         raise NotImplementedError()
 
 class ApplicationByYear(ApplicationByChunks):
@@ -137,19 +153,19 @@ class ApplicationByYear(ApplicationByChunks):
         self.args = args
         self.kwargs = kwargs
 
-    def push_saved(self, yyyyddd, weather):
+    def push_saved(self, yyyyddd, allvalues):
         """
         Returns an interator of (yyyy, value, ...).
+        Removes used daily values from saved.
         """
-
-        if len(yyyyddd) < 365:
-            return
-
-        for year, weather in weather.yearly_daily_ncdf(yyyyddd, weather):
-            if len(weather) < 365:
-                self.saved_yyyyddd = year * 1000 + np.arange(len(weather)) + 1
-                self.saved_weather = weather
+        for year, values in weather.yearly_daily_ncdf(yyyyddd, allvalues):
+            if len(values) < 365:
+                self.saved_yyyyddd = year * 1000 + np.arange(len(values)) + 1
+                self.saved_values = values
                 return
 
-            for values in func(region, year, weather, *self.args, **self.kwargs):
+            for values in self.func(self.region, year, values, *self.args, **self.kwargs):
                 yield values
+
+        self.saved_yyyyddd = []
+        self.saved_values = []

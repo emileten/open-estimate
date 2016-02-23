@@ -1,12 +1,15 @@
 import numpy as np
-import effectset, latextools, calculation
+import latextools, calculation
 
 """Scale the results by the value in scale_dict, or the mean value (if it is set).
 make_generator: we encapsulate this function, passing in data and opporting on outputs
 func: default operation is to multiple (scale), but can do other things (e.g., - for re-basing)
 """
 class Scale(calculation.Calculation):
-    def __init__(self, subcalc, scale_dict, func=lambda x, y: x*y, latexpair=(r"\bar{I}", "Region-specific scaling")):
+    def __init__(self, subcalc, scale_dict, from_units, to_units, func=lambda x, y: x*y, latexpair=(r"\bar{I}", "Region-specific scaling")):
+        super(Scale, self).__init__([to_units] + subcalc.unitses)
+        assert(subcalc.unitses[0] == from_units)
+
         self.subcalc = subcalc
         self.scale_dict = scale_dict
         self.func = func
@@ -32,6 +35,10 @@ class Scale(calculation.Calculation):
         # Prepare the generator from our encapsulated operations
         subapp = self.subcalc.apply(region, *args, **kwargs)
         return calculation.ApplicationPassCall(region, subapp, generate)
+
+    def column_info(self):
+        infos = self.subcalc.column_info()
+        return [dict(name='scaled', title='Scaled ' + infos[0]['title'], source=infos[0]['source'])]
 
 ## make-apply logic for generating make_generators
 
@@ -81,8 +88,8 @@ class Instabase(calculation.CustomFunctionalCalculation):
     Tacks on the value to the front of the results
     """
 
-    def __init__(self, subcalc, baseyear, func=lambda x, y: x / y, skip_on_missing=True):
-        super(Instabase, self).__init__(subcalc, baseyear, func, skip_on_missing)
+    def __init__(self, subcalc, baseyear, func=lambda x, y: x / y, units='portion', skip_on_missing=True):
+        super(Instabase, self).__init__(subcalc, subcalc.unitses[0], units, baseyear, func, skip_on_missing)
         self.denom = None # The value in the baseyear
         self.pastresults = [] # results before baseyear
 
@@ -103,7 +110,7 @@ class Instabase(calculation.CustomFunctionalCalculation):
                 self.denom = result
 
                 # Print out all past results, relative to this year
-                for self.pastresult in pastresults:
+                for self.pastresult in self.pastresults:
                     yield [self.pastresult[0], func(self.pastresult[1], self.denom)] + list(self.pastresult[1:])
 
             if self.denom is None:
@@ -113,10 +120,15 @@ class Instabase(calculation.CustomFunctionalCalculation):
                 # calculate this and tack it on
                 yield [year, func(result, self.denom)] + list(yearresult[1:])
 
+    def donehandler(self, baseyear, func, skip_on_missing):
         if self.denom is None and skip_on_missing:
             # Never got to this year: just write out results
-            for pastresult in pastresults:
+            for pastresult in self.pastresults:
                 yield pastresult
+
+    def column_info(self):
+        infos = self.subcalc.column_info()
+        return [dict(name='rebased', title='Rebased ' + infos[0]['title'], source=infos[0]['source'])] + infos
 
 def make_runaverage(make_generator, priors, weights, unshift=False):
     """Generate results as an N-year running average;
