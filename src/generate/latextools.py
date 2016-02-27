@@ -7,29 +7,31 @@ variables_vars = ['x', 'y', 'z']
 """
 Return a representation of this call.
 """
-def call(func, description=None, *args):
+def call(func, units, description=None, *args):
     if len(args) == 0:
         funcvar = get_function()
-        yield ("Equation", funcvar + "()")
-        yield (funcvar + "()", description)
+        yield ("Equation", funcvar + "()", units)
+        yield (funcvar + "()", description, units)
     elif len(args) == 1:
         interp = interpret1(func)
         if interp == 'identity':
-            yield ("Equation", args[0])
+            yield ("Equation", args[0], units)
         else:
             funcvar = get_function()
-            yield ("Equation", "%s(%s)" % (funcvar, args[0]))
-            yield (funcvar + r"(\cdot)", description)
+            yield ("Equation", "%s(%s)" % (funcvar, args[0]), units)
+            yield (funcvar + r"(\cdot)", description, units)
     elif len(args) == 2:
         interp = interpret2(func)
         if interp == '/':
-            yield ("Equation", r"\frac{%s}{%s}" % args)
+            yield ("Equation", r"\frac{%s}{%s}" % args, units)
         elif interp == '-':
-            yield ("Equation", r"%s - %s" % args)            
+            yield ("Equation", r"%s - %s" % args, units)
+        elif interp == '*':
+            yield ("Equation", r"\left(%s\right) \left(%s\right)" % args, units)
         else:
             funcvar = get_function()
-            yield ("Equation", "%s(%s, %s)" % (funcvar, args[0], args[1]))
-            yield (funcvar + r"(\cdot)", description)
+            yield ("Equation", "%s(%s, %s)" % (funcvar, args[0], args[1]), units)
+            yield (funcvar + r"(\cdot)", description, units)
 
 """
 Try to determine the processing of `func`.
@@ -50,6 +52,8 @@ def interpret2(func):
             return '/'
         if func(555., 111.) == 444.:
             return '-'
+        if func(555., 111.) == 555. * 111.:
+            return '*'
     except:
         return "unknown"
 

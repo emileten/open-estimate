@@ -26,12 +26,12 @@ class FunctionalCalculation(Calculation):
         self.handler_kw = handler_kw
 
     def latex(self, *args, **kwargs):
-        for (equation, latex) in self.subcalc.latex(*args, **kwargs):
-            if equation == "Equation":
-                for (equation2, latex2) in self.latexhandler(latex, *self.handler_args, **self.handler_kw):
-                    yield (equation2, latex2)
+        for (key, value, units) in self.subcalc.latex(*args, **kwargs):
+            if key == "Equation":
+                for tuple2 in self.latexhandler(value, *self.handler_args, **self.handler_kw):
+                    yield tuple2
             else:
-                yield (equation, latex)
+                yield (key, value, units)
 
     def latexhandler(self, latex, *handler_args, **handler_kw):
         raise NotImplementedError()

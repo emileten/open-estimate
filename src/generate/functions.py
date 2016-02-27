@@ -14,16 +14,18 @@ class Scale(calculation.Calculation):
         self.scale_dict = scale_dict
         self.func = func
         self.latexpair = latexpair
+        self.from_units = from_units
 
     def latex(self, *args, **kwargs):
-        for (equation, latex) in self.subcalc.latex(*args, **kwargs):
-            if equation == "Equation":
-                for eqnstr in latextools.call(self.func, "Scaling function", latex, self.latexpair[0]):
+        for (key, value, units) in self.subcalc.latex(*args, **kwargs):
+            if key == "Equation":
+                for eqnstr in latextools.call(self.func, self.unitses[0], "Scaling function", value, self.latexpair[0]):
                     yield eqnstr
             else:
-                yield (equation, latex)
+                yield (key, value, units)
 
-        yield self.latexpair
+        fulllatexpair = (self.latexpair[0], self.latexpair[1], self.from_units + ' -> ' + self.unitses[0])
+        yield fulllatexpair
 
     def apply(self, region, *args, **kwargs):
         def generate(year, result):
@@ -94,7 +96,7 @@ class Instabase(calculation.CustomFunctionalCalculation):
         self.pastresults = [] # results before baseyear
 
     def latexhandler(self, equation, baseyear, func, skip_on_missing):
-        for eqnstr in latextools.call(func, "Re-basing function", equation, "[%s]_{t = %d}" % (equation, baseyear)):
+        for eqnstr in latextools.call(func, self.unitses[0], "Re-basing function", equation, r"\left[%s\right]_{t = %d}" % (equation, baseyear)):
             yield eqnstr
 
     def pushhandler(self, yyyyddd, weather, baseyear, func, skip_on_missing):

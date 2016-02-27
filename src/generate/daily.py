@@ -43,9 +43,9 @@ class YearlyDayBins(Calculation):
 
     def latex(self):
         funcvar = latextools.get_function()
-        yield ("Equation", r"\sum_{d \in y(t)} %s(T_d)" % (funcvar))
-        yield ("T_d", "Temperature (C)")
-        yield ("%s(\cdot)" % (funcvar), self.model)
+        yield ("Equation", r"\sum_{d \in y(t)} %s(T_d)" % (funcvar), self.unitses[0])
+        yield ("T_d", "Temperature", "deg. C")
+        yield ("%s(\cdot)" % (funcvar), str(self.model), self.unitses[0])
 
     def apply(self, fips):
         def generate(fips, year, temps, **kw):
