@@ -41,14 +41,12 @@ def swap_spline(model, beta, vcv, dropbin, totals):
     for ii in range(len(means)):
         x = model.get_xx()[ii]
         order.append(x)
-        if np.isnan(means[ii]):
+        if ii == dropbin:
             xxs[x] = (np.nan, np.nan)
         else:
-            xxs[x] = (means2[jj], sdevs2[jj])
+            xxs[x] = (means2[jj], sdevs2[jj] ** 2)
             jj += 1
 
-    print order
-    print xxs
     return SplineModel.create_gaussian(xxs, order=order, xx_is_categorical=model.xx_is_categorical)
 
 def swap_bin(model, beta, vcv, dropbin, totals):
