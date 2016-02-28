@@ -42,7 +42,7 @@ def latex_function(func, *args):
         elif interp == '-':
             return r"%s - %s" % args
         elif interp == '*':
-            return, r"\left(%s\right) \left(%s\right)" % args
+            return r"\left(%s\right) \left(%s\right)" % args
 
 def english_function(func, *args):
     if len(args) == 1:
@@ -57,7 +57,7 @@ def english_function(func, *args):
         elif interp == '-':
             return r"%s - %s" % args
         elif interp == '*':
-            return, r"%s x %s" % args
+            return r"%s x %s" % args
 
 def interpret1(func):
     """
