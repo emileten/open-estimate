@@ -55,6 +55,9 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
     def get_xx(self):
         return self.xx
 
+    def get_xx_centers(self):
+        return (np.array(self.xx[:-1]) + np.array(self.xx[1:])) / 2
+
     def scale_y(self, a):
         self.model.scale_y(a)
         return self
