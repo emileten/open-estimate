@@ -36,11 +36,14 @@ class Scale(calculation.Calculation):
 
         # Prepare the generator from our encapsulated operations
         subapp = self.subcalc.apply(region, *args, **kwargs)
-        return calculation.ApplicationPassCall(region, subapp, generate)
+        return calculation.ApplicationPassCall(region, subapp, generate, unshift=True)
 
     def column_info(self):
         infos = self.subcalc.column_info()
-        return [dict(name='scaled', title='Scaled ' + infos[0]['title'], source=infos[0]['source'])]
+        title = 'Scaled ' + infos[0]['title']
+        equation = latextools.english_function(self.func, infos[0]['name'], self.latexpair[1])
+        description = "Computed from the %s variable, as %s." % (infos[0]['name'], equation)
+        return [dict(name='scaled', title=title, description=description)] + infos
 
 ## make-apply logic for generating make_generators
 
@@ -92,6 +95,7 @@ class Instabase(calculation.CustomFunctionalCalculation):
 
     def __init__(self, subcalc, baseyear, func=lambda x, y: x / y, units='portion', skip_on_missing=True):
         super(Instabase, self).__init__(subcalc, subcalc.unitses[0], units, baseyear, func, skip_on_missing)
+        self.baseyear = baseyear
         self.denom = None # The value in the baseyear
         self.pastresults = [] # results before baseyear
 
@@ -130,7 +134,9 @@ class Instabase(calculation.CustomFunctionalCalculation):
 
     def column_info(self):
         infos = self.subcalc.column_info()
-        return [dict(name='rebased', title='Rebased ' + infos[0]['title'], source=infos[0]['source'])] + infos
+        title = 'Rebased ' + infos[0]['title']
+        description = "The result calculated relative to the year %d, by re-basing variable %s." % (self.baseyear, infos[0]['name'])
+        return [dict(name='rebased', title=title, description=description)] + infos
 
 def make_runaverage(make_generator, priors, weights, unshift=False):
     """Generate results as an N-year running average;

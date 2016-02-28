@@ -57,7 +57,8 @@ class YearlyDayBins(Calculation):
         return ApplicationByYear(fips, generate)
 
     def column_info(self):
-        return [dict(name='response', title='Direct impulse response', source="From " + str(self.model))]
+        description = "The combined result of daily temperatures, organizaed into bins according to %s." % (str(self.model))
+        return [dict(name='response', title='Direct marginal response', description=description)]
 
 def make_daily_averagemonth(model, func=lambda x: x, pval=.5):
     days_bymonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]

@@ -15,6 +15,9 @@ class Calculation(object):
         pass
 
     def column_info(self):
+        """
+        Returns an array of dictionaries, with 'name', 'title', and 'description'.
+        """
         raise NotImplementedError()
 
 class FunctionalCalculation(Calculation):
