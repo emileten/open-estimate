@@ -8,6 +8,9 @@ class Calculation(object):
     def latex(self, *args, **kwargs):
         raise NotImplementedError()
 
+    def test(self):
+        return self.apply('test')
+
     def apply(self, region, *args, **kwargs):
         raise NotImplementedError()
 
@@ -119,15 +122,16 @@ class ApplicationPassCall(Application):
         """
         Returns an interator of (yyyy, value, ...).
         """
-        for (year, result) in self.subapp.push(yyyyddd, weather):
+        for yearresult in self.subapp.push(yyyyddd, weather):
+            year = yearresult[0]
             # Call handler to get a new value
-            newresult = self.handler(year, result, *self.handler_args, **self.handler_kw)
+            newresult = self.handler(year, yearresult[1], *self.handler_args, **self.handler_kw)
             if isinstance(newresult, tuple):
                 yield tuple
             else:
                 # Construct a new year, value result
                 if self.unshift:
-                    yield [year, newresult] + yearresult[1:]
+                    yield [year, newresult] + list(yearresult[1:])
                 else:
                     yield (year, newresult)
 
