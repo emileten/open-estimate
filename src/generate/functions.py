@@ -94,7 +94,7 @@ class Instabase(calculation.CustomFunctionalCalculation):
     """
 
     def __init__(self, subcalc, baseyear, func=lambda x, y: x / y, units='portion', skip_on_missing=True):
-        super(Instabase, self).__init__(subcalc, subcalc.unitses[0], units, baseyear, func, skip_on_missing)
+        super(Instabase, self).__init__(subcalc, subcalc.unitses[0], units, True, baseyear, func, skip_on_missing)
         self.baseyear = baseyear
         self.denom = None # The value in the baseyear
         self.pastresults = [] # results before baseyear

@@ -77,10 +77,10 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.unaccounted = unaccounted
 
     def __repr__(self):
-        if source is None:
+        if self.source is None:
             return "DDP model"
         else:
-            return "DDP model from " + source
+            return "DDP model from " + str(self.source)
 
     def kind(self):
         return 'ddp_model'

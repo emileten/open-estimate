@@ -24,8 +24,12 @@ class Calculation(object):
         raise NotImplementedError()
 
 class FunctionalCalculation(Calculation):
-    def __init__(self, subcalc, from_units, to_units, *handler_args, **handler_kw):
-        super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses[1:])
+    def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
+        if unshift:
+            super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses)
+        else:
+            super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses[1:])
+            
         assert(subcalc.unitses[0] == from_units)
         self.subcalc = subcalc
         self.handler_args = handler_args
@@ -70,8 +74,8 @@ class Application(object):
         pass
 
 class CustomFunctionalCalculation(FunctionalCalculation, Application):
-    def __init__(self, subcalc, *handler_args, **handler_kw):
-        super(CustomFunctionalCalculation, self).__init__(subcalc, *handler_args, **handler_kw)
+    def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
+        super(CustomFunctionalCalculation, self).__init__(subcalc, from_units, to_units, unshift, *handler_args, **handler_kw)
         self.subapp = None
 
     def apply(self, region, *args, **kwargs):
