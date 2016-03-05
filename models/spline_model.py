@@ -597,12 +597,17 @@ class SplineModelConditional():
     def gaussian_sdev(self, ii):
         if len(self.coeffs[ii]) == 0:
             return 0
+        if self.coeffs[ii][2] == 0:
+            return np.inf
 
         return 1/math.sqrt(-2*self.coeffs[ii][2])
 
     def gaussian_mean(self, ii):
         if len(self.coeffs[ii]) == 0:
             return (self.y1s[ii] + self.y0s[ii]) / 2
+        if self.coeffs[ii][2] == 0:
+            return np.nan
+
         return -self.coeffs[ii][1] / (2*self.coeffs[ii][2])
 
     def nongaussian_xpx(self, ii):

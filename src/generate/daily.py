@@ -37,7 +37,7 @@ class MonthlyDayBins(Calculation):
         return ApplicationByYear(fips, generate)
 
     def column_info(self):
-        description = "The combined result of daily temperatures, organizaed into bins according to %s, divided by 12 to describe monthly effects." % (str(self.model))
+        description = "The combined result of daily temperatures, organized into bins according to %s, divided by 12 to describe monthly effects." % (str(self.model))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
 class YearlyDayBins(Calculation):
@@ -64,7 +64,7 @@ class YearlyDayBins(Calculation):
         return ApplicationByYear(fips, generate)
 
     def column_info(self):
-        description = "The combined result of daily temperatures, organizaed into bins according to %s." % (str(self.model))
+        description = "The combined result of daily temperatures, organized into bins according to %s." % (str(self.model))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
 class AverageByMonth(Calculation):
@@ -97,7 +97,7 @@ class AverageByMonth(Calculation):
         return ApplicationByYear(fips, generate)
 
     def column_info(self):
-        description = "The effects of monthly average temperatures, organizaed into bins according to %s, averaged over months." % (str(self.model))
+        description = "The effects of monthly average temperatures, organized into bins according to %s, averaged over months." % (str(self.model))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
 class PercentWithin(Calculation):
