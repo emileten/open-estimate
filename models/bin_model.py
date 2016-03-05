@@ -43,7 +43,7 @@ from memoizable import MemoizableUnivariate
 class BinModel(UnivariateModel, MemoizableUnivariate):
     def __init__(self, xx=None, model=None):
         super(BinModel, self).__init__(False, xx, model.scaled)
-        
+
         self.model = model
 
     def kind(self):
@@ -70,7 +70,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         bins = []
         for x in xx:
             bins.append(self.xx.index(x) + 1)
-        
+
         model = self.model.filter_x(bins)
         return BinModel(xx, model, scaled=self.model.scaled)
 
@@ -103,11 +103,15 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
     def cdf(self, x, y):
         return self.model.cdf(self.get_bin_at(x), y)
 
-    def get_mean(self, x=None):
-        return self.model.get_mean(self.get_bin_at(x))
+    def get_mean(self, x=None, index=None):
+        if index is None:
+            index = self.get_bin_at(x)
+        return self.model.get_mean(index)
 
-    def get_sdev(self, x=None):
-        return self.model.get_sdev(self.get_bin_at(x))
+    def get_sdev(self, x=None, index=None):
+        if index is None:
+            index = self.get_bin_at(x)
+        return self.model.get_sdev(index)
 
     def draw_sample(self, x=None):
         return self.model.draw_sample(self.get_bin_at(x))
@@ -141,7 +145,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         dupmodel.xx = newxx
         dupmodel.xx_text = map(str, newxx)
         dupmodel.xx_is_categorical = False
-        
+
         return dupmodel
 
     ### Memoizable
@@ -156,7 +160,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
 
     # All models are BinModels
     @staticmethod
-    def merge(models):
+    def consistent_bins(models):
         allxx = set()
         for model in models:
             if not model.scaled:
@@ -167,9 +171,17 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         midpts = (allxx[1:] + allxx[:-1]) / 2
         newmodels = []
         for model in models:
-            newmodels.append(model.model.recategorize_x(map(model.get_bin_at, midpts), range(1, len(allxx))))
+            newmodel = model.model.recategorize_x(map(model.get_bin_at, midpts), range(1, len(allxx)))
+            newmodels.append(BinModel(allxx, newmodel))
 
-        allmodel = Model.merge(newmodels)
+        return newmodels
+
+    # All models are BinModels
+    @staticmethod
+    def merge(models):
+        newmodels = consistent_bins(models)
+
+        allmodel = Model.merge(map(lambda m: m.model, newmodels))
 
         model = BinModel(allxx, allmodel)
 
@@ -190,7 +202,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         twomodel = two.model.recategorize_x(map(model.get_bin_at, midpts), range(1, len(allxx)))
 
         model = Model.combine([onemodel, twomodel], [1, 1])
-        
+
         return BinModel(allxx, model, True)
 
 from ddp_model import DDPModel
