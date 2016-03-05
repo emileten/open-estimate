@@ -76,6 +76,12 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.pp = pp
         self.unaccounted = unaccounted
 
+    def __repr__(self):
+        if source is None:
+            return "DDP model"
+        else:
+            return "DDP model from " + source
+
     def kind(self):
         return 'ddp_model'
 
@@ -303,12 +309,14 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
         return self.yy[-1]
 
-    def init_from(self, file, delimiter, status_callback=None):
+    def init_from(self, file, delimiter, status_callback=None, source=None):
         reader = csv.reader(file, delimiter=delimiter)
         header = reader.next()
         fmt = header[0]
         if fmt not in ['ddp1', 'ddp2', 'ddv1', 'ddv2']:
             raise ValueError("Unknown format: %s" % (fmt))
+
+        self.source = source
 
         if fmt == 'ddp1' or fmt == 'ddp2':
             self.p_format = fmt

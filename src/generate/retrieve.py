@@ -26,5 +26,5 @@ def spline_from_url(url):
     return from_url(url, lambda file: SplineModel().init_from(file, ','))
 
 def ddp_from_url(url):
-    return from_url(url, lambda file: DDPModel().init_from(file, ','))
+    return from_url(url, lambda file: DDPModel().init_from(file, ',', source=url))
 

@@ -62,6 +62,9 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         else:
             self.conditionals = []
 
+    def __repr__(self):
+        return "Spline model"
+
     def kind(self):
         return 'spline_model'
 
@@ -288,7 +291,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         return self.conditionals[ii].get_pval(p, threshold)
 
     ### Class Methods
-    
+
     @staticmethod
     def create_single(xxs, y0s, y1s, coeffss, order=None, xx_is_categorical=True):
         conditionals = []
@@ -300,7 +303,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
             conditionals.append(conditional)
 
         return SplineModel(xx_is_categorical, xx, conditionals, True)
-    
+
     @staticmethod
     def create_gaussian(xxs, order=None, xx_is_categorical=True):
         conditionals = []
@@ -314,7 +317,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
             conditionals.append(conditional)
 
         return SplineModel(xx_is_categorical, xx, conditionals, True)
-    
+
     @staticmethod
     def from_ddp(ddp_model, limits):
         lps = ddp_model.log_p()
