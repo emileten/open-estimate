@@ -2,9 +2,9 @@ import os, csv, random
 import numpy as np
 import weather, latextools
 from calculation import Calculation, Application, ApplicationByYear
-from ..models.model import Model
-from ..models.spline_model import SplineModel
-from ..models.memoizable import MemoizedUnivariate
+from models.model import Model
+from models.spline_model import SplineModel
+from models.memoizable import MemoizedUnivariate
 
 # Generate integral over daily temperature
 
