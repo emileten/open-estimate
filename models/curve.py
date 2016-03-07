@@ -51,9 +51,6 @@ class AdaptableCurve(UnivariateCurve):
         super(AdaptableCurve, self).__init__(xx)
 
     # Subclasses can define their own interfaces
-    def setup(self):
-        pass
-
     def update(self):
         pass
 

@@ -5,7 +5,7 @@ from calculation import Calculation, Application, ApplicationByYear
 from ..models.model import Model
 from ..models.spline_model import SplineModel
 from ..models.memoizable import MemoizedUnivariate
-from ..models.curve import UnivariateCurve
+from ..models.curve import UnivariateCurve, AdaptableCurve
 
 # Generate integral over daily temperature
 class MonthlyDayBins(Calculation):

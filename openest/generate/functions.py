@@ -103,6 +103,9 @@ class Instabase(calculation.CustomFunctionalCalculation):
         for eqnstr in latextools.call(func, self.unitses[0], "Re-basing function", equation, r"\left[%s\right]_{t = %d}" % (equation, baseyear)):
             yield eqnstr
 
+    def init_apply(self):
+        self.pastresults = [] # don't copy this across instances!
+
     def pushhandler(self, yyyyddd, weather, baseyear, func, skip_on_missing):
         """
         Returns an interator of (yyyy, value, ...).

@@ -87,10 +87,14 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
         allkwargs = self.handler_kw.copy()
         allkwargs.update(kwargs)
 
-        app = self.copy()
+        app = copy.copy(self)
         app.subapp = subapp
+        app.init_apply()
 
         return app
+
+    def init_apply(self):
+        pass
 
     def push(self, yyyyddd, weather):
         return self.pushhandler(yyyyddd, weather, *self.handler_args, **self.handler_kw)
