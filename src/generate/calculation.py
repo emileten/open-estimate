@@ -1,5 +1,5 @@
 import copy
-import weather
+import weathertools
 
 class Calculation(object):
     def __init__(self, unitses):
@@ -29,7 +29,7 @@ class FunctionalCalculation(Calculation):
             super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses)
         else:
             super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses[1:])
-            
+
         assert(subcalc.unitses[0] == from_units)
         self.subcalc = subcalc
         self.handler_args = handler_args
@@ -169,7 +169,7 @@ class ApplicationByYear(ApplicationByChunks):
         Returns an interator of (yyyy, value, ...).
         Removes used daily values from saved.
         """
-        for year, values in weather.yearly_daily_ncdf(yyyyddd, allvalues):
+        for year, values in weathertools.yearly_daily_ncdf(yyyyddd, allvalues):
             if len(values) < 365:
                 self.saved_yyyyddd = year * 1000 + np.arange(len(values)) + 1
                 self.saved_values = values

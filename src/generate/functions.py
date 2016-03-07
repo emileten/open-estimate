@@ -138,6 +138,46 @@ class Instabase(calculation.CustomFunctionalCalculation):
         description = "The result calculated relative to the year %d, by re-basing variable %s." % (self.baseyear, infos[0]['name'])
         return [dict(name='rebased', title=title, description=description)] + infos
 
+def SpanInstabase(Instabase):
+    """Re-base the results of a calculation to the average of values between two years.
+    Default func constructs a porportional change; x - y makes simple difference.
+    skip_on_missing: If we never encounter the year and this is false,
+      still print out the existing results.
+    """
+    def __init__(self, subcalc, year1, year2, func=lambda x, y: x / y, units='portion', skip_on_missing=True):
+        super(SpanInstabase, self).__init__(subcalc, (year1 + year2) / 2, func, skip_on_missing)
+        self.year1 = year1
+        self.year2 = year2
+        self.denomterms = []
+
+    def latexhandler(self, equation, baseyear, func, skip_on_missing):
+        for eqnstr in latextools.call(func, self.unitses[0], "Re-basing function", equation, r"Average\left[%s\right]_{%d \le t le %d}" % (equation, self.year1, self.year2)):
+            yield eqnstr
+
+    def pushhandler(self, yyyyddd, weather, baseyear, func, skip_on_missing):
+        """
+        Returns an interator of (yyyy, value, ...).
+        """
+        for yearresult in self.subapp.push(yyyyddd, weather):
+            year = yearresult[0]
+            result = yearresult[1]
+
+            # Should we base everything off this year?
+            if year == self.year2:
+                self.denom = np.mean(self.denomterms)
+
+                # Print out all past results, reb-ased
+                for self.pastresult in self.pastresults:
+                    yield [self.pastresult[0], func(self.pastresult[1], self.denom)] + list(self.pastresult[1:])
+
+            if self.denom is None:
+                # Keep track of this until we have a base
+                self.pastresults.append(yearresult)
+                self.denomterms.append(result)
+            else:
+                # calculate this and tack it on
+                yield [year, func(result, self.denom)] + list(yearresult[1:])
+
 def make_runaverage(make_generator, priors, weights, unshift=False):
     """Generate results as an N-year running average;
     priors: list of size N, with the values to use before we get data
