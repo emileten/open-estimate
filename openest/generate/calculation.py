@@ -24,6 +24,7 @@ class Calculation(object):
         raise NotImplementedError()
 
 class FunctionalCalculation(Calculation):
+    """Calculation that calls a handler when it's applied."""
     def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
         if unshift:
             super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses)
@@ -74,6 +75,7 @@ class Application(object):
         pass
 
 class CustomFunctionalCalculation(FunctionalCalculation, Application):
+    """Calculation that creates a copy of itself for an application."""
     def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
         super(CustomFunctionalCalculation, self).__init__(subcalc, from_units, to_units, unshift, *handler_args, **handler_kw)
         self.subapp = None
@@ -85,7 +87,7 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
         allkwargs = self.handler_kw.copy()
         allkwargs.update(kwargs)
 
-        app = self.__class__(self.subcalc, *allargs, **allkwargs)
+        app = self.copy()
         app.subapp = subapp
 
         return app
