@@ -138,14 +138,14 @@ class Instabase(calculation.CustomFunctionalCalculation):
         description = "The result calculated relative to the year %d, by re-basing variable %s." % (self.baseyear, infos[0]['name'])
         return [dict(name='rebased', title=title, description=description)] + infos
 
-def SpanInstabase(Instabase):
+class SpanInstabase(Instabase):
     """Re-base the results of a calculation to the average of values between two years.
     Default func constructs a porportional change; x - y makes simple difference.
     skip_on_missing: If we never encounter the year and this is false,
       still print out the existing results.
     """
     def __init__(self, subcalc, year1, year2, func=lambda x, y: x / y, units='portion', skip_on_missing=True):
-        super(SpanInstabase, self).__init__(subcalc, (year1 + year2) / 2, func, skip_on_missing)
+        super(SpanInstabase, self).__init__(subcalc, (year1 + year2) / 2, func, units, skip_on_missing)
         self.year1 = year1
         self.year2 = year2
         self.denomterms = []
