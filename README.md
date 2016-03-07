@@ -13,3 +13,9 @@ pip install numpy
 pip install scipy
 pip install emcee
 ```
+
+Install the package by calling
+```
+python setup.py install
+```
+(or use `develop` rather than install if you'll be editing the code).
