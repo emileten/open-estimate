@@ -1,6 +1,6 @@
 import numpy as np
-from generate.daily import YearlyDayBins, Constant
-from generate.functions import Scale, Instabase
+from ..generate.daily import YearlyDayBins, Constant
+from ..generate.functions import Scale, Instabase
 from test_daily import test_model
 
 def test_Scale():

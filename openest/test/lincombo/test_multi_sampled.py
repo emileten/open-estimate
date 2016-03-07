@@ -1,5 +1,5 @@
 import numpy as np
-from lincombo.multi_sampled import *
+from ..lincombo.multi_sampled import *
 from scipy.stats import multivariate_normal
 from numpy.testing import *
 

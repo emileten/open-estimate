@@ -1,4 +1,4 @@
-from lincombo.pooling import *
+from ..lincombo.pooling import *
 from numpy.testing import *
 
 def test_disagg():
