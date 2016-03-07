@@ -27,8 +27,8 @@ class MonthlyDayBins(Calculation):
         yield ("T_d", "Temperature", "deg. C")
         yield ("%s(\cdot)" % (funcvar), str(self.model), self.unitses[0])
 
-    def apply(self, fips):
-        def generate(fips, year, temps, **kw):
+    def apply(self, region):
+        def generate(region, year, temps, **kw):
             temps = self.weather_change(temps)
             results = self.spline(temps)
 
@@ -37,7 +37,7 @@ class MonthlyDayBins(Calculation):
             if not np.isnan(result):
                 yield (year, result)
 
-        return ApplicationByYear(fips, generate)
+        return ApplicationByYear(region, generate)
 
     def column_info(self):
         description = "The combined result of daily temperatures, organized into bins according to %s, divided by 12 to describe monthly effects." % (str(self.model))
@@ -61,14 +61,19 @@ class YearlyDayBins(Calculation):
         yield ("T_d", "Temperature", "deg. C")
         yield ("%s(\cdot)" % (funcvar), str(self.model), self.unitses[0])
 
-    def apply(self, fips):
-        def generate(fips, year, temps, **kw):
-            result = np.sum(self.spline(temps))
+    def apply(self, region, *args):
+        if isinstance(self.spline, AdaptableCurve):
+            spline = self.spline.create(region, *args)
+        else:
+            spline = self.spline
+            
+        def generate(region, year, temps, **kw):
+            result = np.sum(spline(temps))
 
             if not np.isnan(result):
                 yield (year, result)
 
-        return ApplicationByYear(fips, generate)
+        return ApplicationByYear(region, generate)
 
     def column_info(self):
         description = "The combined result of daily temperatures, organized into bins according to %s." % (str(self.model))
@@ -93,8 +98,8 @@ class AverageByMonth(Calculation):
         yield ("T_d", "Temperature", "deg. C")
         yield ("%s(\cdot)" % (funcvar), str(self.model), self.unitses[0])
 
-    def apply(self, fips):
-        def generate(fips, year, temps, **kw):
+    def apply(self, region):
+        def generate(region, year, temps, **kw):
             bymonth = []
             for mm in range(12):
                 avgmonth = np.mean(temps[self.transitions[mm]-self.days_bymonth[mm]:self.transitions[mm]])
@@ -104,7 +109,7 @@ class AverageByMonth(Calculation):
             if not np.isnan(result):
                 yield (year, func(result))
 
-        return ApplicationByYear(fips, generate)
+        return ApplicationByYear(region, generate)
 
     def column_info(self):
         description = "The effects of monthly average temperatures, organized into bins according to %s, averaged over months." % (str(self.model))
@@ -118,8 +123,8 @@ class PercentWithin(Calculation):
     def latex(self):
         pass
 
-    def apply(self, fips):
-        def generate(fips, year, temps, **kw):
+    def apply(self, region):
+        def generate(region, year, temps, **kw):
             results = []
             for ii in range(len(self.endpoints)-1):
                 result = np.sum(temps > self.endpoints[ii]) - np.sum(temps > self.endpoints[ii+1])
@@ -129,7 +134,7 @@ class PercentWithin(Calculation):
 
             yield tuple([year] + results)
 
-        return ApplicationByYear(fips, generate)
+        return ApplicationByYear(region, generate)
 
     def column_info(self):
         return [dict(name='bin' + str(ii), title="Portion in bin " + str(ii), description="The portion of each year falling between %f and %f" % (self.endpoints[ii], self.endpoints[ii+1])) for ii in range(len(self.endpoints)-1)]
