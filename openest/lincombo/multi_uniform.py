@@ -18,7 +18,10 @@ class MultivariateUniform(multi_rv_frozen):
 
     # XXX: This doesn't handle size properly
     def rvs(self, size=1, random_state=None):
-        return uniform.rvs(self.mins, self.maxs - self.mins, size=size, random_state=random_state)
+        if size == 1:
+            return uniform.rvs(self.mins, self.maxs - self.mins, size=len(self.mins), random_state=random_state)
+        else:
+            return uniform.rvs(self.mins, self.maxs - self.mins, size=(size, len(self.mins)), random_state=random_state)            
 
     def pdf(self, xxs):
         for ii in range(len(xxs)):

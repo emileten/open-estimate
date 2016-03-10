@@ -1,4 +1,4 @@
-from ..lincombo.hiernorm import *
+from openest.lincombo.hiernorm import *
 from numpy.testing import *
 
 #lincombo_hiernorm = lincombo_hiernorm_taubybeta

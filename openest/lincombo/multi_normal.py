@@ -15,3 +15,6 @@ class MultivariateNormal(multi_rv_frozen):
 
     def pdf(self, xxs):
         return multivariate_normal.pdf(xxs, self.means, self.big_sigma)
+
+    def logpdf(self, xxs):
+        return multivariate_normal.logpdf(xxs, self.means, self.big_sigma)

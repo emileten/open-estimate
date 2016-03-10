@@ -1,7 +1,7 @@
 import numpy as np
-from ..models.bin_model import BinModel
-from ..models.spline_model import SplineModel
-from ..generate.daily import YearlyDayBins, Constant
+from openest.models.bin_model import BinModel
+from openest.models.spline_model import SplineModel
+from openest.generate.daily import YearlyDayBins, Constant
 
 test_model = BinModel([-40, 0, 80], SplineModel.create_gaussian({0: (0, 1), 1: (1, 1)}, order=range(2)))
 
