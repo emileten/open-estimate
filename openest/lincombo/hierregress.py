@@ -128,3 +128,5 @@ def lincombo_hierregress_taubybeta(yy, stderrs, XX, maxtau=None, guess_range=Fal
 
 def get_sampled_column(allvals, col):
     return [allvals[ii][col] for ii in range(len(allvals))]
+
+lincombo_hierregress = lincombo_hierregress_taubymu
