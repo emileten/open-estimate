@@ -33,8 +33,6 @@ def probability_tau(mus, tau, yy, stdvars, XX, probability_prior_tau):
 
     betahats = np.dot(XX, np.transpose(np.matrix(mus)))
 
-    print probability_prior_tau.logpdf(tau), mv_betahat_given_tau.logpdf(np.transpose(betahats)), mv_mu_given_tau.logpdf(mus)
-
     return np.exp(probability_prior_tau.logpdf(tau) + mv_betahat_given_tau.logpdf(np.transpose(betahats)) - mv_mu_given_tau.logpdf(mus))
 
 def sample_posterior(yy, stderrs, XX, taudist, draws=100):
