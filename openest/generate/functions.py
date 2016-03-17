@@ -45,6 +45,42 @@ class Scale(calculation.Calculation):
         description = "Computed from the %s variable, as %s." % (infos[0]['name'], equation)
         return [dict(name='scaled', title=title, description=description)] + infos
 
+"""
+Transform all results by a function.
+"""
+class Transform(calculation.Calculation):
+    def __init__(self, subcalc, from_units, to_units, func, description, long_description):
+        super(Transform, self).__init__([to_units] + subcalc.unitses)
+        assert(subcalc.unitses[0] == from_units)
+
+        self.subcalc = subcalc
+        self.func = func
+        self.description = description
+        self.long_description = long_description
+        self.from_units = from_units
+
+    def latex(self, *args, **kwargs):
+        for (key, value, units) in self.subcalc.latex(*args, **kwargs):
+            if key == "Equation":
+                for eqnstr in latextools.call(self.func, self.unitses[0], description, value):
+                    yield eqnstr
+            else:
+                yield (key, value, units)
+
+    def apply(self, region, *args, **kwargs):
+        def generate(year, result):
+            return self.func(result)
+
+        # Prepare the generator from our encapsulated operations
+        subapp = self.subcalc.apply(region, *args, **kwargs)
+        return calculation.ApplicationPassCall(region, subapp, generate, unshift=True)
+
+    def column_info(self):
+        infos = self.subcalc.column_info()
+        title = description
+        description = long_description
+        return [dict(name='transformed', title=title, description=description)] + infos
+
 ## make-apply logic for generating make_generators
 
 def make(handler, make_generator, *handler_args, **handler_kw):
