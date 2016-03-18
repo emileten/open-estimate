@@ -1,7 +1,9 @@
+import numpy as np
 from scipy.stats import norm
 import statsmodels.api as sm
 
 def regress_draws(means, serrs, XX, count=1000):
+    print "Making MC draws..."
     betas = []
     for ii in range(count):
         yy = norm.rvs(means, serrs, 1)
