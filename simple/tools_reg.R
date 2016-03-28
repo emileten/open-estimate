@@ -43,7 +43,12 @@ get.coef.clust <- function(mod, cluster, var=c()) {
   if (!is.null(not)) {
     cluster <- cluster[-not]
   }
-
+  
+  ## Drop unused factor levels
+  if (is.factor(cluster)) {
+    cluster <- droplevels(cluster)
+  }
+  
   ## Calculate the covariance matrix
   M <- length(unique(cluster))
   N <- length(cluster)
@@ -81,6 +86,11 @@ get.conf.clust <- function(mod, cluster, xx, alpha, var=c()) {
     not <- attr(mod$model,"na.action")
     if (!is.null(not)) {
         cluster <- cluster[-not]
+    }
+    
+    ## Drop unused factor levels
+    if (is.factor(cluster)) {
+      cluster <- droplevels(cluster)
     }
     
     ## Calculate the covariance matrix

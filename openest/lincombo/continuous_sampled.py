@@ -35,7 +35,7 @@ class ContinuousSampled(rv_continuous):
 
         while max(values) < 1e-10: # assume that this isn't intended
             samples = np.random.uniform(mini, maxi, count)
-            values = self.pdf(samples) # count values
+            values = np.array(self.pdf(samples))[:, 0] # count values
 
         cutoff = max(values) / 1e4 # ignore anything less than this
         aboves = values >= cutoff
