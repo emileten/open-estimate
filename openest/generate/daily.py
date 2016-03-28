@@ -4,8 +4,9 @@ import latextools
 from calculation import Calculation, Application, ApplicationByYear
 from ..models.model import Model
 from ..models.spline_model import SplineModel
+from ..models.bin_model import BinModel
 from ..models.memoizable import MemoizedUnivariate
-from ..models.curve import UnivariateCurve, AdaptableCurve
+from ..models.curve import UnivariateCurve, AdaptableCurve, StepCurve
 
 # Generate integral over daily temperature
 class MonthlyDayBins(Calculation):
@@ -14,6 +15,8 @@ class MonthlyDayBins(Calculation):
         self.model = model
         if isinstance(model, UnivariateCurve):
             spline = model
+        elif isinstance(model, BinModel):
+            spline = StepCurve(model.get_xx(), [model.eval_pval(x, pval) for x in model.get_xx_centers()])
         else:
             model = MemoizedUnivariate(model)
             model.set_x_cache_decimals(1)
@@ -33,7 +36,7 @@ class MonthlyDayBins(Calculation):
             temps = self.weather_change(temps)
             results = self.spline(temps)
 
-            result = np.sum(results) / 12
+            result = np.nansum(results) / 12
 
             if not np.isnan(result):
                 yield (year, result)
@@ -51,6 +54,8 @@ class YearlyDayBins(Calculation):
 
         if isinstance(model, UnivariateCurve):
             self.spline = model
+        elif isinstance(model, BinModel):
+            self.spline = StepCurve(model.get_xx(), [model.eval_pval(x, pval) for x in model.get_xx_centers()])
         else:
             memomodel = MemoizedUnivariate(model)
             memomodel.set_x_cache_decimals(1)
@@ -69,7 +74,7 @@ class YearlyDayBins(Calculation):
             spline = self.spline
             
         def generate(region, year, temps, **kw):
-            result = np.sum(spline(temps))
+            result = np.nansum(spline(temps))
 
             if not np.isnan(result):
                 yield (year, result)
