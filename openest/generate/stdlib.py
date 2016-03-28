@@ -4,3 +4,7 @@ from functions import *
 
 def logscalefunc(x, s):
     return s * (np.exp(x) - 1)
+
+def c2f(x):
+    return x * 1.8 + 32
+

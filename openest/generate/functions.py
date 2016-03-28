@@ -62,7 +62,7 @@ class Transform(calculation.Calculation):
     def latex(self, *args, **kwargs):
         for (key, value, units) in self.subcalc.latex(*args, **kwargs):
             if key == "Equation":
-                for eqnstr in latextools.call(self.func, self.unitses[0], description, value):
+                for eqnstr in latextools.call(self.func, self.unitses[0], self.description, value):
                     yield eqnstr
             else:
                 yield (key, value, units)
@@ -77,8 +77,8 @@ class Transform(calculation.Calculation):
 
     def column_info(self):
         infos = self.subcalc.column_info()
-        title = description
-        description = long_description
+        title = self.description
+        description = self.long_description
         return [dict(name='transformed', title=title, description=description)] + infos
 
 ## make-apply logic for generating make_generators

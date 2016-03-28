@@ -42,7 +42,7 @@ from memoizable import MemoizableUnivariate
 
 class BinModel(UnivariateModel, MemoizableUnivariate):
     def __init__(self, xx=None, model=None):
-        super(BinModel, self).__init__(False, xx, model.scaled)
+        super(BinModel, self).__init__(False, xx, model.scaled if model is not None else False)
 
         self.model = model
 
@@ -116,7 +116,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
     def draw_sample(self, x=None):
         return self.model.draw_sample(self.get_bin_at(x))
 
-    def init_from_bin_file(self, file, delimiter, status_callback=None):
+    def init_from_bin_file(self, file, delimiter, status_callback=None, init_submodel=lambda fp: None):
         line = string.strip(file.readline())
         if line != "bin1":
             raise ValueError("Unknown format: %s" % (line))
@@ -127,7 +127,8 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         self.xx = map(float, row)
         self.xx_is_categorical = False
 
-        self.model = None # Need to set this!
+        self.model = init_submodel(file) # Need to set this!
+        self.scaled = self.model.scaled
 
         return self
 

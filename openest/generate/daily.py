@@ -11,6 +11,7 @@ from ..models.curve import UnivariateCurve, AdaptableCurve
 class MonthlyDayBins(Calculation):
     def __init__(self, model, units, pval=.5, weather_change=lambda temps: temps):
         super(MonthlyDayBins, self).__init__([units])
+        self.model = model
         if isinstance(model, UnivariateCurve):
             spline = model
         else:
@@ -72,6 +73,9 @@ class YearlyDayBins(Calculation):
 
             if not np.isnan(result):
                 yield (year, result)
+
+            if isinstance(self.spline, AdaptableCurve):
+                spline.update(year, temps)
 
         return ApplicationByYear(region, generate)
 
