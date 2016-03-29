@@ -8,9 +8,9 @@ test_model = BinModel([-40, 0, 80], SplineModel.create_gaussian({0: (0, 1), 1: (
 def test_YearlyDayBins():
     application = YearlyDayBins(test_model, 'days').test()
     for (year, result) in application.push(1000 + np.arange(365), [-10] * 300 + [10] * 65):
-        np.testing.assert_equal(result, 65. / 365.)
+        np.testing.assert_equal(result, 65.)
     for (year, result) in application.push(2000 + np.arange(365), [-10] * 65 + [10] * 300):
-        np.testing.assert_equal(result, 300. / 365.)
+        np.testing.assert_equal(result, 300.)
 
 def test_Constant():
     application = Constant(33, 'widgets').test()
