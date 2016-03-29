@@ -311,8 +311,8 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
 
         for key in (xxs if order is None else order):
             xx.append(key)
-            mean = xxs[key][0]
-            var = xxs[key][1]
+            mean = float(xxs[key][0])
+            var = float(xxs[key][1])
             conditional = SplineModelConditional.make_gaussian(SplineModel.neginf, SplineModel.posinf, mean, var)
             conditionals.append(conditional)
 
