@@ -20,7 +20,7 @@ def test_Instabase():
     for yearresult in application.push(1000 + np.arange(365), [-10] * 300 + [10] * 65):
         np.testing.assert_equal(True, False) # Should get nothing here
     for yearresult in application.push(2000 + np.arange(365), [-10] * 65 + [10] * 300):
-        if year[0] == 1:
+        if yearresult[0] == 1:
             np.testing.assert_equal(yearresult[1], 300. / 65.)
-        if year[0] == 2:
+        if yearresult[0] == 2:
             np.testing.assert_equal(yearresult[1], 1.)

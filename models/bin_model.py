@@ -88,11 +88,11 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         self.model.write(file, delimiter)
 
     def get_bin_at(self, x):
-        for ii in range(1, len(self.xx)):
-            if self.xx[ii-1] <= x and self.xx[ii] > x:
+        for ii in range(len(self.xx)):
+            if self.xx[ii] <= x and self.xx[ii+1] > x:
                 return ii
 
-        return 0
+        return -1
 
     def to_points_at(self, x, ys):
         return self.model.to_points_at(self.get_bin_at(x), ys)
