@@ -10,8 +10,8 @@ class MultivariateNormal(multi_rv_frozen):
         # Variance-covariance matrix
         self.big_sigma = big_sigma
 
-    def rvs(self, size=1, random_state=None):
-        return multivariate_normal.rvs(self.means, self.big_sigma, size=size, random_state=random_state)
+    def rvs(self, size=1):
+        return multivariate_normal.rvs(self.means, self.big_sigma, size=size)
 
     def pdf(self, xxs):
         return multivariate_normal.pdf(xxs, self.means, self.big_sigma)

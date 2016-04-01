@@ -193,6 +193,10 @@ class SpanInstabase(Instabase):
         for eqnstr in latextools.call(func, self.unitses[0], "Re-basing function", equation, r"Average\left[%s\right]_{%d \le t le %d}" % (equation, self.year1, self.year2)):
             yield eqnstr
 
+    def init_apply(self):
+        self.denomterms = [] # don't copy this across instances!
+        self.pastresults = []
+
     def pushhandler(self, yyyyddd, weather, baseyear, func, skip_on_missing):
         """
         Returns an interator of (yyyy, value, ...).
@@ -203,16 +207,18 @@ class SpanInstabase(Instabase):
 
             # Should we base everything off this year?
             if year == self.year2:
+                self.denomterms.append(result)
                 self.denom = np.mean(self.denomterms)
 
-                # Print out all past results, reb-ased
+                # Print out all past results, re-based
                 for self.pastresult in self.pastresults:
                     yield [self.pastresult[0], func(self.pastresult[1], self.denom)] + list(self.pastresult[1:])
 
             if self.denom is None:
                 # Keep track of this until we have a base
                 self.pastresults.append(yearresult)
-                self.denomterms.append(result)
+                if year >= self.year1:
+                    self.denomterms.append(result)
             else:
                 # calculate this and tack it on
                 yield [year, func(result, self.denom)] + list(yearresult[1:])
