@@ -133,7 +133,8 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         self.xx_is_categorical = False
 
         self.model = init_submodel(file) # Need to set this!
-        self.scaled = self.model.scaled
+        if self.model is not None:
+            self.scaled = self.model.scaled
 
         return self
 
