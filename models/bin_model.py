@@ -180,10 +180,12 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         midpts = (allxx[1:] + allxx[:-1]) / 2
         midpts[midpts == -np.inf] = min(allxx[allxx > -np.inf]) - 10.
         midpts[midpts == np.inf] = max(allxx[allxx < np.inf]) + 10.
-        
+
         newmodels = []
         for model in models:
-            newmodel = model.model.recategorize_x(map(lambda x: model.model.get_xx()[model.get_bin_at(x)], midpts), range(0, len(allxx)))
+            allbins = [model.get_bin_at(x) for x in midpts]
+            allxxs = [model.model.get_xx()[bin] if bin >= 0 else np.nan for bin in allbins]
+            newmodel = model.model.recategorize_x(allxxs, range(0, len(allxx)))
             newmodels.append(BinModel(allxx, newmodel))
 
         return newmodels
