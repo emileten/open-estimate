@@ -132,7 +132,10 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
     def recategorize_x(self, oldxx, newxx):
         conditionals = []
         for ii in range(len(oldxx)):
-            conditionals.append(self.get_conditional(oldxx[ii]))
+            if oldxx[ii] == -1: # Not available
+                conditionals.append(SplineModelConditional.make_gaussian(-np.inf, np.inf, np.nan, np.nan))
+            else:
+                conditionals.append(self.get_conditional(oldxx[ii]))
 
         return SplineModel(True, newxx, conditionals, scaled=self.scaled)
 
@@ -268,7 +271,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
 
             if status_callback:
                 status_callback("Parsing...", reader.line_num / (reader.line_num + 3.0))
-
+                
         if self.scaled:
             for conditional in self.conditionals:
                 conditional.rescale()

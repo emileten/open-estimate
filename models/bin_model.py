@@ -93,7 +93,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         self.model.write(file, delimiter)
 
     def get_bin_at(self, x):
-        for ii in range(len(self.xx)):
+        for ii in range(len(self.xx)-1):
             if self.xx[ii] <= x and self.xx[ii+1] > x:
                 return ii
 
@@ -111,7 +111,9 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
     def get_mean(self, x=None, index=None):
         if index is None:
             index = self.get_bin_at(x)
-        return self.model.get_mean(index)
+            if index == -1:
+                return np.nan
+        return self.model.get_mean(self.model.get_xx()[index])
 
     def get_sdev(self, x=None, index=None):
         if index is None:
@@ -176,9 +178,12 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
 
         allxx = np.array(sorted(allxx))
         midpts = (allxx[1:] + allxx[:-1]) / 2
+        midpts[midpts == -np.inf] = min(allxx[allxx > -np.inf]) - 10.
+        midpts[midpts == np.inf] = max(allxx[allxx < np.inf]) + 10.
+        
         newmodels = []
         for model in models:
-            newmodel = model.model.recategorize_x(map(model.get_bin_at, midpts), range(1, len(allxx)))
+            newmodel = model.model.recategorize_x(map(lambda x: model.model.get_xx()[model.get_bin_at(x)], midpts), range(0, len(allxx)))
             newmodels.append(BinModel(allxx, newmodel))
 
         return newmodels
