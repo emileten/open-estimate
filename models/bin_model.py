@@ -185,7 +185,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         for model in models:
             allbins = [model.get_bin_at(x) for x in midpts]
             allxxs = [model.model.get_xx()[bin] if bin >= 0 else np.nan for bin in allbins]
-            newmodel = model.model.recategorize_x(allxxs, range(0, len(allxx)))
+            newmodel = model.model.recategorize_x(allxxs, range(0, len(allxx)-1))
             newmodels.append(BinModel(allxx, newmodel))
 
         return newmodels
@@ -197,7 +197,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
 
         allmodel = Model.merge(map(lambda m: m.model, newmodels))
 
-        model = BinModel(allxx, allmodel)
+        model = BinModel(newmodels[0].get_xx(), allmodel)
 
         return model
 
