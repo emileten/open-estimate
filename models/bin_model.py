@@ -193,7 +193,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
     # All models are BinModels
     @staticmethod
     def merge(models):
-        newmodels = consistent_bins(models)
+        newmodels = BinModel.consistent_bins(models)
 
         allmodel = Model.merge(map(lambda m: m.model, newmodels))
 

@@ -312,6 +312,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
 
     @staticmethod
     def create_gaussian(xxs, order=None, xx_is_categorical=True):
+        """xxs should be a dictionary of the form {x: (mean, variance)}."""
         conditionals = []
         xx = []
 
