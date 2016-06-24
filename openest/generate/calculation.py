@@ -1,5 +1,6 @@
 import copy
 import weathertools
+import numpy as np
 
 class Calculation(object):
     def __init__(self, unitses):
@@ -154,6 +155,7 @@ class ApplicationByChunks(Application):
     def push(self, yyyyddd, values):
         self.saved_yyyyddd.extend(yyyyddd)
         self.saved_values.extend(values)
+            
         return self.push_saved(self.saved_yyyyddd, self.saved_values)
 
     def push_saved(self, yyyyddd, values):
@@ -170,6 +172,14 @@ class ApplicationByYear(ApplicationByChunks):
         self.args = args
         self.kwargs = kwargs
 
+    def push(self, yyyyddd, values):
+        # If this is pre-binned, handle it here
+        if hasattr(values, 'shape') and len(values.shape) > 1 and values.shape[0] == 12:
+            for values in self.func(self.region, yyyyddd[0] // 1000, values, *self.args, **self.kwargs):
+                yield values
+        else:
+            super(ApplicationByYear, self).push(yyyyddd, values)
+
     def push_saved(self, yyyyddd, allvalues):
         """
         Returns an interator of (yyyy, value, ...).
@@ -177,7 +187,7 @@ class ApplicationByYear(ApplicationByChunks):
         """
         for year, values in weathertools.yearly_daily_ncdf(yyyyddd, allvalues):
             if len(values) < 365:
-                self.saved_yyyyddd = year * 1000 + np.arange(len(values)) + 1
+                self.saved_yyyyddd = list(year * 1000 + np.arange(len(values)) + 1)
                 self.saved_values = values
                 return
 

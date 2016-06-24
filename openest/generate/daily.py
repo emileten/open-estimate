@@ -53,10 +53,13 @@ class YearlyDayBins(Calculation):
         self.model = model
 
         if isinstance(model, UnivariateCurve):
+            self.xx = model.get_xx()
             self.spline = model
         elif isinstance(model, BinModel):
+            self.xx = model.get_xx_centers()
             self.spline = StepCurve(model.get_xx(), [model.eval_pval(x, pval) for x in model.get_xx_centers()])
         else:
+            self.xx = model.get_xx()
             memomodel = MemoizedUnivariate(model)
             memomodel.set_x_cache_decimals(1)
             self.spline = memomodel.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
@@ -74,7 +77,15 @@ class YearlyDayBins(Calculation):
             spline = self.spline
             
         def generate(region, year, temps, **kw):
-            result = np.nansum(spline(temps))
+            if len(temps.shape) == 2:
+                if temps.shape[0] == 12 and temps.shape[1] == len(self.xx):
+                    yy = spline(self.xx)
+                    yy[np.isnan(yy)] = 0
+                    result = np.sum(temps.dot(yy))
+                else:
+                    raise RuntimeError("Unknown format for temps: " + str(temps.shape[0]) + " x " + str(temps.shape[1]) + " <> len " + str(self.xx))
+            else:
+                result = np.nansum(spline(temps))
 
             if not np.isnan(result):
                 yield (year, result)
