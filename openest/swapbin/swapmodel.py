@@ -20,9 +20,9 @@ def find_bins(means, sdevs, beta, vcv):
         mean_errors = (np.array(beta) - means[ii]) ** 2
         sdev_errors = (np.sqrt(np.array(vcv).diagonal()) - sdevs[ii]) ** 2
         errors = mean_errors + sdev_errors
-        
+
         index = np.argmin(errors)
-        if errors[index] < 1e-6 * means[ii]:
+        if errors[index] < 1e-6 * np.abs(means[ii]):
             bins.append(index)
         else:
             raise LookupError("Cannot find " + str(means[ii]) + " +- " + str(sdevs[ii]))

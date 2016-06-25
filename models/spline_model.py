@@ -130,9 +130,10 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
 
     # Only for categorical models
     def recategorize_x(self, oldxx, newxx):
+        """Construct a new model with categorical x values 'newxx', using the conditionals currently assigned to categorical x values 'oldxx'."""
         conditionals = []
         for ii in range(len(oldxx)):
-            if oldxx[ii] == -1 or (not isinstance(oldxx[ii], str) and np.isnan(oldxx[ii])): # Not available
+            if oldxx[ii] == -1 or (not isinstance(oldxx[ii], str) and not isinstance(oldxx[ii], unicode) and np.isnan(oldxx[ii])): # Not available
                 conditionals.append(SplineModelConditional.make_gaussian(-np.inf, np.inf, np.nan, np.nan))
             else:
                 conditionals.append(self.get_conditional(oldxx[ii]))
@@ -217,7 +218,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         return len(conditional.y0s) == 1 and len(conditional.coeffs[0]) == 3
 
     def get_mean(self, x=None):
-        if not isinstance(x, str) and np.isnan(x):
+        if not isinstance(x, str) and not isinstance(x, unicode) and np.isnan(x):
             return np.nan
 
         conditional = self.get_conditional(x)
@@ -348,7 +349,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
     @staticmethod
     def merge(models):
         for model in models:
-            if not model.scaled:
+              if not model.scaled:
                 raise ValueError("Only scaled distributions can be merged.")
 
         (models, xx) = UnivariateModel.intersect_x_all(models)
@@ -370,7 +371,8 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
                         if modcond.y0s[kk] <= y0 and modcond.y1s[kk] > y0:
                             if modcond.y1s[kk] < y1:
                                 y1 = modcond.y1s[kk]
-                            coeffs[0:len(modcond.coeffs[kk])] = np.array(coeffs[0:len(modcond.coeffs[kk])]) + np.array(modcond.coeffs[kk])
+                            if np.all(np.isfinite(modcond.coeffs[kk])): # Ignore NA and Inf
+                                coeffs[0:len(modcond.coeffs[kk])] = np.array(coeffs[0:len(modcond.coeffs[kk])]) + np.array(modcond.coeffs[kk])
 
                 while len(coeffs) > 0 and coeffs[-1] == 0:
                     coeffs = coeffs[0:-1]
@@ -814,6 +816,11 @@ class SplineModelConditional():
 
     @staticmethod
     def find_nearest(array, value, within):
+        if isinstance(value, str) or isinstance(value, unicode):
+            try:
+                value = int(value)
+            except:
+                raise ValueError("Cannot apply find_nearest to categorical values.")
         idx = (np.abs(np.array(array)-value)).argmin()
         return within[idx]
 

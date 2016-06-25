@@ -64,7 +64,10 @@ def simulate_normal_model(means, serrs, count, taus=None, do_thetas=False):
     for ii in range(count):
         tau = rands[ii]
         (vari_tau_sqrs, v_mu, mu_hat) = helper_params(means, varis, tau)
-        mu = norm.rvs(size=1, loc=mu_hat, scale=math.sqrt(v_mu))
+        if np.isnan(mu_hat):
+            mu = np.nan
+        else:
+            mu = norm.rvs(size=1, loc=mu_hat, scale=math.sqrt(v_mu))
 
         results[ii, 0] = tau
         results[ii, 1] = mu
