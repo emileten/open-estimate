@@ -43,7 +43,7 @@ def polynomial(lowbound, highbound, betas, covas, num=40):
     xx = np.linspace(lowbound, highbound, num=num)
     xxs = {}
     for x in xx:
-        xvec = np.mat([[1, x, x**2, x**3][0:len(betas)]])
+        xvec = np.mat([[1, x, x**2, x**3, x**4][0:len(betas)]])
         serr = np.sqrt(xvec * covas * np.transpose(xvec))
         xxs[x] = (betas.dot(np.squeeze(np.asarray(xvec))), serr[0,0])
 

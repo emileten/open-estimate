@@ -115,4 +115,66 @@ The posterior can be sampled by first sampling $\tau$ from its
 posterior, and then applying that value to the posteriors for
 $\hat\beta$ and $\alpha$.
 
+\subsection{Combinations of estimates}
+
+Whereas the sections above ask how one can get individual estimates
+from various combinations, here we ask what the right way is to
+combine component estimates.
+
+\newpage
+Let there be multiple studies, indexed by $i$ with the following
+regression:
+\[
+y_i = X_i \beta_i + \epsilon_i
+\]
+and producing results:
+\begin{align*}
+  \hat\beta_i &= (X_i' X_i)^{-1} X_i' y \\
+  \hat\Sigma_i &= \hat\sigma_i^2 (X_i' X_i)^{-1}
+\end{align*}
+with $\hat\sigma_i^2 = \frac{\hat\epsilon'\hat\epsilon}{n - k}$, as normal.
+
+We now want to recover the result that would have been produced by
+pooling the observations.
+\[
+\left(\begin{array}{c}
+        y_1 \\
+        y_2 \\
+        \vdots
+      \end{array}\right) = 
+    \left(\begin{array}{c}
+            X_1 \\
+            X_2 \\
+            \vdots
+          \end{array}\right) \beta + \left(\begin{array}{c}
+                                             \epsilon_1 \\
+                                             \epsilon_2 \\
+                                             \vdots
+                                           \end{array}\right)
+\]
+
+The coefficients estimate is
+\begin{align*}
+\hat\beta &= \left(\sum_i X_i' X_i\right)^{-1}
+            \left(\sum_i X_i' y_i\right) \\
+          &= \left(\sum_i \hat\sigma_i^2 \hat\Sigma_i^{-1}\right)^{-1}
+            \left(\sum_i \hat\sigma_i^2 \hat\Sigma_i^{-1} \hat\beta_i \right) \\
+\end{align*}
+
+Determining the variance-covariance matrix is difficult, because it is
+not possible to recover $\hat\epsilon_i = y_i - X_i \hat\beta$.  However,
+we can use a Feasible GLS-like approach, by taking the individual
+estimates of $\sigma_i$ and estimating the HCE matrix:
+\begin{align*}
+  \hat\Sigma &= \left(\sum_i X_i' X_i\right)^{-1} \left(\sum_i \hat\sigma_i^2
+               X_i' X_i\right) \left(\sum_i X_i' X_i\right)^{-1} \\
+             &= \left(\sum_i \hat\Sigma_i / \hat\sigma_i^2\right)^{-1}
+               \left(\sum_i \hat\Sigma_i \right) \left(\sum_i \hat\Sigma_i / \hat\sigma_i^2\right)^{-1}
+\end{align*}
+
+If the estimates share the same error distribution, this simplifies to
+\[
+\hat\Sigma = \sigma^4 \left(\sum_i \hat\Sigma_i\right)^{-1}
+\]
+
 \end{document}
