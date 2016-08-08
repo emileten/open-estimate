@@ -155,7 +155,7 @@ class ApplicationByChunks(Application):
     def push(self, yyyyddd, values):
         self.saved_yyyyddd.extend(yyyyddd)
         self.saved_values.extend(values)
-            
+        
         return self.push_saved(self.saved_yyyyddd, self.saved_values)
 
     def push_saved(self, yyyyddd, values):
@@ -178,7 +178,8 @@ class ApplicationByYear(ApplicationByChunks):
             for values in self.func(self.region, yyyyddd[0] // 1000, values, *self.args, **self.kwargs):
                 yield values
         else:
-            super(ApplicationByYear, self).push(yyyyddd, values)
+            for values in super(ApplicationByYear, self).push(yyyyddd, values):
+                yield values
 
     def push_saved(self, yyyyddd, allvalues):
         """
