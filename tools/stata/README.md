@@ -89,6 +89,10 @@ dmas_extract_polynomial [Your API Key] [Coefficients, Comma Delimited] [Lower Bo
 
 If you do not specify the last argument (the ID), the most recent result from `dmas_put_model` will be used.
 
+You must specify the coefficients in order, starting with the
+intercept.  To specify a 0-intercept, use '0' for the first
+coefficient name.
+
 **Example:**
 ```
 use http://www.stata-press.com/data/r13/auto
