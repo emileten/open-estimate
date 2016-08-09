@@ -223,6 +223,54 @@ class SpanInstabase(Instabase):
                 # calculate this and tack it on
                 yield [year, func(result, self.denom)] + list(yearresult[1:])
 
+class InstaZScore(calculation.CustomFunctionalCalculation):
+    """
+    Collects up to `baseyear` of values and then uses them to represent all values as a z-score.
+    """
+
+    def __init__(self, subcalc, lastyear, units='z-score'):
+        super(Instabase, self).__init__(subcalc, subcalc.unitses[0], units, True, lastyear)
+        self.lastyear = lastyear
+        self.mean = None # The mean to subtract off
+        self.sdev = None # The sdev to divide by
+        self.pastresults = [] # results before lastyear
+
+    def latexhandler(self, equation, lastyear):
+        raise NotImplementedError()
+
+    def init_apply(self):
+        self.pastresults = [] # don't copy this across instances!
+
+    def pushhandler(self, yyyyddd, weather, lastyear):
+        """
+        Returns an interator of (yyyy, value, ...).
+        """
+        for yearresult in self.subapp.push(yyyyddd, weather):
+            year = yearresult[0]
+            result = yearresult[1]
+
+            # Have we collected all the data?
+            if year == lastyear or (lastyear is None and self.mean is None):
+                self.mean = np.mean(self.pastresults)
+                self.sdev = np.sd(self.pastresults)
+
+                # Print out all past results, now that we have them
+                for self.pastresult in self.pastresults:
+                    yield [self.pastresult[0], (self.pastresult[1] - self.mean) / self.sdev] + list(self.pastresult[1:])
+
+            if self.mean is None:
+                # Keep track of this until we have a base
+                self.pastresults.append(yearresult)
+            else:
+                # calculate this and tack it on
+                yield [year, (result - self.mean) / self.sdev] + list(yearresult[1:])
+
+    def column_info(self):
+        infos = self.subcalc.column_info()
+        title = 'Z-Score of ' + infos[0]['title']
+        description = "Z-scores of %s calculated relative to the years before %d." % (infos[0]['name'], self.lastyear)
+        return [dict(name='zscore', title=title, description=description)] + infos
+
 def make_runaverage(make_generator, priors, weights, unshift=False):
     """Generate results as an N-year running average;
     priors: list of size N, with the values to use before we get data
