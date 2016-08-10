@@ -107,7 +107,21 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
         return self.donehandler(*self.handler_args, **self.handler_kw)
 
     def donehandler(self, *allargs, **allkwargs):
-        pass
+        return []
+
+class ApplicationEach(Application):
+    def __init__(self, region, func, *args, **kwargs):
+        super(ApplicationEach, self).__init__(region)
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def push(self, times, weathers):
+        assert len(times) == len(weathers)
+
+        for ii in range(len(times)):
+            for values in self.func(self.region, times[ii], weathers[ii], *self.args, **self.kwargs):
+                yield values
 
 class ApplicationPassCall(Application):
     """Apply a non-enumerator to all elements of a function.

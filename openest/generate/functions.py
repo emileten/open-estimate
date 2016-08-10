@@ -229,7 +229,7 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
     """
 
     def __init__(self, subcalc, lastyear, units='z-score'):
-        super(Instabase, self).__init__(subcalc, subcalc.unitses[0], units, True, lastyear)
+        super(InstaZScore, self).__init__(subcalc, subcalc.unitses[0], units, True, lastyear)
         self.lastyear = lastyear
         self.mean = None # The mean to subtract off
         self.sdev = None # The sdev to divide by
@@ -251,12 +251,12 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
 
             # Have we collected all the data?
             if year == lastyear or (lastyear is None and self.mean is None):
-                self.mean = np.mean(self.pastresults)
-                self.sdev = np.sd(self.pastresults)
+                self.mean = np.mean(map(lambda mx: mx[1], self.pastresults))
+                self.sdev = np.std(map(lambda mx: mx[1], self.pastresults))
 
                 # Print out all past results, now that we have them
-                for self.pastresult in self.pastresults:
-                    yield [self.pastresult[0], (self.pastresult[1] - self.mean) / self.sdev] + list(self.pastresult[1:])
+                for pastresult in self.pastresults:
+                    yield [pastresult[0], (pastresult[1] - self.mean) / self.sdev] + list(pastresult[1:])
 
             if self.mean is None:
                 # Keep track of this until we have a base
