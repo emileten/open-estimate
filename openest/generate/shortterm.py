@@ -1,5 +1,6 @@
+import copy
 import numpy as np
-from calculation import Calculation, ApplicationEach
+from calculation import Calculation, Application, ApplicationEach
 from curvegen import CurveGenerator
 
 class SingleWeatherApply(Calculation):
@@ -34,9 +35,9 @@ class SingleWeatherApply(Calculation):
         description = "Single value applied to " + self.curve_description
         return [dict(name='response', title='Direct marginal response', description=description)]
 
-class InstaZScoreApply(CustomFunctionalCalculation):
+class InstaZScoreApply(Calculation, Application):
     def __init__(self, units, curve, curve_description, lasttime, weather_change=lambda x: x):
-        super(SingleWeatherApply, self).__init__([units])
+        super(InstaZScoreApply, self).__init__([units])
         if isinstance(curve, CurveGenerator):
             assert curve.depenunits == units
 
@@ -52,30 +53,37 @@ class InstaZScoreApply(CustomFunctionalCalculation):
     def latex(self):
         raise NotImplementedError()
 
-    def init_apply(self):
+    def apply(self, region, *args, **kwargs):
+        app = copy.copy(self)
+
         if isinstance(self.curve, CurveGenerator):
-            self.curve = self.curve.get_curve(region, *args)
+            app.curve = self.curve.get_curve(region, *args)
+        else:
+            app.curve = self.curve
 
-        self.pastweathers = [] # don't copy this across instances!
+        app.pastweathers = [] # don't copy this across instances!
 
-    def pushhandler(self, time, weather, lasttime):
-        weather = self.weather_change(weather)
+        return app
+
+    def push(self, time, weather):
+        time = time[0]
+        weather = self.weather_change(weather[0])
 
         # Have we collected all the data?
-        if year == lasttime or (lasttime is None and self.mean is None):
+        if time == self.lasttime or (self.lasttime is None and self.mean is None):
             self.mean = np.mean(self.pastweathers)
             self.sdev = np.std(self.pastweathers)
 
             # Print out all past weathers, now that we have them
             for pastweather in self.pastweathers:
-                yield [time, curve((pastweather - self.mean) / self.sdev)]
+                yield [time, self.curve((pastweather - self.mean) / self.sdev)]
 
         if self.mean is None:
             # Keep track of this until we have a base
             self.pastweathers.append(weather)
         else:
             # calculate this and tack it on
-            yield [time, curve((weather - self.mean) / self.sdev)]
+            yield [time, self.curve((weather - self.mean) / self.sdev)]
 
     def column_info(self):
         description = "Single value applied to " + self.curve_description

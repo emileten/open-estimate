@@ -73,7 +73,7 @@ class Application(object):
         raise NotImplementedError()
 
     def done(self):
-        pass
+        return []
 
 class CustomFunctionalCalculation(FunctionalCalculation, Application):
     """Calculation that creates a copy of itself for an application."""
