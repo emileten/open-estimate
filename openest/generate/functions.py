@@ -237,9 +237,11 @@ Sum two results
 """
 class Sum(calculation.Calculation):
     def __init__(self, subcalcs):
+        fullunitses = subcalcs[0].unitses[:]
         for ii in range(1, len(subcalcs)):
             assert(subcalcs[0].unitses[0] == subcalcs[ii].unitses[0])
-        super(Sum, self).__init__([subcalcs[0].unitses[0]])
+            fullunitses.extend(subcalcs[ii].unitses)
+        super(Sum, self).__init__([subcalcs[0].unitses[0]] + fullunitses)
 
         self.subcalcs = subcalcs
 
@@ -251,7 +253,7 @@ class Sum(calculation.Calculation):
             return np.sum(results)
 
         # Prepare the generator from our encapsulated operations
-        subapps = [subapp.apply(region, *args, **kwargs) for subapp in self.subapps]
+        subapps = [subcalc.apply(region, *args, **kwargs) for subcalc in self.subcalcs]
         return calculation.ApplicationPassCall(region, subapps, generate, unshift=True)
 
     def column_info(self):

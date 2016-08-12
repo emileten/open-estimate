@@ -147,11 +147,11 @@ class ApplicationPassCall(Application):
         """
         Returns an interator of (yyyy, value, ...).
         """
-        if isinstance(subapp, list):
+        if isinstance(self.subapp, list):
             iterators = [subapp.push(yyyyddd, weather) for subapp in self.subapp]
             for yearresult in iterators[0]:
                 year = yearresult[0]
-                yearresults = [yearressult]
+                yearresults = [yearresult]
                 for ii in range(1, len(iterators)):
                     yearresultii = iterators[ii].next()
                     assert year == yearresultii[0]
