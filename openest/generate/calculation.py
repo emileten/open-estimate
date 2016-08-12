@@ -147,18 +147,40 @@ class ApplicationPassCall(Application):
         """
         Returns an interator of (yyyy, value, ...).
         """
-        for yearresult in self.subapp.push(yyyyddd, weather):
-            year = yearresult[0]
-            # Call handler to get a new value
-            newresult = self.handler(year, yearresult[1], *self.handler_args, **self.handler_kw)
-            if isinstance(newresult, tuple):
-                yield tuple
-            else:
-                # Construct a new year, value result
-                if self.unshift:
-                    yield [year, newresult] + list(yearresult[1:])
+        if isinstance(subapp, list):
+            iterators = [subapp.push(yyyyddd, weather) for subapp in self.subapp]
+            for yearresult in iterators[0]:
+                year = yearresult[0]
+                yearresults = [yearressult]
+                for ii in range(1, len(iterators)):
+                    yearresultii = iterators[ii].next()
+                    assert year == yearresultii[0]
+                    yearresults.append(yearresultii)
+
+                newresult = self.handler(year, yearresults, *self.handler_args, **self.handler_kw)
+                if isinstance(newresult, tuple):
+                    yield tuple
                 else:
-                    yield (year, newresult)
+                    if self.unshift:
+                        fullresult = [year, newresult]
+                        for ii in range(len(yearresults)):
+                            fullresult.extend(yearresults[1:])
+                        yield fullresult
+                    else:
+                        yield (year, newresult)
+        else:
+            for yearresult in self.subapp.push(yyyyddd, weather):
+                year = yearresult[0]
+                # Call handler to get a new value
+                newresult = self.handler(year, yearresult[1], *self.handler_args, **self.handler_kw)
+                if isinstance(newresult, tuple):
+                    yield tuple
+                else:
+                    # Construct a new year, value result
+                    if self.unshift:
+                        yield [year, newresult] + list(yearresult[1:])
+                    else:
+                        yield (year, newresult)
 
 class ApplicationByChunks(Application):
     def __init__(self, region):
@@ -169,7 +191,7 @@ class ApplicationByChunks(Application):
     def push(self, yyyyddd, values):
         self.saved_yyyyddd.extend(yyyyddd)
         self.saved_values.extend(values)
-        
+
         return self.push_saved(self.saved_yyyyddd, self.saved_values)
 
     def push_saved(self, yyyyddd, values):

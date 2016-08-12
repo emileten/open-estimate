@@ -46,6 +46,15 @@ class StepCurve(CurveCurve):
         self.xxlimits = xxlimits
         self.yy = yy
 
+class PolynomialCurve(UnivariateCurve):
+    def __init__(self, xx, ccs):
+        super(PolynomialCurve, self).__init__(xx)
+        self.ccs = ccs
+        self.pvcoeffs = ccs[::-1] + [0] # Add on constant and start with highest order
+
+    def __call__(self, x):
+        return np.polyval(self.pvcoeffs, x)
+
 class AdaptableCurve(UnivariateCurve):
     def __init__(self, xx):
         super(AdaptableCurve, self).__init__(xx)

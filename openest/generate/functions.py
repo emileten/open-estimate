@@ -81,45 +81,6 @@ class Transform(calculation.Calculation):
         description = self.long_description
         return [dict(name='transformed', title=title, description=description)] + infos
 
-## make-apply logic for generating make_generators
-
-def make(handler, make_generator, *handler_args, **handler_kw):
-    """Construct a generator from a function, operating on the results of another generator.
-    handler(generator, *handler_args, **handler_kw) takes an enumerator and returns an enumerator
-    """
-
-    if 'latexhandler' in handler_kw:
-        latexhandler = handler_kw['latexhandler']
-        del handler_kw['latexhandler']
-    else:
-        latexhandler = handler
-
-    # The make_generator function to return
-    def generate(fips, yyyyddd, temps, *args, **kw):
-        if fips == effect_bundle.FIPS_COMPLETE:
-            # Pass on signal for end
-            print "completing make"
-            make_generator(fips, yyyyddd, temps, *args, **kw).next()
-            return
-
-        # Pass on data
-        generator = make_generator(fips, yyyyddd, temps, *args, **kw)
-
-        if fips == effect_bundle.LATEX_STRING:
-            for equation, latex in generator:
-                if equation == "Equation":
-                    for (equation2, latex2) in latexhandler(latex, *handler_args, **handler_kw):
-                        yield (equation2, latex2)
-                else:
-                    yield (equation, latex)
-            return
-
-        # Apply function to results of data
-        for yearresult in handler(generator, *handler_args, **handler_kw):
-            yield yearresult
-
-    return generate
-
 class Instabase(calculation.CustomFunctionalCalculation):
     """Re-base the results of make_generator(...) to the values in baseyear
     baseyear is the year to use as the 'denominator'; None for the first year
@@ -271,97 +232,34 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
         description = "Z-scores of %s calculated relative to the years before %d." % (infos[0]['name'], self.lastyear)
         return [dict(name='zscore', title=title, description=description)] + infos
 
-def make_runaverage(make_generator, priors, weights, unshift=False):
-    """Generate results as an N-year running average;
-    priors: list of size N, with the values to use before we get data
-    weights: list of size N, with the weights of the years (earliest first)
-    """
+"""
+Sum two results
+"""
+class Sum(calculation.Calculation):
+    def __init__(self, subcalcs):
+        for ii in range(1, len(subcalcs)):
+            assert(subcalcs[0].unitses[0] == subcalcs[ii].unitses[0])
+        super(Sum, self).__init__([subcalcs[0].unitses[0]])
 
-    # Use the runaverage function to do all the operations
-    return make(runaverage, make_generator, priors, weights, unshift)
+        self.subcalcs = subcalcs
 
-def runaverage(generator, priors, weights, unshift=False):
-    """Generate results as an N-year running average;
-    priors: list of size N, with the values to use before we get data (first value not used)
-    weights: list of size N, with the weights of the years (earliest first)
-    unshift: if true, tack on result at front of result list
-    """
+    def latex(self, *args, **kwargs):
+        raise NotImplementedError()
 
-    values = list(priors) # Make a copy of the priors list
-    totalweight = sum(weights) # Use as weight denominator
+    def apply(self, region, *args, **kwargs):
+        def generate(year, results):
+            return np.sum(results)
 
-    for yearresult in generator:
-        # The set of values to average ends with the new value
-        values = values[1:] + [yearresult[1]]
-        # Calculate weighted average
-        smoothed = sum([values[ii] * weights[ii] for ii in range(len(priors))]) / totalweight
+        # Prepare the generator from our encapsulated operations
+        subapps = [subapp.apply(region, *args, **kwargs) for subapp in self.subapps]
+        return calculation.ApplicationPassCall(region, subapps, generate, unshift=True)
 
-        # Produce the new result
-        if unshift:
-            yield [yearresult[0], smoothed] + list(yearresult[1:])
-        else:
-            yield (yearresult[0], smoothed)
+    def column_info(self):
+        infoses = [subcalc.column_info() for subcalc in self.subcalcs]
+        title = 'Sum of previous results'
+        description = 'Sum of ' + ', '.join([infos[0]['title'] for infos in infoses])
 
-def make_weighted_average(make_generators, weights):
-    """This produces a weighted average of results from *multiple generators*.
-    make_generators: list of make_generator functions; all must produce identical years
-    weights: list of weight dictionaries ({FIPS: weight})
-    len(make_generators) == len(weights)
-    """
-
-    def generate(fips, yyyyddd, weather, **kw):
-        # Is this county represented in any of the weight dictionaries?
-        inany = False
-        for weight in weights:
-            if fips in weight and weight[fips] > 0:
-                inany = True
-                break
-
-        if not inany:
-            return # Produce no results
-
-        # Construct a list of generators from make_generators
-        generators = [make_generators[ii](fips, yyyyddd, weather, **kw) for ii in range(len(make_generators))]
-
-        # Iterate through all generators simultaneously
-        for values in generators[0]:
-            # Construct a list of the value from each generator
-            values = [values] + [generator.next() for generator in generators[1:]]
-            # Ensure that year is identical across all
-            for ii in range(1, len(generators)):
-                assert(values[0][0] == values[ii][0])
-
-            # Construct (year, result) where result is a weighted average using weights
-            yield (values[0][0], np.sum([values[ii][1] * weights[ii].get(fips, 0) for ii in range(len(generators))]) /
-                   np.sum([weights[ii].get(fips, 0) for ii in range(len(generators))]))
-
-    return generate
-
-def make_product(vars, make_generators):
-    """This produces a product of results from *multiple generators*.
-    vars: a list of single variables to pass into each generator
-    make_generators: list of make_generator functions; all must produce identical years
-    len(make_generators) == len(vars)
-    """
-
-    def generate(fips, yyyyddd, weather, **kw):
-        if fips == effect_bundle.FIPS_COMPLETE:
-            # Pass on signal for end
-            for make_generator in make_generators:
-                make_generator(fips, yyyyddd, weather, **kw).next()
-            return
-
-        # Construct a list of generators from make_generators
-        generators = [make_generators[ii](fips, yyyyddd, weather[vars[ii]], **kw) for ii in range(len(make_generators))]
-
-        # Iterate through all generators simultaneously
-        for values in generators[0]:
-            values = [values] + [generator.next() for generator in generators[1:]]
-            # Ensure that year is identical across all
-            for ii in range(1, len(generators)):
-                assert(values[0][0] == values[ii][0])
-
-            # Construct (year, result) where result is a product
-            yield (values[0][0], np.product([values[ii][1] for ii in range(len(generators))]))
-
-    return generate
+        fullinfos = []
+        for infos in infoses:
+            fullinfos.extend(infos)
+        return [dict(name='sum', title=title, description=description)] + fullinfos
