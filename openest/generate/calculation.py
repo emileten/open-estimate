@@ -164,7 +164,7 @@ class ApplicationPassCall(Application):
                     if self.unshift:
                         fullresult = [year, newresult]
                         for ii in range(len(yearresults)):
-                            fullresult.extend(yearresults[1:])
+                            fullresult.extend(yearresults[ii][1:])
                         yield fullresult
                     else:
                         yield (year, newresult)
