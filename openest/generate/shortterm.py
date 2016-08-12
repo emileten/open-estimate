@@ -88,3 +88,33 @@ class InstaZScoreApply(Calculation, Application):
     def column_info(self):
         description = "Single value applied to " + self.curve_description
         return [dict(name='response', title='Direct marginal response', description=description)]
+
+class SplitByMonth(Calculation):
+    def __init__(self, subcalc):
+        super(SplitByMonth, self).__init__([subcalc.unitses[0]])
+        self.subcalc
+
+    def latex(self):
+        raise NotImplementedError()
+
+    def apply(self, region, *args):
+        bymonth = [subcalc.apply(region + '-' + str(month), *args, **kwargs) for mm in range(1, 13)]
+
+        mintime = np.inf
+        maxtime = -np.inf
+        valuebytime = {}
+        def generate(region, time, weather, *args, **kwargs):
+            mintime = min(time, mintime)
+            maxtime = max(time, maxtime)
+            for yearresult in bymonth[time % 12].push([time], [weather]):
+                valuebytime[yearresult[0]] = yearresult[1:]
+
+        def finish():
+            for time in range(mintime, maxtime + 1):
+                yield [time] + valuebytime.get(time, [np.nan])
+
+        return ApplicationEach(region, generate)
+
+    def column_info(self):
+        description = "Separately applied by month"
+        return [dict(name='split', title='Month split', description=description)]

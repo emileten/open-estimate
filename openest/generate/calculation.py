@@ -110,9 +110,10 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
         return []
 
 class ApplicationEach(Application):
-    def __init__(self, region, func, *args, **kwargs):
+    def __init__(self, region, func, finishfunc=lambda: [], *args, **kwargs):
         super(ApplicationEach, self).__init__(region)
         self.func = func
+        self.finishfunc = finishfunc
         self.args = args
         self.kwargs = kwargs
 
@@ -122,6 +123,10 @@ class ApplicationEach(Application):
         for ii in range(len(times)):
             for values in self.func(self.region, times[ii], weathers[ii], *self.args, **self.kwargs):
                 yield values
+
+    def done(self):
+        for yearresult in self.finishfunc():
+            yield yearresult
 
 class ApplicationPassCall(Application):
     """Apply a non-enumerator to all elements of a function.
