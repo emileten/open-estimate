@@ -98,7 +98,8 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
         pass
 
     def push(self, yyyyddd, weather):
-        return self.pushhandler(yyyyddd, weather, *self.handler_args, **self.handler_kw)
+        for yearresult in self.pushhandler(yyyyddd, weather, *self.handler_args, **self.handler_kw):
+            yield yearresult
 
     def pushhandler(self, yyyyddd, weather, *allargs, **allkwargs):
         raise NotImplementedError()
@@ -154,13 +155,24 @@ class ApplicationPassCall(Application):
         """
         if isinstance(self.subapp, list):
             iterators = [subapp.push(yyyyddd, weather) for subapp in self.subapp]
-            for yearresult in iterators[0]:
-                year = yearresult[0]
-                yearresults = [yearresult]
-                for ii in range(1, len(iterators)):
-                    yearresultii = iterators[ii].next()
-                    assert year == yearresultii[0]
-                    yearresults.append(yearresultii)
+            while True:
+                yearresults = []
+                # Call next on every iterator
+                for iterator in iterators:
+                    try:
+                        yearresult = iterator.next()
+                    except StopIteration:
+                        yearresult = None
+                    yearresults.append(yearresult)
+
+                year = yearresults[0][0] if yearresults[0] is not None else None
+                anyresults = False
+                for yearresult in yearresults:
+                    if yearresult is not None:
+                        assert yearresult[0] == year
+                        anyresults = True
+                if not anyresults:
+                    return # No results
 
                 newresult = self.handler(year, yearresults, *self.handler_args, **self.handler_kw)
                 if isinstance(newresult, tuple):
@@ -169,7 +181,7 @@ class ApplicationPassCall(Application):
                     if self.unshift:
                         fullresult = [year, newresult]
                         for ii in range(len(yearresults)):
-                            fullresult.extend(yearresults[ii][1:])
+                            fullresult.extend(yearresults[ii][1:] if yearresults[ii] is not None else [np.nan])
                         yield fullresult
                     else:
                         yield (year, newresult)

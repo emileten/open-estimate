@@ -172,8 +172,8 @@ class SpanInstabase(Instabase):
                 self.denom = np.mean(self.denomterms)
 
                 # Print out all past results, re-based
-                for self.pastresult in self.pastresults:
-                    yield [self.pastresult[0], func(self.pastresult[1], self.denom)] + list(self.pastresult[1:])
+                for pastresult in self.pastresults:
+                    yield [pastresult[0], func(pastresult[1], self.denom)] + list(pastresult[1:])
 
             if self.denom is None:
                 # Keep track of this until we have a base
@@ -239,7 +239,7 @@ class Sum(calculation.Calculation):
     def __init__(self, subcalcs):
         fullunitses = subcalcs[0].unitses[:]
         for ii in range(1, len(subcalcs)):
-            assert(subcalcs[0].unitses[0] == subcalcs[ii].unitses[0])
+            assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
             fullunitses.extend(subcalcs[ii].unitses)
         super(Sum, self).__init__([subcalcs[0].unitses[0]] + fullunitses)
 
@@ -250,7 +250,7 @@ class Sum(calculation.Calculation):
 
     def apply(self, region, *args, **kwargs):
         def generate(year, results):
-            return np.sum(results)
+            return np.sum(map(lambda x: x[1] if x is not None else np.nan, results))
 
         # Prepare the generator from our encapsulated operations
         subapps = [subcalc.apply(region, *args, **kwargs) for subcalc in self.subcalcs]
