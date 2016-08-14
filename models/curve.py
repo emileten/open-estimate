@@ -38,6 +38,10 @@ class FlatCurve(CurveCurve):
     def __init__(self, yy):
         super(FlatCurve, self).__init__([-40, 0, 80], lambda x: yy)
 
+class LinearCurve(CurveCurve):
+    def __init__(self, yy):
+        super(FlatCurve, self).__init__([-40, 0, 80], lambda x: yy * x)
+
 class StepCurve(CurveCurve):
     def __init__(self, xxlimits, yy):
         step_function = StepFunction(xxlimits[1:-1], yy[1:], ival=yy[0])
