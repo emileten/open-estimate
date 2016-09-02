@@ -59,7 +59,8 @@ class MonthlyClimateApply(Calculation):
         region_index = self.regions.index(region)
 
         def generate(region, time, weather, **kw):
-            weather = self.weather_change(self.monthmeans[time % 12][region_index])
+            # Ignores weather
+            weather = self.weather_change(self.monthmeans[int(time) % 12][region_index])
             result = curve(weather)
 
             if not np.isnan(result):

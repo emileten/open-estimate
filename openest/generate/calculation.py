@@ -165,14 +165,18 @@ class ApplicationPassCall(Application):
                         yearresult = None
                     yearresults.append(yearresult)
 
-                year = yearresults[0][0] if yearresults[0] is not None else None
-                anyresults = False
-                for yearresult in yearresults:
-                    if yearresult is not None:
-                        assert yearresult[0] == year
-                        anyresults = True
-                if not anyresults:
-                    return # No results
+                if yearresults[0] is None:
+                    # Ignore the result
+                    return
+                else:
+                    year = yearresults[0][0] if yearresults[0] is not None else None
+                    anyresults = False
+                    for yearresult in yearresults:
+                        if yearresult is not None:
+                            assert yearresult[0] == year, "%s <> %s" % (str(yearresult[0]), str(year))
+                            anyresults = True
+                    if not anyresults:
+                        return # No results
 
                 newresult = self.handler(year, yearresults, *self.handler_args, **self.handler_kw)
                 if isinstance(newresult, tuple):
