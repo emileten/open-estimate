@@ -7,9 +7,9 @@ Welcome to openest's documentation!
 ===================================
 
 Here is some content I want to display for the OpenEst docs. OpenEst is a library used 
-by the 'Climate Impat Labs'_ team.
+by the `Climate Impat Labs`_ team.
 
-This code is open source and available on 'github'_
+This code is open source and available on `github`_.
 
 .. _Climate Impact Lab: http://www.impactlab.org/
 .. _github: https://github.com/ClimateImpactLab/open-estimate/tree/first-docs
