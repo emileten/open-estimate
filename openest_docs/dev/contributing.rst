@@ -40,7 +40,7 @@ They're written in `reStructuredText`_, and use `Sphinx`_ to generate the full s
 documentation.
 
 When writing documentation, please do your best to follow the style of the
-documentation files. An :doc:` example </example.rst>` can be seen here.
+documentation files. An `example </example.rst>`__ can be seen here.
 
 .. _reStructuredText: http://docutils.sourceforge.net/rst.html
 .. _Sphinx: http://sphinx-doc.org/index.html
