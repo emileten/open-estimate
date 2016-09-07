@@ -40,10 +40,12 @@ They're written in `reStructuredText`_, and use `Sphinx`_ to generate the full s
 documentation.
 
 When writing documentation, please do your best to follow the style of the
-documentation files. A :doc:`/reference_example`can be seen here.
+documentation files. 
 
 .. _reStructuredText: http://docutils.sourceforge.net/rst.html
 .. _Sphinx: http://sphinx-doc.org/index.html
+
+.. literalinclude:: example.py
 
 
 
