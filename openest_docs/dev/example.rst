@@ -1,3 +1,3 @@
 .. _example:
 
-.. literalinclude:: example.py
+Some text we'll use
