@@ -45,6 +45,8 @@ documentation files.
 .. _reStructuredText: http://docutils.sourceforge.net/rst.html
 .. _Sphinx: http://sphinx-doc.org/index.html
 
+Here is an reference example Python Module with resStructuredText in the docstring. 
+
 .. literalinclude:: example.py
 
 
