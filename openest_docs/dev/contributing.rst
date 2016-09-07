@@ -40,13 +40,11 @@ They're written in `reStructuredText`_, and use `Sphinx`_ to generate the full s
 documentation.
 
 When writing documentation, please do your best to follow the style of the
-documentation files. This means a soft-limit of 79 characters wide in your text.
-
-When presenting Python code, use single-quoted strings (``'hello'`` instead of
-``"hello"``).
+documentation files. An example_ can be seen here.
 
 .. _reStructuredText: http://docutils.sourceforge.net/rst.html
 .. _Sphinx: http://sphinx-doc.org/index.html
+
 
 
 
