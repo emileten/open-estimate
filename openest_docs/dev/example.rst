@@ -1,3 +1,3 @@
-.. _example:
+.. _documentation_example:
 
 Some text we'll use
