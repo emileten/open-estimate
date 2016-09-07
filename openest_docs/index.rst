@@ -26,7 +26,10 @@ short overview of the library, with one or two very simple use cases. It will, h
 answer the question: 'Why should I use this tool?'
 
 
+.. toctree::
+   :maxdepth: 2
 
+   user/install
 
 
 The API Documentation / Guide
@@ -50,6 +53,8 @@ you.
 
 .. toctree::
    :maxdepth: 3
+
+   dev/contributing
 
 
 Indices and tables
