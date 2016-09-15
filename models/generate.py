@@ -45,6 +45,6 @@ def polynomial(lowbound, highbound, betas, covas, num=40):
     for x in xx:
         xvec = np.mat([[1, x, x**2, x**3, x**4][0:len(betas)]])
         serr = np.sqrt(xvec * covas * np.transpose(xvec))
-        xxs[x] = (betas.dot(np.squeeze(np.asarray(xvec))), serr[0,0])
+        xxs[x] = (betas.dot(np.squeeze(np.asarray(xvec))), serr[0,0]**2)
 
     return SplineModel.create_gaussian(xxs, xx, False)

@@ -51,6 +51,7 @@ def setup_trend(N):
     return yy, sigma, XX
 
 def test_trend():
+    np.random.seed(1001)
     yy, sigma, XX = setup_trend(101)
     alltau, allmus, allbetahats = lincombo_hierregress(yy, sigma, XX)
 

@@ -18,3 +18,10 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
+
+
+#Documentation
+
+_build
+_static
+_templates 

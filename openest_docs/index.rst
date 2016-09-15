@@ -13,7 +13,7 @@ OpenEst is a library created by the `Climate Impact Lab`_ team.
 This code is open source and available on `github`_.
 
 .. _Climate Impact Lab: http://www.impactlab.org/
-.. _github: https://github.com/ClimateImpactLab/open-estimate/tree/first-docs
+.. _github: https://github.com/ClimateImpactLab/open-estimate/
 
 
 We can add any additional information about the library here. Please make suggestions. 
