@@ -43,6 +43,7 @@ this part of the documentation is for you.
    :maxdepth: 4
 
    openest
+   
 
 
 The Developers Guide
@@ -55,7 +56,9 @@ you.
    :maxdepth: 3
 
    dev/contributing
-   dev/example_ref
+   
+   
+ 
 
 
 Indices and tables
