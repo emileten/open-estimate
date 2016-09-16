@@ -18,10 +18,4 @@ Submodules
    openest.lincombo.multi_uniform
    openest.lincombo.pooling
 
-Module contents
----------------
 
-.. automodule:: openest.lincombo
-    :members:
-    :undoc-members:
-    :show-inheritance:

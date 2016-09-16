@@ -9,7 +9,9 @@ This library depends on numpy and scipy.  In addition, to use Mean-Size hierarch
 
 
 ``pip install numpy``
+
 ``pip install scipy``
+
 ``pip install emcee``
 
 

@@ -25,10 +25,3 @@ Submodules
    openest.models.sum_multi_model
    openest.models.univariate_model
 
-Module contents
----------------
-
-.. automodule:: openest.models
-    :members:
-    :undoc-members:
-    :show-inheritance:

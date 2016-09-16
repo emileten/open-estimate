@@ -11,10 +11,3 @@ Subpackages
     openest.models
     openest.swapbin
 
-.. Module contents
-.. ---------------
-
-.. .. automodule:: openest
-..     :members:
-..     :undoc-members:
-..     :show-inheritance:

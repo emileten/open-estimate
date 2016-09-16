@@ -1,4 +1,4 @@
-openest.generate package
+openest.generate 
 ========================
 
 Submodules
@@ -16,10 +16,4 @@ Submodules
    openest.generate.stdlib
    openest.generate.weathertools
 
-Module contents
----------------
 
-.. automodule:: openest.generate
-    :members:
-    :undoc-members:
-    :show-inheritance:
