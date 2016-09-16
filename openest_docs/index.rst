@@ -55,7 +55,7 @@ you.
    :maxdepth: 3
 
    dev/contributing
-
+ 
 
 Indices and tables
 ==================

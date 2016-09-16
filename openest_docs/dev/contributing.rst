@@ -49,6 +49,8 @@ Here is an reference example Python Module with resStructuredText in the docstri
 
 .. literalinclude:: example.py
 
+:ref:`reference_example`
+
 
 
 
