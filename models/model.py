@@ -3,11 +3,6 @@
 # Copyright 2014, Distributed Meta-Analysis System
 ################################################################################
 
-"""
-Top level Model class, from which all specific model derive.  All
-models should implement most of these functions (with the notable
-exceptions of merge and combine).
-"""
 
 __copyright__ = "Copyright 2014, Distributed Meta-Analysis System"
 
@@ -23,6 +18,13 @@ __version__ = "$Revision$"
 import copy
 
 class Model(object):
+    """
+    Model class
+    
+    Top level Model class, from which all specific model derive.  All
+    models should implement most of these functions (with the notable
+    exceptions of merge and combine).
+    """
     mergers = {}
     combiners = {}
 
