@@ -93,12 +93,6 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
     scaled : bool
         Indicates whether data has been scaled. If scaled, re-scale so ``pp.sum(axis=1)==1``.
 
-    TODO
-    ----
-
-    * Evaluate potential replacement with pandas.DataFrame, xarray.DataArray, or 
-      subclass of either
-    
     '''
 
     def __init__(self, p_format=None, source=None, xx_is_categorical=False, xx=None, yy_is_categorical=False, yy=None, pp=None, unaccounted=None, scaled=True):
@@ -119,6 +113,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.unaccounted = unaccounted
 
 
+    
     def __repr__(self):
         ''' string representation '''
 
@@ -128,12 +123,14 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
             return "DDP model from " + str(self.source)
 
 
+    
     def kind(self):
         ''' returns model type ("ddp_model") '''
 
         return 'ddp_model'
 
 
+    
     def copy(self):
         ''' copy data and return DDPModel with the same data '''
 
@@ -141,6 +138,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return DDPModel(self.p_format, getattr(self, 'source', 'external'), self.xx_is_categorical, list(self.get_xx()), self.yy_is_categorical, list(self.get_yy()), array(self.pp), unaccounted=getattr(self, 'unaccounted', 0), scaled=self.scaled)
 
 
+    
     def get_xx(self):
         ''' returns x axis index '''
 
@@ -150,8 +148,9 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
             return self.xx
 
 
+    
     def get_yy(self):
-        ''' returns y axis index '''
+        ''' returns x axis index '''
 
         if self.yy_is_categorical:
             return self.yy_text
@@ -159,6 +158,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
             return self.yy
 
 
+    
     def rescale(self, as_ddp=True):
         ''' Can rescale non-ddp (that is, as sampling of continuous distribution) '''
 
@@ -186,11 +186,13 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return self
 
 
+    
     def eval_pval(self, x, p, threshold=1e-3):
 
         return self.eval_pval_index(self.get_closest(x), p, threshold)
 
 
+    
     def scale_y(self, a):
         ''' multiply index y (numeric only) by scale factor a '''
 
@@ -201,6 +203,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return self
 
 
+    
     def scale_p(self, a):
         ''' coerce to ddp2 (log probability) format and scale by a '''
 
@@ -209,6 +212,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return self.rescaled()
 
 
+    
     def add_to_y(self, a):
         ''' add value a to each element of index y (numeric only) '''
 
@@ -219,6 +223,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return self
 
 
+    
     def transpose(self):
         ''' transpose data structure '''
 
@@ -235,12 +240,14 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
         return other
 
+    
     def write_file(self, filename, delimiter):
         ''' write CSV to file path '''
 
         with open(filename, 'w') as fp:
             self.write(fp, delimiter)
 
+    
     def write(self, file, delimiter):
         ''' write CSV to file object '''
 
@@ -269,6 +276,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
                 row.extend(self.pp[ii,])
                 writer.writerow(row)
 
+    
     def lin_p(self):
         ''' convert any DDPModel to ddp1 (linear probability) format '''
 
@@ -279,6 +287,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         else:
             return NotImplementedError("Unknown format in lin_p: " + self.p_format)
 
+    
     def log_p(self):
         ''' convert any DDPModel to ddp2 (log probability) format '''
 
@@ -291,6 +300,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         else:
             return NotImplementedError("Unknown format in log_p: " + self.p_format)
 
+    
     def filter_x(self, xx):
         ''' Slice DDPModel data such that the values of the x index == xx '''
 
@@ -300,6 +310,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
         return DDPModel(self.p_format, 'filter_x', self.xx_is_categorical, xx, self.yy_is_categorical, self.get_yy(), newpp, scaled=self.scaled)
 
+    
     def interpolate_x(self, newxx, kind='quadratic'):
         '''
         custom interpolation method. wrapper around scipy.interp1d.
@@ -348,6 +359,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
         return DDPModel('ddp1', 'recategorize_x', True, newxx, self.yy_is_categorical, self.yy, newpp, scaled=self.scaled)
 
+    
     def interpolate_y(self, newyy, kind='quadratic'):
         '''
         custom interpolation method. wrapper around scipy.interp1d.
@@ -380,6 +392,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
         return DDPModel('ddp1', 'interpolate_y', self.xx_is_categorical, self.get_xx(), False, newyy, newpp, scaled=self.scaled)
 
+    
     def get_closest(self, x=None):
         '''
         return closest index on x axis
@@ -400,6 +413,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
             idx = (abs(array(self.xx)-x)).argmin()
             return idx
 
+    
     def get_mean(self, x=None):
         '''
         Returns the mean of the y-index labels weighted by p values in row x
@@ -414,6 +428,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         ps = self.lin_p()[self.get_closest(x), :]
         return sum(ps * self.yy)
 
+    
     def get_sdev(self, x=None):
         '''
         Returns the std dev of the y-index labels weighted by p values in row x
@@ -430,6 +445,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         vari = sum(ps * square(self.yy - mean))
         return sqrt(vari)
 
+    
     def draw_sample(self, x=None):
         '''
         Randomly sample label from y-index using p values in row x
@@ -451,6 +467,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
         return self.yy[-1]
 
+    
     def init_from(self, file, delimiter, status_callback=None, source=None):
         '''
         Read DDP data set from file
@@ -524,6 +541,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
         return self
 
+    
     def init_from_other(self, ddp):
         ''' copy attributes of other DDP dataset to this one '''
 
@@ -542,6 +560,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.unaccounted = ddp.unaccounted
         self.scaled = ddp.scaled
 
+    
     def to_ddp(self, ys=None):
         ''' coerce to DDP, interpolating along y axis if necessary '''
 
@@ -552,6 +571,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
     ### Memoizable
 
+    
     def eval_pval_index(self, ii, p, threshold=1e-3):
         ps = self.lin_p()[ii, :]
         value = p * sum(ps)

@@ -4,29 +4,6 @@
 #   GNU General Public License, Ver. 3 (see docs/license.txt)
 ################################################################################
 
-"""Model Spline File
-
-Each line in a model spline file represents a polynomial segment in
-log-probability space.  The format is as follows::
-
-  spp1
-  <x>,<y0>,<y1>,<a0>,<a1>,<a2>
-  ...
-
-Each line describes a segment of a probability distribution of y,
-conditional on x = ``<x>``.  The segment spans from ``<y0>`` to
-``<y1>``, where the lowest value of ``<y0>`` may be ``-inf``, and the
-highest value of ``<y1>`` may be ``inf``.  The ``<x>`` values may also
-be categorical or numerical.  If they are numerical, it is assumed
-that these values represent samples of a smoothly varying function (a
-cubic spline in every y).
-
-The values ``<a0>``, ``<a1>`` and ``<a2>`` are the polynomial
-coefficients in y (with quadratic coefficients, only normal or
-exponential tails are possible).  The final segment of the probability
-function is:
-  exp(a0 + a1 y + a2 y2)
-"""
 __copyright__ = "Copyright 2014, The Open Aggregator"
 __license__ = "GPL"
 
@@ -50,6 +27,44 @@ from univariate_model import UnivariateModel
 from memoizable import MemoizableUnivariate
 
 class SplineModel(UnivariateModel, MemoizableUnivariate):
+    '''
+    Model Spline File
+
+    Each line in a model spline file represents a polynomial segment in
+    log-probability space.  The format is as follows::
+
+        spp1
+        <x>,<y0>,<y1>,<a0>,<a1>,<a2>
+        ...
+
+    Each line describes a segment of a probability distribution of y,
+    conditional on x = ``<x>``.  The segment spans from ``<y0>`` to
+    ``<y1>``, where the lowest value of ``<y0>`` may be ``-inf``, and the
+    highest value of ``<y1>`` may be ``inf``.  The ``<x>`` values may also
+    be categorical or numerical.  If they are numerical, it is assumed
+    that these values represent samples of a smoothly varying function (a
+    cubic spline in every y).
+
+    The values ``<a0>``, ``<a1>`` and ``<a2>`` are the polynomial
+    coefficients in y (with quadratic coefficients, only normal or
+    exponential tails are possible).  The final segment of the probability
+    function is::
+        
+        exp(a0 + a1 y + a2 y2)
+    
+    Parameters
+    ----------
+    xx_is_categorical : bool
+
+    xx : list-like
+
+    conditionals : 
+
+    scaled : bool
+
+
+    '''
+
     posinf = float('inf')
     neginf = float('-inf')
     samples = 1000
@@ -109,7 +124,10 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         return SplineModel(self.xx_is_categorical, xx, conditionals, scaled=self.scaled)
 
     def interpolate_x(self, newxx):
-        # Is this a subset of our values?
+        '''
+        Determines whether argument `newxx` a subset of index ``xx``.
+        '''
+
         subset = True
         for x in newxx:
             if x not in self.get_xx():
