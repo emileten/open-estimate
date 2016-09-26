@@ -4,40 +4,7 @@
 #   GNU General Public License, Ver. 3 (see docs/license.txt)
 ################################################################################
 
-"""Discrete-Discrete-Probability (DDP) Format
 
-A DDP file describes a dose-response relationship with a limited
-collection of response outcomes.  The dose and response values may be
-either categorical or sampled at a collection of numerical levels.
-The format of a DDP file is::
-
-  <format>,<y-value-1>,<y-value-2>,...
-  <x-value-1>,p(y1|x1),p(y2|x1),...
-  <x-value-2>,p(y1|x2),p(y2|x2),...
-  ...
-
-<format> may be one of the following values:
-  * ``ddp1`` - the p(.) values are simple probabilities (0 < p(.) < 1 and sum p(y|x) = 1)
-  * ``ddp2`` - the p(.) values are log probabilities
-
-``<y-value-1>``, ..., ``<y-value-N>`` and ``<x-value-1>``, ...,
-``<x-value-N>`` are either strings, for named categories or numerical
-values.
-
-Below is a sample categorical DDP file::
-
-  ddp1,live,dead
-  control,.5,.5
-  treated,.9,.1
-
-Below is a sample numerical DDP file::
-
-  ddp1,-10.0,-.33333333333,3.33333333333,10.0
-  0.0,0.5,0.5,0.0,0.0
-  13.3333333333,0.0,0.5,0.5,0.0
-  26.6666666667,0.0,0.0,0.5,0.5
-  40.0,0.0,0.0,0.0,0.5
-"""
 __copyright__ = "Copyright 2014, The Open Aggregator"
 __license__ = "GPL"
 
@@ -59,6 +26,81 @@ from univariate_model import UnivariateModel
 from memoizable import MemoizableUnivariate
 
 class DDPModel(UnivariateModel, MemoizableUnivariate):
+    '''
+    Discrete-Discrete-Probability (DDP) Format
+
+    A DDP file describes a dose-response relationship with a limited
+    collection of response outcomes.  The dose and response values may be
+    either categorical or sampled at a collection of numerical levels.
+       
+    ``<y-value-1>``, ..., ``<y-value-N>`` and ``<x-value-1>``, ...,
+    ``<x-value-N>`` are either strings (for named categories) or numerical
+    values.
+
+    The format of a DDP file is::
+
+        <format>,<y-value-1>,<y-value-2>,...
+        <x-value-1>,p(y1|x1),p(y2|x1),...
+        <x-value-2>,p(y1|x2),p(y2|x2),...
+    
+
+    Below is a sample categorical DDP file::
+
+        ddp1,live,dead
+        control,.5,.5
+        treated,.9,.1
+
+
+    Below is a sample numerical DDP file::
+
+        ddp1,-10.0,-.33333333333,3.33333333333,10.0
+        0.0,0.5,0.5,0.0,0.0
+        13.3333333333,0.0,0.5,0.5,0.0
+        26.6666666667,0.0,0.0,0.5,0.5
+        40.0,0.0,0.0,0.0,0.5
+
+
+    Parameters
+    ----------
+    
+    p_format : str
+        Probability format. May be one of the following values:
+          
+          * ``ddp1`` - the p(.) values are simple probabilities (0 < p(.) < 1 and sum p(y|x) = 1)
+          * ``ddp2`` - the p(.) values are log probabilities
+
+    source : str
+        Metadata attribute. Name of file this object was read in from.
+
+    xx_is_categorical : bool
+        Indicates whether ``xx`` is categorical. False indicates numeric data.
+
+    xx : list-like
+        X axis index
+
+    yy_is_categorical : bool
+        Indicates whether ``yy`` is categorical. False indicates numeric data.
+
+    yy : list-like
+        Y axis index
+
+    pp : array-like
+        underlying numpy(?) data array
+
+    unaccounted : numpy.array
+        column of remaining probability. ``unaccounted = 1-sum(pp, axis=1)``.
+
+    scaled : bool
+        Indicates whether data has been scaled. If scaled, re-scale so ``pp.sum(axis=1)==1``.
+
+    TODO
+    ----
+
+    * Evaluate potential replacement with pandas.DataFrame, xarray.DataArray, or 
+      subclass of either
+    
+    '''
+
     def __init__(self, p_format=None, source=None, xx_is_categorical=False, xx=None, yy_is_categorical=False, yy=None, pp=None, unaccounted=None, scaled=True):
         super(DDPModel, self).__init__(xx_is_categorical, xx, scaled)
 
@@ -76,33 +118,50 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.pp = pp
         self.unaccounted = unaccounted
 
+
     def __repr__(self):
+        ''' string representation '''
+
         if self.source is None:
             return "DDP model"
         else:
             return "DDP model from " + str(self.source)
 
+
     def kind(self):
+        ''' returns model type ("ddp_model") '''
+
         return 'ddp_model'
 
+
     def copy(self):
-        # Can't use python's copy since could be strange object from ming
+        ''' copy data and return DDPModel with the same data '''
+
+        # Can't use python's copy since could be strange object from ming <-- note: could implement __copy__
         return DDPModel(self.p_format, getattr(self, 'source', 'external'), self.xx_is_categorical, list(self.get_xx()), self.yy_is_categorical, list(self.get_yy()), array(self.pp), unaccounted=getattr(self, 'unaccounted', 0), scaled=self.scaled)
 
+
     def get_xx(self):
+        ''' returns x axis index '''
+
         if self.xx_is_categorical:
             return self.xx_text
         else:
             return self.xx
 
+
     def get_yy(self):
+        ''' returns y axis index '''
+
         if self.yy_is_categorical:
             return self.yy_text
         else:
             return self.yy
 
-    # Can rescale non-ddp (that is, as sampling of continuous distribution)
+
     def rescale(self, as_ddp=True):
+        ''' Can rescale non-ddp (that is, as sampling of continuous distribution) '''
+
         if as_ddp or self.yy_is_categorical:
             newpp = self.lin_p()
             for ii in range(len(self.xx)):
@@ -126,29 +185,43 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
         return self
 
+
     def eval_pval(self, x, p, threshold=1e-3):
+
         return self.eval_pval_index(self.get_closest(x), p, threshold)
 
+
     def scale_y(self, a):
+        ''' multiply index y (numeric only) by scale factor a '''
+
         if self.yy_is_categorical:
             raise ValueError("Cannot scale on a categorical y")
 
         self.yy = [y * a for y in self.yy]
         return self
 
+
     def scale_p(self, a):
+        ''' coerce to ddp2 (log probability) format and scale by a '''
+
         self.pp = a * self.log_p()
         self.p_format = 'ddp2'
         return self.rescaled()
 
+
     def add_to_y(self, a):
+        ''' add value a to each element of index y (numeric only) '''
+
         if self.yy_is_categorical:
             raise ValueError("Cannot add to a categorical y")
 
         self.yy = [y + a for y in self.yy]
         return self
 
+
     def transpose(self):
+        ''' transpose data structure '''
+
         other = self.copy()
         other.pp = transpose(other.pp)
 
@@ -163,10 +236,14 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return other
 
     def write_file(self, filename, delimiter):
+        ''' write CSV to file path '''
+
         with open(filename, 'w') as fp:
             self.write(fp, delimiter)
 
     def write(self, file, delimiter):
+        ''' write CSV to file object '''
+
         writer = csv.writer(file, delimiter=delimiter)
 
         if self.scaled:
@@ -193,6 +270,8 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
                 writer.writerow(row)
 
     def lin_p(self):
+        ''' convert any DDPModel to ddp1 (linear probability) format '''
+
         if self.p_format == 'ddp1':
             return self.pp
         elif self.p_format == 'ddp2':
@@ -201,6 +280,8 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
             return NotImplementedError("Unknown format in lin_p: " + self.p_format)
 
     def log_p(self):
+        ''' convert any DDPModel to ddp2 (log probability) format '''
+
         if self.p_format == 'ddp1':
             pp = ones((len(self.xx), len(self.yy))) * float('-inf')
             pp[self.pp > 0] = log(self.pp[self.pp > 0])
@@ -211,6 +292,8 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
             return NotImplementedError("Unknown format in log_p: " + self.p_format)
 
     def filter_x(self, xx):
+        ''' Slice DDPModel data such that the values of the x index == xx '''
+
         newpp = ones((len(xx), len(self.yy)))
         for ii in range(len(xx)):
             newpp[ii,] = self.pp[self.get_xx() == xx,]
@@ -218,6 +301,20 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return DDPModel(self.p_format, 'filter_x', self.xx_is_categorical, xx, self.yy_is_categorical, self.get_yy(), newpp, scaled=self.scaled)
 
     def interpolate_x(self, newxx, kind='quadratic'):
+        '''
+        custom interpolation method. wrapper around scipy.interp1d.
+
+        Parameters
+        ----------
+
+        newxx : list-like
+            new x axis
+
+        kind : str
+            interpolation method, passed to scipy.interp1d
+
+        '''
+
         newpp = zeros((len(newxx), len(self.yy)))
 
         # Interpolate for each y
@@ -252,6 +349,20 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return DDPModel('ddp1', 'recategorize_x', True, newxx, self.yy_is_categorical, self.yy, newpp, scaled=self.scaled)
 
     def interpolate_y(self, newyy, kind='quadratic'):
+        '''
+        custom interpolation method. wrapper around scipy.interp1d.
+
+        Parameters
+        ----------
+
+        newyy : list-like
+            new y axis
+
+        kind : str
+            interpolation method, passed to scipy.interp1d
+
+        '''
+
         newpp = zeros((len(self.xx), len(newyy)))
 
         # Interpolate for each y
@@ -270,6 +381,16 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return DDPModel('ddp1', 'interpolate_y', self.xx_is_categorical, self.get_xx(), False, newyy, newpp, scaled=self.scaled)
 
     def get_closest(self, x=None):
+        '''
+        return closest index on x axis
+
+        If x index is categorical, coerce x to string and find first matching 
+        index. If numeric, find the closest value.
+
+        If x is None (default), return 0
+        '''
+
+
         if x is None:
             return 0
 
@@ -280,6 +401,13 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
             return idx
 
     def get_mean(self, x=None):
+        '''
+        Returns the mean of the y-index labels weighted by p values in row x
+
+        If x is None (default), use first row. Uses self.get_closest(x) to find
+        matching nearest match for x-index label x
+        '''
+
         if not self.scaled:
             raise ValueError("Cannot take mean of unscaled distribution.")
 
@@ -287,6 +415,13 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return sum(ps * self.yy)
 
     def get_sdev(self, x=None):
+        '''
+        Returns the std dev of the y-index labels weighted by p values in row x
+
+        If x is None (default), use first row. Uses self.get_closest(x) to find
+        matching nearest match for x-index label x
+        '''
+
         if not self.scaled:
             raise ValueError("Cannot take sdev of unscaled distribution.")
 
@@ -296,6 +431,13 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return sqrt(vari)
 
     def draw_sample(self, x=None):
+        '''
+        Randomly sample label from y-index using p values in row x
+
+        If x is None (default), use first row. Uses self.get_closest(x) to find
+        matching nearest match for x-index label x
+        '''
+
         if not self.scaled:
             raise ValueError("Cannot draw sample from unscaled distribution.")
 
@@ -310,6 +452,10 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return self.yy[-1]
 
     def init_from(self, file, delimiter, status_callback=None, source=None):
+        '''
+        Read DDP data set from file
+        '''
+
         reader = csv.reader(file, delimiter=delimiter)
         header = reader.next()
         fmt = header[0]
@@ -379,6 +525,8 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         return self
 
     def init_from_other(self, ddp):
+        ''' copy attributes of other DDP dataset to this one '''
+
         self.p_format = ddp.p_format
         self.source = ddp.source
 
@@ -395,6 +543,8 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.scaled = ddp.scaled
 
     def to_ddp(self, ys=None):
+        ''' coerce to DDP, interpolating along y axis if necessary '''
+
         if ys is None:
             return self.copy()
 
@@ -418,14 +568,30 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
     @staticmethod
     def from_file(filename, delimiter):
+        ''' read DDP file from file path '''
+
         with open(filename) as fp:
             model = DDPModel()
             model.init_from(fp, delimiter)
             model.source = filename
             return model
 
+
     @staticmethod
     def create_lin(yy, xxs):
+        '''
+        Create a DDP model by supplying y index and dictionary of p-values
+
+        Parameters
+        ----------
+
+        yy : list-like
+            y-index labels
+    
+        xxs : dict
+            dictionary keyed with x-index values with p-values for vals
+        '''
+
         pp = None
         xx = []
         for key in xxs:
