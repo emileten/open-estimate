@@ -111,6 +111,9 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
         return []
 
 class ApplicationEach(Application):
+    """
+    Pass every set of values to the calculation for a value.
+    """
     def __init__(self, region, func, finishfunc=lambda: [], *args, **kwargs):
         super(ApplicationEach, self).__init__(region)
         self.func = func
