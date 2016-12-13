@@ -175,3 +175,38 @@ class Constant(Calculation):
 
     def column_info(self):
         return [dict(name='response', title="Constant value", description="Always equal to " + str(self.value))]
+
+class YearlyAverageDay(Calculation):
+    def __init__(self, curve, units, weather_change=lambda temps: temps):
+        super(YearlyAverageDay, self).__init__([units])
+        self.curve = curve # Instance of UnivariateCurve
+        self.xx = curve.get_xx()
+        self.weather_change = weather_change
+
+    def latex(self):
+        funcvar = latextools.get_function()
+        yield ("Equation", r"\frac{1}{365} \sum_{d \in y(t)} %s(T_d)" % (funcvar), self.unitses[0])
+        yield ("T_d", "Temperature", "deg. C")
+        yield ("%s(\cdot)" % (funcvar), str(self.curve), self.unitses[0])
+
+    def apply(self, region, *args):
+        if isinstance(self.curve, AdaptableCurve):
+            curve = self.curve.create(region, *args)
+        else:
+            curve = self.curve
+
+        def generate(region, year, temps, **kw):
+            temps = self.weather_change(temps)
+            result = np.nansum(curve(temps)) / len(temps)
+
+            if not np.isnan(result):
+                yield (year, result)
+
+            if isinstance(self.curve, AdaptableCurve):
+                curve.update(year, temps)
+
+        return ApplicationByYear(region, generate)
+
+    def column_info(self):
+        description = "The average result across a year according to daily temperatures."
+        return [dict(name='response', title='Direct marginal response', description=description)]
