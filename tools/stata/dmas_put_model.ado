@@ -9,7 +9,7 @@ set more off
 preserve
 * Put in dummy data, so we have one row
 clear
-set obs 1
+qui set obs 1
 gen OK = 3
 
 /* Improvements:
