@@ -7,6 +7,7 @@ from ..models.spline_model import SplineModel
 from ..models.bin_model import BinModel
 from ..models.memoizable import MemoizedUnivariate
 from ..models.curve import UnivariateCurve, AdaptableCurve, StepCurve
+from curvegen import CurveGenerator
 
 # Generate integral over daily temperature
 class MonthlyDayBins(Calculation):
@@ -75,7 +76,7 @@ class YearlyDayBins(Calculation):
             spline = self.spline.create(region, *args)
         else:
             spline = self.spline
-            
+
         def generate(region, year, temps, **kw):
             if len(temps.shape) == 2:
                 if temps.shape[0] == 12 and temps.shape[1] == len(self.xx):
@@ -177,23 +178,22 @@ class Constant(Calculation):
         return [dict(name='response', title="Constant value", description="Always equal to " + str(self.value))]
 
 class YearlyAverageDay(Calculation):
-    def __init__(self, curve, units, weather_change=lambda temps: temps):
+    def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x):
         super(YearlyAverageDay, self).__init__([units])
-        self.curve = curve # Instance of UnivariateCurve
-        self.xx = curve.get_xx()
+        assert isinstance(curvegen, CurveGenerator)
+
+        self.curvegen = curvegen
+        self.curve_description = curve_description
         self.weather_change = weather_change
 
     def latex(self):
         funcvar = latextools.get_function()
         yield ("Equation", r"\frac{1}{365} \sum_{d \in y(t)} %s(T_d)" % (funcvar), self.unitses[0])
         yield ("T_d", "Temperature", "deg. C")
-        yield ("%s(\cdot)" % (funcvar), str(self.curve), self.unitses[0])
+        yield ("%s(\cdot)" % (funcvar), self.curve_description, self.unitses[0])
 
     def apply(self, region, *args):
-        if isinstance(self.curve, AdaptableCurve):
-            curve = self.curve.create(region, *args)
-        else:
-            curve = self.curve
+        curve = self.curvegen.get_curve(region, *args)
 
         def generate(region, year, temps, **kw):
             temps = self.weather_change(temps)
@@ -208,5 +208,5 @@ class YearlyAverageDay(Calculation):
         return ApplicationByYear(region, generate)
 
     def column_info(self):
-        description = "The average result across a year according to daily temperatures."
+        description = "The average result across a year of daily temperatures applied to " + self.curve_desciption
         return [dict(name='response', title='Direct marginal response', description=description)]
