@@ -202,11 +202,11 @@ class YearlyAverageDay(Calculation):
             if not np.isnan(result):
                 yield (year, result)
 
-            if isinstance(self.curve, AdaptableCurve):
+            if isinstance(curve, AdaptableCurve):
                 curve.update(year, temps)
 
         return ApplicationByYear(region, generate)
 
     def column_info(self):
-        description = "The average result across a year of daily temperatures applied to " + self.curve_desciption
+        description = "The average result across a year of daily temperatures applied to " + self.curve_description
         return [dict(name='response', title='Direct marginal response', description=description)]
