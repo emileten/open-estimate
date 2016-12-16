@@ -210,3 +210,35 @@ class YearlyAverageDay(Calculation):
     def column_info(self):
         description = "The average result across a year of daily temperatures applied to " + self.curve_desciption
         return [dict(name='response', title='Direct marginal response', description=description)]
+
+class YearlyDividedPolynomialAverageDay(Calculation):
+    def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x):
+        super(YearlyAverageDay, self).__init__([units])
+        assert isinstance(curvegen, CurveGenerator)
+
+        self.curvegen = curvegen
+        self.curve_description = curve_description
+        self.weather_change = weather_change
+
+    def latex(self):
+        raise NotImplementedError
+
+    def apply(self, region, *args):
+        curve = self.curvegen.get_curve(region, *args)
+
+        def generate(region, year, temps, **kw):
+            temps = self.weather_change(temps)
+            assert temps.shape[1] == len(curve.ccs)
+            result = np.nansum(np.dot(curve.ccs, temps)) / len(temps)
+
+            if not np.isnan(result):
+                yield (year, result)
+
+            if isinstance(self.curve, AdaptableCurve):
+                curve.update(year, temps)
+
+        return ApplicationByYear(region, generate)
+
+    def column_info(self):
+        description = "The average result across a year of daily temperatures applied to a polynomial."
+        return [dict(name='response', title='Direct marginal response', description=description)]
