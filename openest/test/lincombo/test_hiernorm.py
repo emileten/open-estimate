@@ -24,7 +24,7 @@ def test_tau_no_alpha1():
             assert_almost_equal(prob, prob_check)
 
 def test_disagg():
-    alltaus, allalphas, allbetahats = lincombo_hiernorm([4, 7, 2], [1, 3, 1], [[1, 0], [0, 1], [1, 0]], draws=200)
+    alltaus, allalphas, allbetahats = lincombo_hiernorm([4, 7, 2], [1, 3, 1], [[1, 0], [0, 1], [1, 0]], draws=300)
     assert_almost_equal(np.mean(get_sampled_column(allalphas, 0)), 3, decimal=0)
     assert_almost_equal(np.mean(get_sampled_column(allalphas, 1)), 7, decimal=0)
 
