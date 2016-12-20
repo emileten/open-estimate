@@ -1,6 +1,6 @@
 import os, csv, random
 import numpy as np
-import latextools
+import latextools, diagnostic
 from calculation import Calculation, Application, ApplicationByYear
 from ..models.model import Model
 from ..models.spline_model import SplineModel
@@ -199,6 +199,9 @@ class YearlyAverageDay(Calculation):
             temps = self.weather_change(temps)
             result = np.nansum(curve(temps)) / len(temps)
 
+            if diagnostic.is_recording():
+                diagnostic.record(region, year, 'avgv', np.nansum(temps) / len(temps))
+
             if not np.isnan(result):
                 yield (year, result)
 
@@ -213,7 +216,7 @@ class YearlyAverageDay(Calculation):
 
 class YearlyDividedPolynomialAverageDay(Calculation):
     def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x):
-        super(YearlyAverageDay, self).__init__([units])
+        super(YearlyDividedPolynomialAverageDay, self).__init__([units])
         assert isinstance(curvegen, CurveGenerator)
 
         self.curvegen = curvegen
@@ -230,6 +233,11 @@ class YearlyDividedPolynomialAverageDay(Calculation):
             temps = self.weather_change(temps)
             assert temps.shape[1] == len(curve.ccs)
             result = np.nansum(np.dot(curve.ccs, temps)) / len(temps)
+
+            if diagnostic.is_recording():
+                sumtemps = np.sum(temps, axis=0) / len(temps)
+                for ii in range(temps.shape[1]):
+                    diagnostic.record(region, year, 'avgtk_' + str(ii+1), sumtemps[ii])
 
             if not np.isnan(result):
                 yield (year, result)

@@ -1,5 +1,5 @@
 import numpy as np
-import latextools, calculation
+import latextools, calculation, diagnostic
 
 """Scale the results by the value in scale_dict, or the mean value (if it is set).
 make_generator: we encapsulate this function, passing in data and opporting on outputs
@@ -181,6 +181,7 @@ class SpanInstabase(Instabase):
                 if year >= self.year1:
                     self.denomterms.append(result)
             else:
+                diagnostic.record(self.region, year, 'baseline', self.denom)
                 # calculate this and tack it on
                 yield [year, func(result, self.denom)] + list(yearresult[1:])
 

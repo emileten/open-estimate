@@ -80,6 +80,7 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
     def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
         super(CustomFunctionalCalculation, self).__init__(subcalc, from_units, to_units, unshift, *handler_args, **handler_kw)
         self.subapp = None
+        self.region = None
 
     def apply(self, region, *args, **kwargs):
         # Prepare the generator from our encapsulated operations
@@ -90,6 +91,7 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
 
         app = copy.copy(self)
         app.subapp = subapp
+        app.region = region
         app.init_apply()
 
         return app

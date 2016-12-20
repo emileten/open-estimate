@@ -79,9 +79,12 @@ def record(region, year, column, value):
     when finish(region, year) is called.
     """
     if default_manager is None:
-        raise RuntimeError("No default manager in use.  Please run begin(filepath) first.")
+        return # Silently drop the record
 
     default_manager.record(region, year, column, value)
+
+def is_recording():
+    return default_manager is not None
 
 def finish(region, year):
     """Write out the information for the given region, year combination.
