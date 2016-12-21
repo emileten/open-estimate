@@ -196,17 +196,17 @@ class YearlyAverageDay(Calculation):
         curve = self.curvegen.get_curve(region, *args)
 
         def generate(region, year, temps, **kw):
-            temps = self.weather_change(temps)
-            result = np.nansum(curve(temps)) / len(temps)
+            temps2 = self.weather_change(temps)
+            result = np.nansum(curve(temps2)) / len(temps2)
 
             if diagnostic.is_recording():
-                diagnostic.record(region, year, 'avgv', np.nansum(temps) / len(temps))
+                diagnostic.record(region, year, 'avgv', float(np.nansum(temps2)) / len(temps2))
 
             if not np.isnan(result):
                 yield (year, result)
 
             if isinstance(curve, AdaptableCurve):
-                curve.update(year, temps)
+                curve.update(year, temps) # XXX: pass the original temps (labor decision, generalize?)
 
         return ApplicationByYear(region, generate)
 

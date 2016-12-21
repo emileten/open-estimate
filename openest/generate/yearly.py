@@ -21,15 +21,12 @@ class YearlyBins(Calculation):
             curve = self.curve
 
         def generate(region, year, temps, **kw):
-            if len(temps.shape) == 2:
-                if temps.shape[0] == 12 and temps.shape[1] == len(self.xx):
-                    yy = curve(self.xx)
-                    yy[np.isnan(yy)] = 0
-                    result = np.sum(temps.dot(yy))
-                else:
-                    raise RuntimeError("Unknown format for temps: " + str(temps.shape[0]) + " x " + str(temps.shape[1]) + " <> len " + str(self.xx))
+            if len(temps) == len(self.xx):
+                yy = curve(self.xx)
+                yy[np.isnan(yy)] = 0
+                result = np.sum(temps.dot(yy))
             else:
-                result = np.nansum(curve(temps))
+                raise RuntimeError("Unknown format for temps: " + str(temps.shape) + " <> len " + str(self.xx))
 
             if not np.isnan(result):
                 yield (year, result)

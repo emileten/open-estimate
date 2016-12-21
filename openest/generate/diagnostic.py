@@ -122,7 +122,7 @@ class DiagnosticManager(object):
         # Write any region-years out to file
         if self.incomplete:
             with self._open() as writer:
-                for region, year in incomplete:
+                for region, year in self.incomplete:
                     self._writerow(writer, region, year, delete=False)
 
             self.incomplete = {}
@@ -158,13 +158,13 @@ class DiagnosticManager(object):
     def _open(self):
         """Return a writer for the file, writting the header if needed."""
 
-        if not initialized:
-            fp = open(filepath, 'w')
+        if not self.initialized:
+            fp = open(self.filepath, 'w')
             writer = CSVWriterFile(fp)
             writer.writerow(['region', 'year'] + self.header)
             self.initialized = True
         else:
-            fp = open(filepath, 'a')
+            fp = open(self.filepath, 'a')
             writer = CSVWriterFile(fp)
 
         return writer
@@ -188,9 +188,10 @@ class CSVWriterFile(object):
 
     def __enter__(self):
         self.csvfile.__enter__()
+        return self
 
-    def __exit__(self):
-        self.csvfile.__exit__()
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.csvfile.__exit__(exception_type, exception_value, traceback)
 
     def writerow(self, row):
         self.writer.writerow(row)
