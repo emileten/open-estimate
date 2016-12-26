@@ -54,7 +54,7 @@ class PolynomialCurve(UnivariateCurve):
     def __init__(self, xx, ccs):
         super(PolynomialCurve, self).__init__(xx)
         self.ccs = ccs
-        self.pvcoeffs = ccs[::-1] + [0] # Add on constant and start with highest order
+        self.pvcoeffs = list(ccs[::-1]) + [0] # Add on constant and start with highest order
 
     def __call__(self, x):
         return np.polyval(self.pvcoeffs, x)
