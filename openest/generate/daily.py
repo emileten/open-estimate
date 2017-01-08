@@ -196,17 +196,17 @@ class YearlyAverageDay(Calculation):
         curve = self.curvegen.get_curve(region, *args)
 
         def generate(region, year, temps, **kw):
-            temps = self.weather_change(temps)
-            result = np.nansum(curve(temps)) / len(temps)
+            temps2 = self.weather_change(temps)
+            result = np.nansum(curve(temps2)) / len(temps2)
 
             if diagnostic.is_recording():
-                diagnostic.record(region, year, 'avgv', float(np.nansum(temps)) / len(temps))
+                diagnostic.record(region, year, 'avgv', float(np.nansum(temps2)) / len(temps2))
 
             if not np.isnan(result):
                 yield (year, result)
 
             if isinstance(curve, AdaptableCurve):
-                curve.update(year, temps)
+                curve.update(year, temps) # XXX: pass the original temps (labor decision, generalize?)
 
         return ApplicationByYear(region, generate)
 
@@ -231,8 +231,9 @@ class YearlyDividedPolynomialAverageDay(Calculation):
 
         def generate(region, year, temps, **kw):
             temps = self.weather_change(temps)
-            assert temps.shape[1] == len(curve.ccs)
-            result = np.nansum(np.dot(curve.ccs, temps)) / len(temps)
+            assert temps.shape[1] == len(curve.curr_curve.ccs), "%d <> %d" % (temps.shape[1], len(curve.curr_curve.ccs))
+            #result = np.nansum(np.dot(temps, curve.curr_curve.ccs)) / len(temps)
+            result = np.dot(np.sum(temps, axis=0), curve.curr_curve.ccs) / len(temps)
 
             if diagnostic.is_recording():
                 sumtemps = np.sum(temps, axis=0) / len(temps)
@@ -242,7 +243,7 @@ class YearlyDividedPolynomialAverageDay(Calculation):
             if not np.isnan(result):
                 yield (year, result)
 
-            if isinstance(self.curve, AdaptableCurve):
+            if isinstance(curve, AdaptableCurve):
                 curve.update(year, temps)
 
         return ApplicationByYear(region, generate)
