@@ -200,7 +200,7 @@ class YearlyAverageDay(Calculation):
             result = np.nansum(curve(temps)) / len(temps)
 
             if diagnostic.is_recording():
-                diagnostic.record(region, year, 'avgv', np.nansum(temps) / len(temps))
+                diagnostic.record(region, year, 'avgv', float(np.nansum(temps)) / len(temps))
 
             if not np.isnan(result):
                 yield (year, result)
@@ -250,3 +250,32 @@ class YearlyDividedPolynomialAverageDay(Calculation):
     def column_info(self):
         description = "The average result across a year of daily temperatures applied to a polynomial."
         return [dict(name='response', title='Direct marginal response', description=description)]
+
+class ApplyCurve(Calculation):
+    def __init__(self, curvegen, units, names, titles, descriptions):
+        super(ApplyCurve, self).__init__([units])
+        assert isinstance(curvegen, CurveGenerator)
+
+        self.curvegen = curvegen
+
+        self.names = names
+        self.titles = titles
+        self.descriptions = descriptions
+
+    def latex(self):
+        raise NotImplementedError()
+
+    def apply(self, region, *args):
+        curve = self.curvegen.get_curve(region, *args)
+
+        def generate(region, year, temps, **kw):
+            yield [year] + curve(temps)
+
+            if isinstance(curve, AdaptableCurve):
+                curve.update(year, temps)
+
+        return ApplicationByYear(region, generate)
+
+    def column_info(self):
+        return [{'name': names[ii], 'title': titles[ii],
+                 'description': descriptions[ii]} for ii in range(len(ranges))]
