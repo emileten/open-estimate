@@ -36,11 +36,11 @@ class CurveCurve(UnivariateCurve):
 
 class FlatCurve(CurveCurve):
     def __init__(self, yy):
-        super(FlatCurve, self).__init__([-40, 0, 80], lambda x: yy)
+        super(FlatCurve, self).__init__([-np.inf, np.inf], lambda x: yy)
 
 class LinearCurve(CurveCurve):
     def __init__(self, yy):
-        super(LinearCurve, self).__init__([-40, 0, 80], lambda x: yy * x)
+        super(LinearCurve, self).__init__([-np.inf, np.inf], lambda x: yy * x)
 
 class StepCurve(CurveCurve):
     def __init__(self, xxlimits, yy):
