@@ -1,14 +1,24 @@
 from calculation import Calculation
 
+## Top-level class
 class CurveGenerator(object):
-    def __init__(self, indepunits, depenunits):
+    def __init__(self, indepunits, depenunit):
         self.indepunits = indepunits
-        self.depenunits = depenunits
+        self.depenunit = depenunit
 
     def get_curve(self, *args, **kw):
         """Returns an object of type Curve."""
         raise NotImplementedError()
 
+class ConstantCurveGenerator(CurveGenerator):
+    def __init__(self, indepunits, depenunit, curve):
+        super(ConstantCurveGenerator, self).__init__(indepunits, depenunit)
+        self.curve = curve
+
+    def get_curve(self, region, *args):
+        return self.curve
+
+## Labor-style recursive curve
 class RecursiveInstantaneousCurve(AdaptableCurve):
     def __init__(self, region, predgen, curr_curve):
         self.region = region

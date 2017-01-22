@@ -1,12 +1,15 @@
 import numpy as np
 from calculation import Calculation, ApplicationEach
 from ..models.curve import AdaptableCurve
+from curvegen import CurveGenerator
 
 class YearlyBins(Calculation):
-    def __init__(self, curve, units):
+    def __init__(self, units, curvegen, curve_description):
         super(YearlyBins, self).__init__([units])
-        self.curve = curve # Instance of UnivariateCurve
-        self.xx = curve.get_xx()
+        assert isinstance(curvegen, CurveGenerator)
+
+        self.curvegen = curvegen
+        self.curve_description = curve_description
 
     def latex(self):
         funcvar = latextools.get_function()
@@ -15,10 +18,7 @@ class YearlyBins(Calculation):
         yield ("%s(\cdot)" % (funcvar), str(self.curve), self.unitses[0])
 
     def apply(self, region, *args):
-        if isinstance(self.curve, AdaptableCurve):
-            curve = self.curve.create(region, *args)
-        else:
-            curve = self.curve
+        curve = self.curvegen.get_curve(region, *args)
 
         def generate(region, year, temps, **kw):
             if len(temps) == len(self.xx):
@@ -37,5 +37,5 @@ class YearlyBins(Calculation):
         return ApplicationEach(region, generate)
 
     def column_info(self):
-        description = "The combined result of daily temperatures, organized into bins according to %s." % (str(self.curve))
+        description = "The combined result of daily temperatures, organized into bins according to %s." % (str(self.curve_description))
         return [dict(name='response', title='Direct marginal response', description=description)]
