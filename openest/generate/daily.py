@@ -253,8 +253,8 @@ class YearlyDividedPolynomialAverageDay(Calculation):
         return [dict(name='response', title='Direct marginal response', description=description)]
 
 class ApplyCurve(Calculation):
-    def __init__(self, curvegen, units, names, titles, descriptions):
-        super(ApplyCurve, self).__init__([units])
+    def __init__(self, curvegen, unitses, names, titles, descriptions):
+        super(ApplyCurve, self).__init__(unitses)
         assert isinstance(curvegen, CurveGenerator)
 
         self.curvegen = curvegen
@@ -278,5 +278,5 @@ class ApplyCurve(Calculation):
         return ApplicationByYear(region, generate)
 
     def column_info(self):
-        return [{'name': names[ii], 'title': titles[ii],
-                 'description': descriptions[ii]} for ii in range(len(ranges))]
+        return [{'name': self.names[ii], 'title': self.titles[ii],
+                 'description': self.descriptions[ii]} for ii in range(len(self.names))]

@@ -1,4 +1,5 @@
 from calculation import Calculation
+from ..models.curve import AdaptableCurve
 
 ## Top-level class
 class CurveGenerator(object):
@@ -20,22 +21,28 @@ class ConstantCurveGenerator(CurveGenerator):
 
 ## Labor-style recursive curve
 class RecursiveInstantaneousCurve(AdaptableCurve):
-    def __init__(self, region, predgen, curr_curve):
+    def __init__(self, region, curvegen, curr_curve):
         self.region = region
-        self.predgen = predgen
+        self.curvegen = curvegen
         self.curr_curve = curr_curve
 
     def update(self, year, weather):
-        self.predictors = self.predgen.get_update(self.region, year, weather)
-        self.curr_curve = self.curvegen.get_curve(self.region, *self.predictors)
+        self.curr_curve = self.curvegen.get_updated_curve(self.region, year, weather)
 
     def __call__(self, x):
         return self.curr_curve(x)
 
 class RecursiveInstantaneousCurveGenerator(CurveGenerator):
-    def __init__(self, indepunits, depenunits, curvegenfunc):
+    def __init__(self, indepunits, depenunits, predgen, curvegenfunc):
         super(RecursiveInstantaneousCurveGenerator, self).__init__(indepunits, depenunits)
+        self.predgen = predgen
         self.curvegenfunc = curvegenfunc
 
-    def get_curve(self, region, *predictors):
+    def get_updated_curve(self, region, year, weather):
+        predictors = self.predgen.get_update(region, year, weather)
+        return self.get_curve(region, predictors)
+
+    def get_curve(self, region, predictors={}):
+        if not predictors:
+            predictors = self.predgen.get_baseline(region)
         return RecursiveInstantaneousCurve(region, self, self.curvegenfunc(predictors))
