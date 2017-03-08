@@ -46,6 +46,7 @@ diagnostic.close()
 """
 
 import os, csv
+import metacsv
 
 """
 The DiagnosticManager used by `begin`, `close`, and `record` below.
@@ -159,7 +160,10 @@ class DiagnosticManager(object):
         """Return a writer for the file, writting the header if needed."""
 
         if not self.initialized:
-            fp = open(self.filepath, 'w')
+            variables = dict(region="Hierarchy region index", year="Year of the result")
+            variables.update({column: "Ask for additional information" for column in self.header})
+            metacsv.to_header(self.filepath, attrs=dict(oneline="Diagnostic file"), variables=variables)
+            fp = open(self.filepath, 'a')
             writer = CSVWriterFile(fp)
             writer.writerow(['region', 'year'] + self.header)
             self.initialized = True
