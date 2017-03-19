@@ -64,8 +64,17 @@ def pos(x):
 
 class CubicSplineCurve(UnivariateCurve):
     def __init__(self, knots, coeffs):
-        super(PolynomialCurve, self).__init__(knots)
+        super(CubicSplineCurve, self).__init__(knots)
+        self.knots = knots
         self.coeffs = coeffs
+
+    def get_terms(self, x):
+        terms = [x]
+        for kk in range(len(self.knots) - 2):
+            termx_k = pos(x - self.knots[kk])**3 - pos(x - self.knots[-2])**3 * (self.knots[-1] - self.knots[kk]) / (self.knots[-1] - self.knots[-2]) + pos(x - self.knots[-1])**3 * (self.knots[-2] - self.knots[kk]) / (self.knots[-1] - self.knots[-2])
+            terms.append(termx_k)
+
+        return terms
 
     def __call__(self, x):
         total = x * self.coeffs[0]

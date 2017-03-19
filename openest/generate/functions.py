@@ -267,3 +267,4 @@ class Sum(calculation.Calculation):
         for infos in infoses:
             fullinfos.extend(infos)
         return [dict(name='sum', title=title, description=description)] + fullinfos
+

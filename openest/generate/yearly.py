@@ -2,6 +2,7 @@ import numpy as np
 from calculation import Calculation, ApplicationEach
 from ..models.curve import AdaptableCurve
 from curvegen import CurveGenerator
+import diagnostic
 
 class YearlyBins(Calculation):
     def __init__(self, units, curvegen, curve_description):
@@ -38,4 +39,40 @@ class YearlyBins(Calculation):
 
     def column_info(self):
         description = "The combined result of daily temperatures, organized into bins according to %s." % (str(self.curve_description))
+        return [dict(name='response', title='Direct marginal response', description=description)]
+
+class YearlyCoefficients(Calculation):
+    def __init__(self, units, curvegen, curve_description, getter=lambda curve: curve.yy, weather_change=lambda x: x):
+        super(YearlyCoefficients, self).__init__([units])
+        assert isinstance(curvegen, CurveGenerator)
+
+        self.curvegen = curvegen
+        self.curve_description = curve_description
+        self.getter = getter
+        self.weather_change = weather_change
+
+    def apply(self, region, *args):
+        curve = self.curvegen.get_curve(region, *args)
+
+        def generate(region, year, temps, **kw):
+            coeffs = self.getter(curve)
+            if len(temps) == len(coeffs):
+                result = np.sum(self.weather_change(temps).dot(coeffs))
+            else:
+                raise RuntimeError("Unknown format for temps: " + str(temps.shape) + " <> len " + str(coeffs))
+
+            if diagnostic.is_recording():
+                for ii in range(temps.shape[0]):
+                    diagnostic.record(region, year, 'var-' + str(ii), temps[ii])
+
+            if not np.isnan(result):
+                yield (year, result)
+
+            if isinstance(curve, AdaptableCurve):
+                curve.update(year, temps) # Passing in original (not weather-changed data)
+
+        return ApplicationEach(region, generate)
+
+    def column_info(self):
+        description = "The combined result of yearly values, with coefficients from %s." % (str(self.curve_description))
         return [dict(name='response', title='Direct marginal response', description=description)]
