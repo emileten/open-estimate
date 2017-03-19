@@ -268,3 +268,28 @@ class Sum(calculation.Calculation):
             fullinfos.extend(infos)
         return [dict(name='sum', title=title, description=description)] + fullinfos
 
+class Positive(calculation.Calculation):
+    """
+    Return 0 if subcalc is less than 0
+    """
+    def __init__(self, subcalc):
+        super(Sum, self).__init__([subcalc.unitses[0]] + subcalc.unitses)
+        self.subcalc = subcalc
+
+    def latex(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def apply(self, region, *args, **kwargs):
+        def generate(year, result):
+            return result if result > 0 else 0
+
+        # Prepare the generator from our encapsulated operations
+        subapp = self.subcalc.apply(region, *args, **kwargs)
+        return calculation.ApplicationPassCall(region, subapp, generate, unshift=True)
+
+    def column_info(self):
+        infos = self.subcalc.column_info()
+        title = 'Positive-only form of ' + infos[0]['title']
+        description = 'The value of ' + infos[0]['title'] ', if positive and otherwise 0.'
+
+        return [dict(name='positive', title=title, description=description)] + infos
