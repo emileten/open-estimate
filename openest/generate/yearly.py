@@ -55,7 +55,7 @@ class YearlyCoefficients(Calculation):
         curve = self.curvegen.get_curve(region, *args)
 
         def generate(region, year, temps, **kw):
-            coeffs = self.getter(curve)
+            coeffs = self.getter(region, year, temps, curve)
             if len(temps) == len(coeffs):
                 result = np.sum(self.weather_change(region, temps).dot(coeffs))
             else:

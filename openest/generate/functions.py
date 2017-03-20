@@ -273,7 +273,7 @@ class Positive(calculation.Calculation):
     Return 0 if subcalc is less than 0
     """
     def __init__(self, subcalc):
-        super(Sum, self).__init__([subcalc.unitses[0]] + subcalc.unitses)
+        super(Positive, self).__init__([subcalc.unitses[0]] + subcalc.unitses)
         self.subcalc = subcalc
 
     def latex(self, *args, **kwargs):
@@ -290,6 +290,6 @@ class Positive(calculation.Calculation):
     def column_info(self):
         infos = self.subcalc.column_info()
         title = 'Positive-only form of ' + infos[0]['title']
-        description = 'The value of ' + infos[0]['title'] ', if positive and otherwise 0.'
+        description = 'The value of ' + infos[0]['title'] + ', if positive and otherwise 0.'
 
         return [dict(name='positive', title=title, description=description)] + infos
