@@ -1,5 +1,5 @@
 import numpy as np
-import latextools, calculation
+import latextools, calculation, diagnostic
 
 """Scale the results by the value in scale_dict, or the mean value (if it is set).
 make_generator: we encapsulate this function, passing in data and opporting on outputs
@@ -173,6 +173,7 @@ class SpanInstabase(Instabase):
 
                 # Print out all past results, re-based
                 for pastresult in self.pastresults:
+                    diagnostic.record(self.region, pastresult[0], 'baseline', self.denom)
                     yield [pastresult[0], func(pastresult[1], self.denom)] + list(pastresult[1:])
 
             if self.denom is None:
@@ -181,6 +182,7 @@ class SpanInstabase(Instabase):
                 if year >= self.year1:
                     self.denomterms.append(result)
             else:
+                diagnostic.record(self.region, year, 'baseline', self.denom)
                 # calculate this and tack it on
                 yield [year, func(result, self.denom)] + list(yearresult[1:])
 
@@ -265,3 +267,29 @@ class Sum(calculation.Calculation):
         for infos in infoses:
             fullinfos.extend(infos)
         return [dict(name='sum', title=title, description=description)] + fullinfos
+
+class Positive(calculation.Calculation):
+    """
+    Return 0 if subcalc is less than 0
+    """
+    def __init__(self, subcalc):
+        super(Positive, self).__init__([subcalc.unitses[0]] + subcalc.unitses)
+        self.subcalc = subcalc
+
+    def latex(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def apply(self, region, *args, **kwargs):
+        def generate(year, result):
+            return result if result > 0 else 0
+
+        # Prepare the generator from our encapsulated operations
+        subapp = self.subcalc.apply(region, *args, **kwargs)
+        return calculation.ApplicationPassCall(region, subapp, generate, unshift=True)
+
+    def column_info(self):
+        infos = self.subcalc.column_info()
+        title = 'Positive-only form of ' + infos[0]['title']
+        description = 'The value of ' + infos[0]['title'] + ', if positive and otherwise 0.'
+
+        return [dict(name='positive', title=title, description=description)] + infos

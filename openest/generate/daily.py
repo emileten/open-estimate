@@ -1,12 +1,13 @@
 import os, csv, random
 import numpy as np
-import latextools
+import latextools, diagnostic
 from calculation import Calculation, Application, ApplicationByYear
 from ..models.model import Model
 from ..models.spline_model import SplineModel
 from ..models.bin_model import BinModel
 from ..models.memoizable import MemoizedUnivariate
 from ..models.curve import UnivariateCurve, AdaptableCurve, StepCurve
+from curvegen import CurveGenerator
 
 # Generate integral over daily temperature
 class MonthlyDayBins(Calculation):
@@ -75,7 +76,7 @@ class YearlyDayBins(Calculation):
             spline = self.spline.create(region, *args)
         else:
             spline = self.spline
-            
+
         def generate(region, year, temps, **kw):
             if len(temps.shape) == 2:
                 if temps.shape[0] == 12 and temps.shape[1] == len(self.xx):
@@ -175,3 +176,107 @@ class Constant(Calculation):
 
     def column_info(self):
         return [dict(name='response', title="Constant value", description="Always equal to " + str(self.value))]
+
+class YearlyAverageDay(Calculation):
+    def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x):
+        super(YearlyAverageDay, self).__init__([units])
+        assert isinstance(curvegen, CurveGenerator)
+
+        self.curvegen = curvegen
+        self.curve_description = curve_description
+        self.weather_change = weather_change
+
+    def latex(self):
+        funcvar = latextools.get_function()
+        yield ("Equation", r"\frac{1}{365} \sum_{d \in y(t)} %s(T_d)" % (funcvar), self.unitses[0])
+        yield ("T_d", "Temperature", "deg. C")
+        yield ("%s(\cdot)" % (funcvar), self.curve_description, self.unitses[0])
+
+    def apply(self, region, *args):
+        curve = self.curvegen.get_curve(region, *args)
+
+        def generate(region, year, temps, **kw):
+            temps2 = self.weather_change(temps)
+            result = np.nansum(curve(temps2)) / len(temps2)
+
+            if diagnostic.is_recording():
+                diagnostic.record(region, year, 'avgv', float(np.nansum(temps2)) / len(temps2))
+
+            if not np.isnan(result):
+                yield (year, result)
+
+            if isinstance(curve, AdaptableCurve):
+                curve.update(year, temps) # XXX: pass the original temps (labor decision, generalize?)
+
+        return ApplicationByYear(region, generate)
+
+    def column_info(self):
+        description = "The average result across a year of daily temperatures applied to " + self.curve_description
+        return [dict(name='response', title='Direct marginal response', description=description)]
+
+class YearlyDividedPolynomialAverageDay(Calculation):
+    def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x):
+        super(YearlyDividedPolynomialAverageDay, self).__init__([units])
+        assert isinstance(curvegen, CurveGenerator)
+
+        self.curvegen = curvegen
+        self.curve_description = curve_description
+        self.weather_change = weather_change
+
+    def latex(self):
+        raise NotImplementedError
+
+    def apply(self, region, *args):
+        curve = self.curvegen.get_curve(region, *args)
+
+        def generate(region, year, temps, **kw):
+            temps = self.weather_change(temps)
+            assert temps.shape[1] == len(curve.curr_curve.ccs), "%d <> %d" % (temps.shape[1], len(curve.curr_curve.ccs))
+            #result = np.nansum(np.dot(temps, curve.curr_curve.ccs)) / len(temps)
+            result = np.dot(np.sum(temps, axis=0), curve.curr_curve.ccs) / len(temps)
+
+            if diagnostic.is_recording():
+                sumtemps = np.sum(temps, axis=0) / len(temps)
+                for ii in range(temps.shape[1]):
+                    diagnostic.record(region, year, 'avgtk_' + str(ii+1), sumtemps[ii])
+
+            if not np.isnan(result):
+                yield (year, result)
+
+            if isinstance(curve, AdaptableCurve):
+                curve.update(year, temps)
+
+        return ApplicationByYear(region, generate)
+
+    def column_info(self):
+        description = "The average result across a year of daily temperatures applied to a polynomial."
+        return [dict(name='response', title='Direct marginal response', description=description)]
+
+class ApplyCurve(Calculation):
+    def __init__(self, curvegen, unitses, names, titles, descriptions):
+        super(ApplyCurve, self).__init__(unitses)
+        assert isinstance(curvegen, CurveGenerator)
+
+        self.curvegen = curvegen
+
+        self.names = names
+        self.titles = titles
+        self.descriptions = descriptions
+
+    def latex(self):
+        raise NotImplementedError()
+
+    def apply(self, region, *args):
+        curve = self.curvegen.get_curve(region, *args)
+
+        def generate(region, year, temps, **kw):
+            yield [year] + curve(temps)
+
+            if isinstance(curve, AdaptableCurve):
+                curve.update(year, temps)
+
+        return ApplicationByYear(region, generate)
+
+    def column_info(self):
+        return [{'name': self.names[ii], 'title': self.titles[ii],
+                 'description': self.descriptions[ii]} for ii in range(len(self.names))]

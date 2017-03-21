@@ -36,11 +36,11 @@ class CurveCurve(UnivariateCurve):
 
 class FlatCurve(CurveCurve):
     def __init__(self, yy):
-        super(FlatCurve, self).__init__([-40, 0, 80], lambda x: yy)
+        super(FlatCurve, self).__init__([-np.inf, np.inf], lambda x: yy)
 
 class LinearCurve(CurveCurve):
     def __init__(self, yy):
-        super(LinearCurve, self).__init__([-40, 0, 80], lambda x: yy * x)
+        super(LinearCurve, self).__init__([-np.inf, np.inf], lambda x: yy * x)
 
 class StepCurve(CurveCurve):
     def __init__(self, xxlimits, yy):
@@ -54,10 +54,35 @@ class PolynomialCurve(UnivariateCurve):
     def __init__(self, xx, ccs):
         super(PolynomialCurve, self).__init__(xx)
         self.ccs = ccs
-        self.pvcoeffs = ccs[::-1] + [0] # Add on constant and start with highest order
+        self.pvcoeffs = list(ccs[::-1]) + [0] # Add on constant and start with highest order
 
     def __call__(self, x):
         return np.polyval(self.pvcoeffs, x)
+
+def pos(x):
+    return x * (x > 0)
+
+class CubicSplineCurve(UnivariateCurve):
+    def __init__(self, knots, coeffs):
+        super(CubicSplineCurve, self).__init__(knots)
+        self.knots = knots
+        self.coeffs = coeffs
+
+    def get_terms(self, x):
+        terms = [x]
+        for kk in range(len(self.knots) - 2):
+            termx_k = pos(x - self.knots[kk])**3 - pos(x - self.knots[-2])**3 * (self.knots[-1] - self.knots[kk]) / (self.knots[-1] - self.knots[-2]) + pos(x - self.knots[-1])**3 * (self.knots[-2] - self.knots[kk]) / (self.knots[-1] - self.knots[-2])
+            terms.append(termx_k)
+
+        return terms
+
+    def __call__(self, x):
+        total = x * self.coeffs[0]
+        for kk in range(len(self.knots) - 2):
+            termx_k = pos(x - self.knots[kk])**3 - pos(x - self.knots[-2])**3 * (self.knots[-1] - self.knots[kk]) / (self.knots[-1] - self.knots[-2]) + pos(x - self.knots[-1])**3 * (self.knots[-2] - self.knots[kk]) / (self.knots[-1] - self.knots[-2])
+            total += termx_k * self.coeffs[kk + 1]
+
+        return total
 
 class AdaptableCurve(UnivariateCurve):
     def __init__(self, xx):
