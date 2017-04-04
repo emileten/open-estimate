@@ -7,7 +7,7 @@ class SingleWeatherApply(Calculation):
     def __init__(self, units, curve, curve_description, weather_change=lambda x: x):
         super(SingleWeatherApply, self).__init__([units])
         if isinstance(curve, CurveGenerator):
-            assert curve.depenunits == units
+            assert curve.depenunit == units
 
         self.curve = curve
         self.curve_description = curve_description
@@ -23,6 +23,8 @@ class SingleWeatherApply(Calculation):
             curve = self.curve
 
         def generate(region, time, weather, **kw):
+            print weather
+            print weather.shape
             weather = self.weather_change(weather)
             result = curve(weather)
 
@@ -39,7 +41,7 @@ class MonthlyClimateApply(Calculation):
     def __init__(self, units, curve, curve_description, monthmeans, regions, weather_change=lambda x: x):
         super(MonthlyClimateApply, self).__init__([units])
         if isinstance(curve, CurveGenerator):
-            assert curve.depenunits == units
+            assert curve.depenunit == units
 
         self.curve = curve
         self.curve_description = curve_description
@@ -76,7 +78,7 @@ class InstaZScoreApply(Calculation, Application):
     def __init__(self, units, curve, curve_description, lasttime, weather_change=lambda x: x):
         super(InstaZScoreApply, self).__init__([units])
         if isinstance(curve, CurveGenerator):
-            assert curve.depenunits == units
+            assert curve.depenunit == units
 
         self.curve = curve
         self.curve_description = curve_description
@@ -130,7 +132,7 @@ class MonthlyZScoreApply(Calculation, Application):
     def __init__(self, units, curve, curve_description, monthmeans, monthsdevs, regions, weather_change=lambda x: x):
         super(MonthlyZScoreApply, self).__init__([units])
         if isinstance(curve, CurveGenerator):
-            assert curve.depenunits == units
+            assert curve.depenunit == units
 
         self.curve = curve
         self.curve_description = curve_description
