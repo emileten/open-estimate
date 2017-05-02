@@ -1,6 +1,8 @@
 open-estimate
 =============
 
+
+
 Crowd-Sourcing Model Aggregation Library
 
 Installation
@@ -19,3 +21,6 @@ Install the package by calling
 python setup.py install
 ```
 (or use `develop` rather than install if you'll be editing the code).
+
+
+Full Documentation can be found `here <http://openest.readthedocs.io/en/master/>`_.
