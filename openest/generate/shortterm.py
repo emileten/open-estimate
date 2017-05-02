@@ -7,7 +7,7 @@ class SingleWeatherApply(Calculation):
     def __init__(self, units, curve, curve_description, weather_change=lambda x: x):
         super(SingleWeatherApply, self).__init__([units])
         if isinstance(curve, CurveGenerator):
-            assert curve.depenunits == units
+            assert curve.depenunit == units
 
         self.curve = curve
         self.curve_description = curve_description
@@ -39,7 +39,7 @@ class MonthlyClimateApply(Calculation):
     def __init__(self, units, curve, curve_description, monthmeans, regions, weather_change=lambda x: x):
         super(MonthlyClimateApply, self).__init__([units])
         if isinstance(curve, CurveGenerator):
-            assert curve.depenunits == units
+            assert curve.depenunit == units
 
         self.curve = curve
         self.curve_description = curve_description
@@ -60,7 +60,7 @@ class MonthlyClimateApply(Calculation):
 
         def generate(region, time, weather, **kw):
             # Ignores weather
-            weather = self.weather_change(self.monthmeans[int(time) % 12][region_index])
+            weather = self.weather_change(self.monthmeans[int(time - 1.5) % 12][region_index])
             result = curve(weather)
 
             if not np.isnan(result):
@@ -76,7 +76,7 @@ class InstaZScoreApply(Calculation, Application):
     def __init__(self, units, curve, curve_description, lasttime, weather_change=lambda x: x):
         super(InstaZScoreApply, self).__init__([units])
         if isinstance(curve, CurveGenerator):
-            assert curve.depenunits == units
+            assert curve.depenunit == units
 
         self.curve = curve
         self.curve_description = curve_description
@@ -130,7 +130,7 @@ class MonthlyZScoreApply(Calculation, Application):
     def __init__(self, units, curve, curve_description, monthmeans, monthsdevs, regions, weather_change=lambda x: x):
         super(MonthlyZScoreApply, self).__init__([units])
         if isinstance(curve, CurveGenerator):
-            assert curve.depenunits == units
+            assert curve.depenunit == units
 
         self.curve = curve
         self.curve_description = curve_description
