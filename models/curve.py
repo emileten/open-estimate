@@ -80,7 +80,7 @@ class CubicSplineCurve(UnivariateCurve):
     def __call__(self, x):
         """Get the set of knots-1 terms representing temperature x and multiply by the coefficients."""
         total = x * self.coeffs[0]
-        for kk in range(self.knots - 2):
+        for kk in range(len(self.knots) - 2):
             termx_k = pos(x - self.knots[kk])**3 - pos(x - self.knots[-2])**3 * (self.knots[-1] - self.knots[kk]) / (self.knots[-1] - self.knots[-2]) + pos(x - self.knots[-1])**3 * (self.knots[-2] - self.knots[kk]) / (self.knots[-1] - self.knots[-2])
             total += termx_k * self.coeffs[kk + 1]
 
