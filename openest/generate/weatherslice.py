@@ -4,8 +4,9 @@ MIN_REGIONS = 20000
 
 class WeatherSlice(object):
     """
+        WeatherSlice have two public attributes: times and weathers
         times should be a numpy array with a single dimension.  Let it have length T.
-        weather should be a numpy array of size T x REGIONS [x K]
+        weathers should be a numpy array of size T x REGIONS [x K]
           the last dimension is optional, if more than one value is returned for each time.
     """
     def __init__(self, times, weathers):
@@ -42,6 +43,24 @@ class YearlyWeatherSlice(WeatherSlice):
 
     def get_years(self):
         return self.times
+
+    @staticmethod
+    def convert(weatherslice):
+        if isinstance(weatherslice, YearlyWeatherSlice):
+            return weatherslice
+        
+        origyears = np.array(weatherslice.get_years())
+        years, indexes = np.unique(origyears, return_index=True)
+        if len(years) > 1:
+            years = weatherslice.get_years()[np.sort(indexes)] # make sure in order
+
+        weather_byyear = []
+        for year in years:
+            summed = np.sum(weatherslice.weathers[origyears == year], axis=0)
+            summed = np.expand_dims(summed, axis=0)
+            weather_byyear.append(summed)
+
+        return YearlyWeatherSlice(years, np.concatenate(weather_byyear, axis=0))
 
 class TriMonthlyWeatherSlice(WeatherSlice):
     def __init__(self, times, weathers):
