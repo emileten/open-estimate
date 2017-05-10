@@ -103,11 +103,11 @@ class Instabase(calculation.CustomFunctionalCalculation):
     def init_apply(self):
         self.pastresults = [] # don't copy this across instances!
 
-    def pushhandler(self, yyyyddd, weather, baseyear, func, skip_on_missing):
+    def pushhandler(self, weatherslice, baseyear, func, skip_on_missing):
         """
         Returns an interator of (yyyy, value, ...).
         """
-        for yearresult in self.subapp.push(yyyyddd, weather):
+        for yearresult in self.subapp.push(weatherslice):
             year = yearresult[0]
             result = yearresult[1]
 
@@ -158,11 +158,11 @@ class SpanInstabase(Instabase):
         self.denomterms = [] # don't copy this across instances!
         self.pastresults = []
 
-    def pushhandler(self, yyyyddd, weather, baseyear, func, skip_on_missing):
+    def pushhandler(self, weatherslice, baseyear, func, skip_on_missing):
         """
         Returns an interator of (yyyy, value, ...).
         """
-        for yearresult in self.subapp.push(yyyyddd, weather):
+        for yearresult in self.subapp.push(weatherslice):
             year = yearresult[0]
             result = yearresult[1]
 
@@ -204,11 +204,11 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
     def init_apply(self):
         self.pastresults = [] # don't copy this across instances!
 
-    def pushhandler(self, yyyyddd, weather, lastyear):
+    def pushhandler(self, weatherslice, lastyear):
         """
         Returns an interator of (yyyy, value, ...).
         """
-        for yearresult in self.subapp.push(yyyyddd, weather):
+        for yearresult in self.subapp.push(weatherslice):
             year = yearresult[0]
             result = yearresult[1]
 

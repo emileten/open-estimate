@@ -123,11 +123,9 @@ class ApplicationEach(Application):
         self.args = args
         self.kwargs = kwargs
 
-    def push(self, times, weathers):
-        assert len(times) == len(weathers)
-
-        for ii in range(len(times)):
-            for values in self.func(self.region, times[ii], weathers[ii], *self.args, **self.kwargs):
+    def push(self, weatherslice):
+        for ii in range(len(weatherslice.times)):
+            for values in self.func(self.region, weatherslice.times[ii], weatherslice.weathers[ii], *self.args, **self.kwargs):
                 yield values
 
     def done(self):

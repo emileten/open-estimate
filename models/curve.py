@@ -50,9 +50,9 @@ class StepCurve(CurveCurve):
         self.xxlimits = xxlimits
         self.yy = yy
 
-class PolynomialCurve(UnivariateCurve):
+class ZeroInterceptPolynomialCurve(UnivariateCurve):
     def __init__(self, xx, ccs):
-        super(PolynomialCurve, self).__init__(xx)
+        super(ZeroInterceptPolynomialCurve, self).__init__(xx)
         self.ccs = ccs
         self.pvcoeffs = list(ccs[::-1]) + [0] # Add on constant and start with highest order
 
@@ -85,7 +85,7 @@ class CubicSplineCurve(UnivariateCurve):
             total += termx_k * self.coeffs[kk + 1]
 
         return total
-
+    
 class AdaptableCurve(UnivariateCurve):
     def __init__(self, xx):
         super(AdaptableCurve, self).__init__(xx)
@@ -94,3 +94,43 @@ class AdaptableCurve(UnivariateCurve):
     def update(self):
         pass
 
+class ShiftedCurve(AdaptableCurve):
+    def __init__(self, curve, offset):
+        super(ShiftedCurve, self).__init__(curve.xx)
+        self.curve = curve
+        self.offset = offset
+
+    def __call__(self, xs):
+        return self.curve(xs) + self.offset
+
+    def update(self):
+        if isinstance(self.curve, AdaptableCurve):
+            self.curve.update()
+
+class ClippedCurve(AdaptableCurve):
+    def __init__(self, curve):
+        super(ClippedCurve, self).__init__(curve.xx)
+        self.curve = curve
+
+    def __call__(self, xs):
+        ys = self.curve(xs)
+        return ys * (ys > 0)
+
+    def update(self):
+        if isinstance(self.curve, AdaptableCurve):
+            self.curve.update()
+
+class MinimumCurve(AdaptableCurve):
+    def __init__(self, curve1, curve2):
+        super(MinimumCurve, self).__init__(curve1.xx)
+        self.curve1 = curve1
+        self.curve2 = curve2
+
+    def __call__(self, xs):
+        return np.minimum(self.curve1(xs), self.curve2(xs))
+
+    def update(self):
+        if isinstance(self.curve1, AdaptableCurve):
+            self.curve1.update()
+        if isinstance(self.curve2, AdaptableCurve):
+            self.curve2.update()

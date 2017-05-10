@@ -178,7 +178,7 @@ class Constant(Calculation):
         return [dict(name='response', title="Constant value", description="Always equal to " + str(self.value))]
 
 class YearlyAverageDay(Calculation):
-    def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x):
+    def __init__(self, units, curvegen, curve_description, weather_change=lambda region, x: x):
         super(YearlyAverageDay, self).__init__([units])
         assert isinstance(curvegen, CurveGenerator)
 
@@ -196,7 +196,7 @@ class YearlyAverageDay(Calculation):
         curve = self.curvegen.get_curve(region, *args)
 
         def generate(region, year, temps, **kw):
-            temps2 = self.weather_change(temps)
+            temps2 = self.weather_change(region, temps)
             result = np.nansum(curve(temps2)) / len(temps2)
 
             if diagnostic.is_recording():
@@ -206,7 +206,7 @@ class YearlyAverageDay(Calculation):
                 yield (year, result)
 
             if isinstance(curve, AdaptableCurve):
-                curve.update(year, temps) # XXX: pass the original temps (labor decision, generalize?)
+                curve.update(year, temps) # Passing in original (not weather-changed) data
 
         return ApplicationByYear(region, generate)
 

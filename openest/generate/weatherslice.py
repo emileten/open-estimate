@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 MIN_REGIONS = 20000
@@ -6,20 +7,36 @@ class WeatherSlice(object):
     """
         WeatherSlice have two public attributes: times and weathers
         times should be a numpy array with a single dimension.  Let it have length T.
-        weathers should be a numpy array of size T x REGIONS [x K]
+        weathers should be a numpy array of size T [x REGIONS] [x K]
+          the regions dimension should be excluded iff this is for a single region
           the last dimension is optional, if more than one value is returned for each time.
     """
-    def __init__(self, times, weathers):
+    def __init__(self, times, weathers, manyregion=True):
         self.times = np.array(times)
         T = len(times)
 
-        if len(weathers.shape) == 1:
-            weathers = np.expand_dims(weathers, axis=0)
+        if manyregion:
+            if len(weathers.shape) == 1:
+                weathers = np.expand_dims(weathers, axis=0)
 
+            assert weathers.shape[1] > MIN_REGIONS, "The second dimension does not have enough regions: %d < %d" % (weathers.shape[1], MIN_REGIONS)
+        else:
+            assert len(weathers.shape) < 2, "Without the region dimension, WeatherSlice may only have 1 or 2 dimensions."
+            
         assert weathers.shape[0] == T, "The first dimension does not match the times: %d <> %d" % (weathers.shape[0], T)
-        assert weathers.shape[1] > MIN_REGIONS, "The second dimension does not have enough regions: %d < %d" % (weathers.shape[1], MIN_REGIONS)
 
         self.weathers = weathers
+        self.manyregion = manyregion
+
+    def select_region(self, ii):
+        child = copy.copy(self)
+        if len(self.weathers.shape) == 3:
+            child.weathers = self.weathers[:, ii, :]
+        else:
+            child.weathers = self.weathers[:, ii]
+        child.manyregion = False
+
+        return child
 
 class DailyWeatherSlice(WeatherSlice):
     def __init__(self, times, weathers):
@@ -43,20 +60,22 @@ class YearlyWeatherSlice(WeatherSlice):
 
     def get_years(self):
         return self.times
-
+    
     @staticmethod
     def convert(weatherslice):
+        """Converts other slices to yearly values, taking the mean by year"""
+        
         if isinstance(weatherslice, YearlyWeatherSlice):
             return weatherslice
         
         origyears = np.array(weatherslice.get_years())
         years, indexes = np.unique(origyears, return_index=True)
         if len(years) > 1:
-            years = weatherslice.get_years()[np.sort(indexes)] # make sure in order
+            years = origyears[np.sort(indexes)] # make sure in order
 
         weather_byyear = []
         for year in years:
-            summed = np.sum(weatherslice.weathers[origyears == year], axis=0)
+            summed = np.mean(weatherslice.weathers[origyears == year], axis=0)
             summed = np.expand_dims(summed, axis=0)
             weather_byyear.append(summed)
 
