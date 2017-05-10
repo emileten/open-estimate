@@ -1,7 +1,26 @@
+# -*- coding: utf-8 -*-
+################################################################################
+# Copyright 2014, Distributed Meta-Analysis System
+################################################################################
+"""Create a pooled estimates.
+
+The main function is `lincombo_pooled`.
+"""
+
+__copyright__ = "Copyright 2014, Distributed Meta-Analysis System"
+
+__author__ = "James Rising"
+__credits__ = ["James Rising"]
+__maintainer__ = "James Rising"
+__email__ = "jar2234@columbia.edu"
+
+__status__ = "Production"
+__version__ = "$Revision$"
+# $Source$
+
 import numpy as np
 from multi_normal import MultivariateNormal
 import helpers
-import time # XXX
 
 def sum_multiply(sparsecol, densevec):
     indices = sparsecol.nonzero()[0] # just take rows
