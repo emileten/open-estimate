@@ -69,7 +69,7 @@ class YearlyCoefficients(Calculation):
                 yield (year, result)
 
             if isinstance(curve, AdaptableCurve):
-                curve.update(year, temps) # Passing in original (not weather-changed data)
+                curve.update(year, temps) # Passing in original (not weather-changed) data
 
         return ApplicationEach(region, generate)
 

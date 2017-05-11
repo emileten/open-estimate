@@ -19,6 +19,15 @@ class ConstantCurveGenerator(CurveGenerator):
     def get_curve(self, region, *args):
         return self.curve
 
+class TransformCurveGenerator(CurveGenerator):
+    def __init__(self, curvegen, transform):
+        super(TransformCurveGenerator, self).__init__(curvegen.indepunits, curvegen.depenunit)
+        self.curvegen = curvegen
+        self.transform = transform
+
+    def get_curve(self, region, *args):
+        return self.transform(region, self.curvegen.get_curve(region, *args))
+    
 ## Labor-style recursive curve
 class RecursiveInstantaneousCurve(AdaptableCurve):
     def __init__(self, region, curvegen, curr_curve):

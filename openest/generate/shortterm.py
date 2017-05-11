@@ -23,6 +23,8 @@ class SingleWeatherApply(Calculation):
             curve = self.curve
 
         def generate(region, time, weather, **kw):
+            print weather
+            print weather.shape
             weather = self.weather_change(weather)
             result = curve(weather)
 

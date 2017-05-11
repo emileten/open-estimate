@@ -66,7 +66,7 @@ class Application(object):
     def __init__(self, region):
         self.region = region
 
-    def push(self, yyyyddd, weather):
+    def push(self, weatherslice):
         """
         Returns an interator of (yyyy, value, ...).
         """
@@ -99,11 +99,11 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
     def init_apply(self):
         pass
 
-    def push(self, yyyyddd, weather):
-        for yearresult in self.pushhandler(yyyyddd, weather, *self.handler_args, **self.handler_kw):
+    def push(self, weatherslice):
+        for yearresult in self.pushhandler(weatherslice, *self.handler_args, **self.handler_kw):
             yield yearresult
 
-    def pushhandler(self, yyyyddd, weather, *allargs, **allkwargs):
+    def pushhandler(self, weatherslice, *allargs, **allkwargs):
         raise NotImplementedError()
 
     def done(self):
@@ -123,11 +123,9 @@ class ApplicationEach(Application):
         self.args = args
         self.kwargs = kwargs
 
-    def push(self, times, weathers):
-        assert len(times) == len(weathers)
-
-        for ii in range(len(times)):
-            for values in self.func(self.region, times[ii], weathers[ii], *self.args, **self.kwargs):
+    def push(self, weatherslice):
+        for ii in range(len(weatherslice.times)):
+            for values in self.func(self.region, weatherslice.times[ii], weatherslice.weathers[ii], *self.args, **self.kwargs):
                 yield values
 
     def done(self):
@@ -154,12 +152,12 @@ class ApplicationPassCall(Application):
         self.handler_args = handler_args
         self.handler_kw = handler_kw
 
-    def push(self, yyyyddd, weather):
+    def push(self, weatherslice):
         """
         Returns an interator of (yyyy, value, ...).
         """
         if isinstance(self.subapp, list):
-            iterators = [subapp.push(yyyyddd, weather) for subapp in self.subapp]
+            iterators = [subapp.push(weatherslice) for subapp in self.subapp]
             while True:
                 yearresults = []
                 # Call next on every iterator
@@ -195,7 +193,7 @@ class ApplicationPassCall(Application):
                     else:
                         yield (year, newresult)
         else:
-            for yearresult in self.subapp.push(yyyyddd, weather):
+            for yearresult in self.subapp.push(weatherslice):
                 year = yearresult[0]
                 # Call handler to get a new value
                 newresult = self.handler(year, yearresult[1], *self.handler_args, **self.handler_kw)
@@ -214,9 +212,9 @@ class ApplicationByChunks(Application):
         self.saved_yyyyddd = []
         self.saved_values = []
 
-    def push(self, yyyyddd, values):
-        self.saved_yyyyddd.extend(yyyyddd)
-        self.saved_values.extend(values)
+    def push(self, weatherslice):
+        self.saved_yyyyddd.extend(weatherslice.times)
+        self.saved_values.extend(weatherslice.weathers)
 
         return self.push_saved(self.saved_yyyyddd, self.saved_values)
 
@@ -233,15 +231,6 @@ class ApplicationByYear(ApplicationByChunks):
         self.func = func
         self.args = args
         self.kwargs = kwargs
-
-    def push(self, yyyyddd, values):
-        # If this is pre-binned, handle it here
-        if hasattr(values, 'shape') and len(values.shape) > 1 and values.shape[0] == 12:
-            for values in self.func(self.region, yyyyddd[0] // 1000, values, *self.args, **self.kwargs):
-                yield values
-        else:
-            for values in super(ApplicationByYear, self).push(yyyyddd, values):
-                yield values
 
     def push_saved(self, yyyyddd, allvalues):
         """
