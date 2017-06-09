@@ -201,6 +201,7 @@ class YearlyAverageDay(Calculation):
 
             if diagnostic.is_recording():
                 diagnostic.record(region, year, 'avgv', float(np.nansum(temps2)) / len(temps2))
+                diagnostic.record(region, year, 'zero', np.nansum(curve(temps2) == 0) / len(temps2))
 
             if not np.isnan(result):
                 yield (year, result)
