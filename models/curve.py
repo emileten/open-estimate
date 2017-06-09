@@ -85,16 +85,8 @@ class CubicSplineCurve(UnivariateCurve):
             total += termx_k * self.coeffs[kk + 1]
 
         return total
-    
-class AdaptableCurve(UnivariateCurve):
-    def __init__(self, xx):
-        super(AdaptableCurve, self).__init__(xx)
 
-    # Subclasses can define their own interfaces
-    def update(self):
-        pass
-
-class ShiftedCurve(AdaptableCurve):
+class ShiftedCurve(UnivariateCurve):
     def __init__(self, curve, offset):
         super(ShiftedCurve, self).__init__(curve.xx)
         self.curve = curve
@@ -103,24 +95,17 @@ class ShiftedCurve(AdaptableCurve):
     def __call__(self, xs):
         return self.curve(xs) + self.offset
 
-    def update(self):
-        if isinstance(self.curve, AdaptableCurve):
-            self.curve.update()
-
-class ClippedCurve(AdaptableCurve):
+class ClippedCurve(UnivariateCurve):
     def __init__(self, curve):
         super(ClippedCurve, self).__init__(curve.xx)
         self.curve = curve
 
     def __call__(self, xs):
         ys = self.curve(xs)
-        return ys * (ys > 0)
+        self.last_clipped = (ys > 0) # Store this for others
+        return ys * self.last_clipped
 
-    def update(self):
-        if isinstance(self.curve, AdaptableCurve):
-            self.curve.update()
-
-class MinimumCurve(AdaptableCurve):
+class MinimumCurve(UnivariateCurve):
     def __init__(self, curve1, curve2):
         super(MinimumCurve, self).__init__(curve1.xx)
         self.curve1 = curve1
@@ -129,8 +114,11 @@ class MinimumCurve(AdaptableCurve):
     def __call__(self, xs):
         return np.minimum(self.curve1(xs), self.curve2(xs))
 
-    def update(self):
-        if isinstance(self.curve1, AdaptableCurve):
-            self.curve1.update()
-        if isinstance(self.curve2, AdaptableCurve):
-            self.curve2.update()
+class SelectiveZeroCurve(Curve):
+    def __init__(self, curve, zeros):
+        self.curve = curve
+        self.zeros = zeros
+
+    def __call__(self, xs):
+        assert len(xs) == len(self.zeros)
+        return self.curve(xs) * self.zeros

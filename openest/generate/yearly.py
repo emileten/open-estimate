@@ -1,6 +1,5 @@
 import numpy as np
 from calculation import Calculation, ApplicationEach
-from ..models.curve import AdaptableCurve
 from curvegen import CurveGenerator
 import diagnostic
 
@@ -19,9 +18,9 @@ class YearlyBins(Calculation):
         yield ("%s(\cdot)" % (funcvar), str(self.curve), self.unitses[0])
 
     def apply(self, region, *args):
-        curve = self.curvegen.get_curve(region, *args)
-
         def generate(region, year, temps, **kw):
+            curve = self.curvegen.get_curve(region, *args, weather=temps)
+
             if len(temps) == len(curve.xx):
                 yy = curve(curve.xx)
                 yy[np.isnan(yy)] = 0
@@ -31,9 +30,6 @@ class YearlyBins(Calculation):
 
             if not np.isnan(result):
                 yield (year, result)
-
-            if isinstance(curve, AdaptableCurve):
-                curve.update(year, temps)
 
         return ApplicationEach(region, generate)
 
@@ -52,9 +48,9 @@ class YearlyCoefficients(Calculation):
         self.weather_change = weather_change
 
     def apply(self, region, *args):
-        curve = self.curvegen.get_curve(region, *args)
-
         def generate(region, year, temps, **kw):
+            curve = self.curvegen.get_curve(region, *args, weather=temps) # Passing in original (not weather-changed) data
+
             coeffs = self.getter(region, year, temps, curve)
             if len(temps) == len(coeffs):
                 result = np.sum(self.weather_change(region, temps).dot(coeffs))
@@ -67,9 +63,6 @@ class YearlyCoefficients(Calculation):
 
             if not np.isnan(result):
                 yield (year, result)
-
-            if isinstance(curve, AdaptableCurve):
-                curve.update(year, temps) # Passing in original (not weather-changed) data
 
         return ApplicationEach(region, generate)
 

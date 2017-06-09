@@ -6,7 +6,7 @@ from ..models.model import Model
 from ..models.spline_model import SplineModel
 from ..models.bin_model import BinModel
 from ..models.memoizable import MemoizedUnivariate
-from ..models.curve import UnivariateCurve, AdaptableCurve, StepCurve
+from ..models.curve import UnivariateCurve, StepCurve
 from curvegen import CurveGenerator
 
 # Generate integral over daily temperature
@@ -72,12 +72,12 @@ class YearlyDayBins(Calculation):
         yield ("%s(\cdot)" % (funcvar), str(self.model), self.unitses[0])
 
     def apply(self, region, *args):
-        if isinstance(self.spline, AdaptableCurve):
-            spline = self.spline.create(region, *args)
-        else:
-            spline = self.spline
-
         def generate(region, year, temps, **kw):
+            if isinstance(curvegen, CurveGenerator):
+                spline = self.spline.get_spline.get_curve(region, *args, weather=temps)
+            else:
+                spline = self.spline
+
             if len(temps.shape) == 2:
                 if temps.shape[0] == 12 and temps.shape[1] == len(self.xx):
                     yy = spline(self.xx)
@@ -90,9 +90,6 @@ class YearlyDayBins(Calculation):
 
             if not np.isnan(result):
                 yield (year, result)
-
-            if isinstance(self.spline, AdaptableCurve):
-                spline.update(year, temps)
 
         return ApplicationByYear(region, generate)
 
@@ -193,9 +190,15 @@ class YearlyAverageDay(Calculation):
         yield ("%s(\cdot)" % (funcvar), self.curve_description, self.unitses[0])
 
     def apply(self, region, *args):
-        curve = self.curvegen.get_curve(region, *args)
+        checks = dict(lastyear=-np.inf)
 
         def generate(region, year, temps, **kw):
+            # Ensure that we aren't called with a year twice
+            assert year > checks['lastyear']
+            checks['lastyear'] = year
+
+            curve = self.curvegen.get_curve(region, *args, weather=temps) # Passing in original (not weather-changed) data
+
             temps2 = self.weather_change(region, temps)
             result = np.nansum(curve(temps2)) / len(temps2)
 
@@ -205,9 +208,6 @@ class YearlyAverageDay(Calculation):
 
             if not np.isnan(result):
                 yield (year, result)
-
-            if isinstance(curve, AdaptableCurve):
-                curve.update(year, temps) # Passing in original (not weather-changed) data
 
         return ApplicationByYear(region, generate)
 
@@ -228,11 +228,12 @@ class YearlyDividedPolynomialAverageDay(Calculation):
         raise NotImplementedError
 
     def apply(self, region, *args):
-        curve = self.curvegen.get_curve(region, *args)
-
         def generate(region, year, temps, **kw):
             temps = self.weather_change(temps)
             assert temps.shape[1] == len(curve.curr_curve.ccs), "%d <> %d" % (temps.shape[1], len(curve.curr_curve.ccs))
+
+            curve = self.curvegen.get_curve(region, *args, weather=temps) # Passing in weather-changed data
+
             #result = np.nansum(np.dot(temps, curve.curr_curve.ccs)) / len(temps)
             result = np.dot(np.sum(temps, axis=0), curve.curr_curve.ccs) / len(temps)
 
@@ -243,9 +244,6 @@ class YearlyDividedPolynomialAverageDay(Calculation):
 
             if not np.isnan(result):
                 yield (year, result)
-
-            if isinstance(curve, AdaptableCurve):
-                curve.update(year, temps)
 
         return ApplicationByYear(region, generate)
 
@@ -268,13 +266,10 @@ class ApplyCurve(Calculation):
         raise NotImplementedError()
 
     def apply(self, region, *args):
-        curve = self.curvegen.get_curve(region, *args)
-
         def generate(region, year, temps, **kw):
-            yield [year] + curve(temps)
+            curve = self.curvegen.get_curve(region, *args, weather=temps)
 
-            if isinstance(curve, AdaptableCurve):
-                curve.update(year, temps)
+            yield [year] + curve(temps)
 
         return ApplicationByYear(region, generate)
 
