@@ -215,7 +215,7 @@ class ApplicationByChunks(Application):
     def push(self, weatherslice):
         self.saved_yyyyddd.extend(weatherslice.times)
         self.saved_values.extend(weatherslice.weathers)
-
+        
         return self.push_saved(self.saved_yyyyddd, self.saved_values)
 
     def push_saved(self, yyyyddd, values):

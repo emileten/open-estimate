@@ -74,7 +74,7 @@ class YearlyDayBins(Calculation):
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
             if isinstance(curvegen, CurveGenerator):
-                spline = self.spline.get_spline.get_curve(region, *args, weather=temps)
+                spline = self.spline.get_spline.get_curve(region, year, *args, weather=temps)
             else:
                 spline = self.spline
 
@@ -197,7 +197,7 @@ class YearlyAverageDay(Calculation):
             assert year > checks['lastyear']
             checks['lastyear'] = year
 
-            curve = self.curvegen.get_curve(region, *args, weather=temps) # Passing in original (not weather-changed) data
+            curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
 
             temps2 = self.weather_change(region, temps)
             result = np.nansum(curve(temps2)) / len(temps2)
@@ -232,7 +232,7 @@ class YearlyDividedPolynomialAverageDay(Calculation):
             temps = self.weather_change(temps)
             assert temps.shape[1] == len(curve.curr_curve.ccs), "%d <> %d" % (temps.shape[1], len(curve.curr_curve.ccs))
 
-            curve = self.curvegen.get_curve(region, *args, weather=temps) # Passing in weather-changed data
+            curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in weather-changed data
 
             #result = np.nansum(np.dot(temps, curve.curr_curve.ccs)) / len(temps)
             result = np.dot(np.sum(temps, axis=0), curve.curr_curve.ccs) / len(temps)
@@ -267,7 +267,7 @@ class ApplyCurve(Calculation):
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
-            curve = self.curvegen.get_curve(region, *args, weather=temps)
+            curve = self.curvegen.get_curve(region, year, *args, weather=temps)
 
             yield [year] + curve(temps)
 

@@ -299,7 +299,7 @@ class AuxillaryResult(calculation.Calculation):
     Produce an additional output, but then pass the main result on.
     """
     def __init__(self, subcalc_main, subcalc_aux, auxname):
-        super(Positive, self).__init__([subcalc.unitses[0]] + subcalc.unitses)
+        super(AuxillaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
         self.subcalc_main = subcalc_main
         self.subcalc_aux = subcalc_aux
         self.auxname = auxname
@@ -315,7 +315,7 @@ class AuxillaryResult(calculation.Calculation):
     def column_info(self):
         infos_main = self.subcalc_main.column_info()
         infos_aux = self.subcalc_aux.column_info()
-        infos_aux['name'] = self.auxname
+        infos_aux[0]['name'] = self.auxname
 
         return [infos_main[0]] + infos_aux + infos_main[1:]
 
@@ -324,14 +324,15 @@ class AuxillaryResultApplication(calculation.Application):
     Perform both main and auxillary calculation, and order as main[0], aux, main[1:]
     """
     def __init__(self, region, subapp_main, subapp_aux):
-        super(Positive, self).__init__(region)
+        super(AuxillaryResultApplication, self).__init__(region)
         self.subapp_main = subapp_main
         self.subapp_aux = subapp_aux
 
     def push(self, weatherslice):
         for yearresult in self.subapp_main.push(weatherslice):
-            yearresult_aux = next(self.subapp_aux.push(None))
-            yield yearresult[0:2] + [yearresult_aux[1]] + yearresult[2:]
+            for yearresult_aux in self.subapp_aux.push(weatherslice):
+                next # Just take the last one
+            yield list(yearresult[0:2]) + [yearresult_aux[1]] + list(yearresult[2:])
 
     def done(self):
         self.subapp_main.done()

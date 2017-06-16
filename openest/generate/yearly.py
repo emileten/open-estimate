@@ -19,7 +19,7 @@ class YearlyBins(Calculation):
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
-            curve = self.curvegen.get_curve(region, *args, weather=temps)
+            curve = self.curvegen.get_curve(region, year, *args, weather=temps)
 
             if len(temps) == len(curve.xx):
                 yy = curve(curve.xx)
@@ -49,7 +49,7 @@ class YearlyCoefficients(Calculation):
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
-            curve = self.curvegen.get_curve(region, *args, weather=temps) # Passing in original (not weather-changed) data
+            curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
 
             coeffs = self.getter(region, year, temps, curve)
             if len(temps) == len(coeffs):

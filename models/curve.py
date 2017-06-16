@@ -99,6 +99,7 @@ class ClippedCurve(UnivariateCurve):
     def __init__(self, curve):
         super(ClippedCurve, self).__init__(curve.xx)
         self.curve = curve
+        self.last_clipped = None
 
     def __call__(self, xs):
         ys = self.curve(xs)
@@ -114,11 +115,14 @@ class MinimumCurve(UnivariateCurve):
     def __call__(self, xs):
         return np.minimum(self.curve1(xs), self.curve2(xs))
 
-class SelectiveZeroCurve(Curve):
+class SelectiveZeroCurve(UnivariateCurve):
     def __init__(self, curve, zeros):
         self.curve = curve
         self.zeros = zeros
 
     def __call__(self, xs):
+        if self.zeros is None:
+            return self.curve(xs)
+        
         assert len(xs) == len(self.zeros)
         return self.curve(xs) * self.zeros
