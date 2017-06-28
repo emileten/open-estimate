@@ -175,13 +175,14 @@ class Constant(Calculation):
         return [dict(name='response', title="Constant value", description="Always equal to " + str(self.value))]
 
 class YearlyAverageDay(Calculation):
-    def __init__(self, units, curvegen, curve_description, weather_change=lambda region, x: x):
+    def __init__(self, units, curvegen, curve_description, weather_change=lambda region, x: x, norecord=False):
         super(YearlyAverageDay, self).__init__([units])
         assert isinstance(curvegen, CurveGenerator)
 
         self.curvegen = curvegen
         self.curve_description = curve_description
         self.weather_change = weather_change
+        self.norecord = norecord
 
     def latex(self):
         funcvar = latextools.get_function()
@@ -202,9 +203,9 @@ class YearlyAverageDay(Calculation):
             temps2 = self.weather_change(region, temps)
             result = np.nansum(curve(temps2)) / len(temps2)
 
-            if diagnostic.is_recording():
+            if not self.norecord and diagnostic.is_recording():
                 diagnostic.record(region, year, 'avgv', float(np.nansum(temps2)) / len(temps2))
-                diagnostic.record(region, year, 'zero', np.nansum(curve(temps2) == 0) / len(temps2))
+                diagnostic.record(region, year, 'zero', float(np.nansum(curve(temps2) == 0)) / len(temps2))
 
             if not np.isnan(result):
                 yield (year, result)

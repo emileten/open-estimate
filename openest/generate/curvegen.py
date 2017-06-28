@@ -31,24 +31,24 @@ class DelayedCurveGenerator(CurveGenerator):
     def __init__(self, curvegen):
         super(DelayedCurveGenerator, self).__init__(curvegen.indepunits, curvegen.depenunit)
         self.curvegen = curvegen
-        self.last_curve = None
-        self.last_year = None
+        self.last_curves = {}
+        self.last_years = {}
         
     def get_curve(self, region, year, *args, **kwargs):
-        if self.last_year == year:
-            return self.last_curve
+        if self.last_years.get(region, None) == year:
+            return self.last_curves[region]
         
-        if self.last_curve is None:
+        if region not in self.last_curves:
             # Calculate no-weather before update covariates by calling with weather
             weather = kwargs['weather']
             del kwargs['weather']
             curve = self.get_next_curve(region, year, *args, **kwargs)
             kwargs['weather'] = weather
         else:
-            curve = self.last_curve
+            curve = self.last_curves[region]
 
-        self.last_curve = self.get_next_curve(region, year, *args, **kwargs)
-        self.last_year = year
+        self.last_curves[region] = self.get_next_curve(region, year, *args, **kwargs)
+        self.last_years[region] = year
         return curve
 
     def get_next_curve(self, region, year, *args, **kwargs):
