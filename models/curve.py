@@ -86,6 +86,15 @@ class CubicSplineCurve(UnivariateCurve):
 
         return total
 
+class CoefficientsCurve(UnivariateCurve):
+    """A curve represented by the sum of multiple predictors, each multiplied by a coefficient."""
+    def __init__(self, coeffs):
+        super(CoefficientsCurve, self).__init__([-np.inf, np.inf])
+        self.coeffs = coeffs
+
+    def __call__(self, x):
+        return x.dot(self.coeffs)
+
 class ShiftedCurve(UnivariateCurve):
     def __init__(self, curve, offset):
         super(ShiftedCurve, self).__init__(curve.xx)
@@ -122,3 +131,15 @@ class MinimumCurve(UnivariateCurve):
 
     def __call__(self, xs):
         return np.minimum(self.curve1(xs), self.curve2(xs))
+
+class SelectiveInputCurve(UnivariateCurve):
+    """Assumes input is a matrix, and only pass selected input columns to child curve."""
+    
+    def __init__(self, curve, indices):
+        super(SelectiveInputCurve, self).__init__(curve.xx)
+        self.curve = curve
+        self.indices = np.array(indices)
+
+    def __call__(self, xs):
+        return self.curve(xs[:, self.indices])
+
