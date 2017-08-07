@@ -110,6 +110,7 @@ def growing_seasons_daily_ncdf(yyyyddd, weather, plantday, harvestday):
     #    else:
     #        ii += 365
 
+
 def yearly_daily_ncdf(yyyyddd, weather):
     year0 = int(yyyyddd[0]) // 1000
     year1 = int(yyyyddd[-1]) // 1000

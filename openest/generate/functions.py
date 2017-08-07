@@ -103,11 +103,11 @@ class Instabase(calculation.CustomFunctionalCalculation):
     def init_apply(self):
         self.pastresults = [] # don't copy this across instances!
 
-    def pushhandler(self, weatherslice, baseyear, func, skip_on_missing):
+    def pushhandler(self, ds, baseyear, func, skip_on_missing):
         """
         Returns an interator of (yyyy, value, ...).
         """
-        for yearresult in self.subapp.push(weatherslice):
+        for yearresult in self.subapp.push(ds):
             year = yearresult[0]
             result = yearresult[1]
 
@@ -158,11 +158,11 @@ class SpanInstabase(Instabase):
         self.denomterms = [] # don't copy this across instances!
         self.pastresults = []
 
-    def pushhandler(self, weatherslice, baseyear, func, skip_on_missing):
+    def pushhandler(self, ds, baseyear, func, skip_on_missing):
         """
         Returns an interator of (yyyy, value, ...).
         """
-        for yearresult in self.subapp.push(weatherslice):
+        for yearresult in self.subapp.push(ds):
             year = yearresult[0]
             result = yearresult[1]
 
@@ -204,11 +204,11 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
     def init_apply(self):
         self.pastresults = [] # don't copy this across instances!
 
-    def pushhandler(self, weatherslice, lastyear):
+    def pushhandler(self, ds, lastyear):
         """
         Returns an interator of (yyyy, value, ...).
         """
-        for yearresult in self.subapp.push(weatherslice):
+        for yearresult in self.subapp.push(ds):
             year = yearresult[0]
             result = yearresult[1]
 
@@ -328,9 +328,9 @@ class AuxillaryResultApplication(calculation.Application):
         self.subapp_main = subapp_main
         self.subapp_aux = subapp_aux
 
-    def push(self, weatherslice):
-        for yearresult in self.subapp_main.push(weatherslice):
-            for yearresult_aux in self.subapp_aux.push(weatherslice):
+    def push(self, ds):
+        for yearresult in self.subapp_main.push(ds):
+            for yearresult_aux in self.subapp_aux.push(ds):
                 next # Just take the last one
             yield list(yearresult[0:2]) + [yearresult_aux[1]] + list(yearresult[2:])
 

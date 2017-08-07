@@ -66,7 +66,7 @@ class Application(object):
     def __init__(self, region):
         self.region = region
 
-    def push(self, weatherslice):
+    def push(self, ds):
         """
         Returns an interator of (yyyy, value, ...).
         """
@@ -99,11 +99,11 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
     def init_apply(self):
         pass
 
-    def push(self, weatherslice):
-        for yearresult in self.pushhandler(weatherslice, *self.handler_args, **self.handler_kw):
+    def push(self, ds):
+        for yearresult in self.pushhandler(ds, *self.handler_args, **self.handler_kw):
             yield yearresult
 
-    def pushhandler(self, weatherslice, *allargs, **allkwargs):
+    def pushhandler(self, ds, *allargs, **allkwargs):
         raise NotImplementedError()
 
     def done(self):
@@ -123,9 +123,9 @@ class ApplicationEach(Application):
         self.args = args
         self.kwargs = kwargs
 
-    def push(self, weatherslice):
-        for ii in range(len(weatherslice.times)):
-            for values in self.func(self.region, weatherslice.times[ii], weatherslice.weathers[ii], *self.args, **self.kwargs):
+    def push(self, ds):
+        for ii in range(len(ds.time)):
+            for values in self.func(self.region, ds.time[ii], ds.isel(time=ii), *self.args, **self.kwargs):
                 yield values
 
     def done(self):
@@ -152,12 +152,12 @@ class ApplicationPassCall(Application):
         self.handler_args = handler_args
         self.handler_kw = handler_kw
 
-    def push(self, weatherslice):
+    def push(self, ds):
         """
         Returns an interator of (yyyy, value, ...).
         """
         if isinstance(self.subapp, list):
-            iterators = [subapp.push(weatherslice) for subapp in self.subapp]
+            iterators = [subapp.push(ds) for subapp in self.subapp]
             while True:
                 yearresults = []
                 # Call next on every iterator
@@ -193,7 +193,7 @@ class ApplicationPassCall(Application):
                     else:
                         yield (year, newresult)
         else:
-            for yearresult in self.subapp.push(weatherslice):
+            for yearresult in self.subapp.push(ds):
                 year = yearresult[0]
                 # Call handler to get a new value
                 newresult = self.handler(year, yearresult[1], *self.handler_args, **self.handler_kw)
@@ -209,16 +209,16 @@ class ApplicationPassCall(Application):
 class ApplicationByChunks(Application):
     def __init__(self, region):
         super(ApplicationByChunks, self).__init__(region)
-        self.saved_yyyyddd = []
-        self.saved_values = []
+        self.saved_ds = None
 
-    def push(self, weatherslice):
-        self.saved_yyyyddd.extend(weatherslice.times)
-        self.saved_values.extend(weatherslice.weathers)
-        
-        return self.push_saved(self.saved_yyyyddd, self.saved_values)
+    def push(self, ds):
+        if self.saved_ds is None:
+            return self.push_saved(ds)
 
-    def push_saved(self, yyyyddd, values):
+        self.saved_ds = xr.merge((self.saved_ds, ds))
+        return self.push_saved(self.saved_ds)
+
+    def push_saved(self, ds):
         """
         Returns an interator of (yyyy, value, ...).
         Removes used daily values from saved.
@@ -232,19 +232,17 @@ class ApplicationByYear(ApplicationByChunks):
         self.args = args
         self.kwargs = kwargs
 
-    def push_saved(self, yyyyddd, allvalues):
+    def push_saved(self, ds):
         """
         Returns an interator of (yyyy, value, ...).
         Removes used daily values from saved.
         """
-        for year, values in weathertools.yearly_daily_ncdf(yyyyddd, allvalues):
-            if len(values) < 365:
-                self.saved_yyyyddd = list(year * 1000 + np.arange(len(values)) + 1)
-                self.saved_values = values
+        for year, yeards in ds.groupby('time.year'):
+            if len(yeards.time) < 365:
+                self.saved_ds = yeards
                 return
 
-            for values in self.func(self.region, year, values, *self.args, **self.kwargs):
+            for values in self.func(self.region, year, ds, *self.args, **self.kwargs):
                 yield values
 
-        self.saved_yyyyddd = []
-        self.saved_values = []
+        self.saved_ds = None
