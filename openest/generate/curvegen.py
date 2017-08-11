@@ -19,13 +19,13 @@ class ConstantCurveGenerator(CurveGenerator):
         return self.curve
 
 class TransformCurveGenerator(CurveGenerator):
-    def __init__(self, curvegen, transform):
-        super(TransformCurveGenerator, self).__init__(curvegen.indepunits, curvegen.depenunit)
-        self.curvegen = curvegen
+    def __init__(self, transform, *curvegens):
+        super(TransformCurveGenerator, self).__init__(curvegens[0].indepunits, curvegens[0].depenunit)
+        self.curvegens = curvegens
         self.transform = transform
 
     def get_curve(self, region, year, *args, **kw):
-        return self.transform(region, self.curvegen.get_curve(region, year, *args, **kw))
+        return self.transform(region, *tuple([curvegen.get_curve(region, year, *args, **kw) for curvegen in self.curvegens]))
 
 class DelayedCurveGenerator(CurveGenerator):
     def __init__(self, curvegen):
