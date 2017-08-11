@@ -143,3 +143,17 @@ class SelectiveInputCurve(UnivariateCurve):
     def __call__(self, xs):
         return self.curve(xs[:, self.indices])
 
+class PiecewiseCurve(UnivariateCurve):
+    def __init__(self, curves, knots):
+        self(PiecewiseCurve, self).__init__(knots)
+        self.curves = curves
+        self.knots = knots
+
+    def __call__(self, xs):
+        ys = np.ones(xs.shape) * np.nan
+        
+        for ii in range(len(self.knots) - 1):
+            within = (xs >= self.knots[ii]) & (xs < self.knots[ii+1])
+            ys[within] = self.curves[ii](xs[within])
+
+        return ys
