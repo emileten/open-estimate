@@ -215,7 +215,7 @@ class ApplicationByChunks(Application):
         if self.saved_ds is None:
             return self.push_saved(ds)
 
-        self.saved_ds = xr.merge((self.saved_ds, ds))
+        self.saved_ds = xr.concat((self.saved_ds, ds), dim='time')
         return self.push_saved(self.saved_ds)
 
     def push_saved(self, ds):
