@@ -237,12 +237,21 @@ class ApplicationByYear(ApplicationByChunks):
         Returns an interator of (yyyy, value, ...).
         Removes used daily values from saved.
         """
+        if len(ds.time) in [365, 366]:
+            year = ds.attrs.get('year')
+            if year is None:
+                year = ds['time.year'].values[0]
+                
+            for values in self.func(self.region, year, ds, *self.args, **self.kwargs):
+                yield values
+            return
+            
         for year, yeards in ds.groupby('time.year'):
             if len(yeards.time) < 365:
                 self.saved_ds = yeards
                 return
 
-            for values in self.func(self.region, year, ds, *self.args, **self.kwargs):
+            for values in self.func(self.region, year, yeards, *self.args, **self.kwargs):
                 yield values
 
         self.saved_ds = None

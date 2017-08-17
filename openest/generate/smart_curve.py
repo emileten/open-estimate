@@ -1,16 +1,18 @@
 import numpy as np
-from univariate_model import UnivariateModel
-from scipy.interpolate import UnivariateSpline
 from statsmodels.distributions.empirical_distribution import StepFunction
 
 ## Smart Curves fall back on Curve logic, but take xarray DataSets and know which variables they want
 
 class SmartCurve(object):
+    def __init__(self):
+        self.xx = [-np.inf, np.inf] # Backwards compatibility to functions expecting curves
+    
     def __call__(self, ds):
         raise NotImplementedError("call not implemented")
 
 class CurveCurve(SmartCurve):
     def __init__(self, curve, variable):
+        super(CurveCurve, self).__init__()
         self.curve = curve
         self.variable = variable
 
@@ -19,6 +21,7 @@ class CurveCurve(SmartCurve):
 
 class ConstantCurve(SmartCurve):
     def __init__(self, cosntant, dimension):
+        super(ConstantCurve, self).__init__()
         self.constant = constant
         self.dimension = dimension
 
@@ -39,14 +42,16 @@ class StepCurve(CurveCurve):
 
 class CoefficientsCurve(SmartCurve):
     def __init__(self, coeffs, variables):
+        super(CoefficientsCurve, self).__init__()
         self.coeffs = coeffs
         self.variables = variables
 
-        assert isinstance(variables, list) and len(variable) == len(coeffs)
+        assert isinstance(variables, list) and len(variables) == len(coeffs)
 
     def __call__(self, ds):
         result = np.zeros(ds[self.variables[0]].shape)
         for ii in range(len(self.variables)):
-            result += self.coeffs[ii] * ds[self.variables[ii]].values
-
+            #result += self.coeffs[ii] * ds[self.variables[ii]].values # TOO SLOW
+            result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
+            
         return result

@@ -195,7 +195,7 @@ class YearlyAverageDay(Calculation):
 
         def generate(region, year, temps, **kw):
             # Ensure that we aren't called with a year twice
-            assert year > checks['lastyear']
+            assert year > checks['lastyear'], "Push of %d, but already did %d." % (year, checks['lastyear'])
             checks['lastyear'] = year
 
             curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
