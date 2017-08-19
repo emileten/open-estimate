@@ -231,9 +231,9 @@ class YearlyDividedPolynomialAverageDay(Calculation):
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
             temps = self.weather_change(temps)
-            assert temps.shape[1] == len(curve.curr_curve.ccs), "%d <> %d" % (temps.shape[1], len(curve.curr_curve.ccs))
-
             curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in weather-changed data
+
+            assert temps.shape[1] == len(curve.curr_curve.ccs), "%d <> %d" % (temps.shape[1], len(curve.curr_curve.ccs))
 
             #result = np.nansum(np.dot(temps, curve.curr_curve.ccs)) / len(temps)
             result = np.dot(np.sum(temps, axis=0), curve.curr_curve.ccs) / len(temps)
