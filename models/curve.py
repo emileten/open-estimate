@@ -120,13 +120,17 @@ class ProductCurve(UnivariateCurve):
         return self.curve1(xs) * self.curve2(xs)
     
 class ClippedCurve(UnivariateCurve):
-    def __init__(self, curve):
+    def __init__(self, curve, cliplow=True):
         super(ClippedCurve, self).__init__(curve.xx)
         self.curve = curve
+        self.cliplow = cliplow
 
     def __call__(self, xs):
         ys = self.curve(xs)
-        return ys * (ys > 0)
+        if self.cliplow:
+            return ys * (ys > 0)
+        else:
+            return ys * (ys < 0)            
 
 class OtherClippedCurve(ClippedCurve):
     def __init__(self, clipping_curve, value_curve):
