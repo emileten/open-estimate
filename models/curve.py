@@ -43,12 +43,13 @@ class LinearCurve(CurveCurve):
         super(LinearCurve, self).__init__([-np.inf, np.inf], lambda x: yy * x)
 
 class StepCurve(CurveCurve):
-    def __init__(self, xxlimits, yy):
+    def __init__(self, xxlimits, yy, xtrans):
         step_function = StepFunction(xxlimits[1:-1], yy[1:], ival=yy[0])
-        super(StepCurve, self).__init__((np.array(xxlimits[0:-1]) + np.array(xxlimits[1:])) / 2, step_function)
+        super(StepCurve, self).__init__((np.array(xxlimits[0:-1]) + np.array(xxlimits[1:])) / 2, lambda x: step_function(xtrans(x)))
 
         self.xxlimits = xxlimits
         self.yy = yy
+        self.xtrans = xtrans
 
 class ZeroInterceptPolynomialCurve(UnivariateCurve):
     def __init__(self, xx, ccs):
@@ -88,12 +89,17 @@ class CubicSplineCurve(UnivariateCurve):
 
 class CoefficientsCurve(UnivariateCurve):
     """A curve represented by the sum of multiple predictors, each multiplied by a coefficient."""
-    def __init__(self, coeffs):
+    def __init__(self, coeffs, curve, xtrans):
         super(CoefficientsCurve, self).__init__([-np.inf, np.inf])
         self.coeffs = coeffs
+        self.curve = curve
+        self.xtrans = xtrans
 
     def __call__(self, x):
-        return x.dot(self.coeffs)
+        if np.isscalar(x):
+            return self.curve(x)
+        else:
+            return self.xtrans(x).dot(self.coeffs)
 
 class ShiftedCurve(UnivariateCurve):
     def __init__(self, curve, offset):
@@ -104,14 +110,27 @@ class ShiftedCurve(UnivariateCurve):
     def __call__(self, xs):
         return self.curve(xs) + self.offset
 
+class ProductCurve(UnivariateCurve):
+    def __init__(self, curve1, curve2):
+        super(ProductCurve, self).__init__(curve1.xx)
+        self.curve1 = curve1
+        self.curve2 = curve2
+
+    def __call__(self, xs):
+        return self.curve1(xs) * self.curve2(xs)
+    
 class ClippedCurve(UnivariateCurve):
-    def __init__(self, curve):
+    def __init__(self, curve, cliplow=True):
         super(ClippedCurve, self).__init__(curve.xx)
         self.curve = curve
+        self.cliplow = cliplow
 
     def __call__(self, xs):
         ys = self.curve(xs)
-        return ys * (ys > 0)
+        if self.cliplow:
+            return ys * (ys > 0)
+        else:
+            return ys * (ys < 0)            
 
 class OtherClippedCurve(ClippedCurve):
     def __init__(self, clipping_curve, value_curve):
@@ -144,16 +163,26 @@ class SelectiveInputCurve(UnivariateCurve):
         return self.curve(xs[:, self.indices])
 
 class PiecewiseCurve(UnivariateCurve):
-    def __init__(self, curves, knots):
-        self(PiecewiseCurve, self).__init__(knots)
+    def __init__(self, curves, knots, xtrans=lambda x: x):
+        super(PiecewiseCurve, self).__init__(knots)
         self.curves = curves
         self.knots = knots
+        self.xtrans = xtrans # for example, to select first column
 
     def __call__(self, xs):
-        ys = np.ones(xs.shape) * np.nan
+        if np.isscalar(xs):
+            for ii in range(len(self.knots) - 1):
+                if xs >= self.knots[ii] and xs < self.knots[ii+1]:
+                    return self.curves[ii](xs)
+            return np.nan
+
+        ys = np.ones(len(xs)) * np.nan
         
         for ii in range(len(self.knots) - 1):
-            within = (xs >= self.knots[ii]) & (xs < self.knots[ii+1])
-            ys[within] = self.curves[ii](xs[within])
+            txs = self.xtrans(xs)
+            within = (txs >= self.knots[ii]) & (txs < self.knots[ii+1])
+            wixs = xs[within]
+            if len(wixs) > 0:
+                ys[within] = self.curves[ii](wixs)
 
         return ys
