@@ -33,3 +33,9 @@ class LincomDay2Year(Calculation):
         description = "The cummulative result across a year of daily temperatures applied to " + self.curve_description
         return [dict(name='response', title='Direct marginal response', description=description),
                 dict(name='stddev', title='Linear combination std. err.', description="Standard deviation of `response`.")]
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='year',
+                    arguments=[arguments.output_unit, arguments.curvegen, arguments.curve_description],
+                    description="Report the sum over all values within a year, and the lincom standard deviation of this result.")

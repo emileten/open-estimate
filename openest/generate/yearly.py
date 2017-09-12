@@ -37,6 +37,12 @@ class YearlyBins(Calculation):
         description = "The combined result of daily temperatures, organized into bins according to %s." % (str(self.curve_description))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.output_unit, arguments.curvegen, arguments.curve_description],
+                    description="Apply the results of a previous calculation to a curve.")
+
 class YearlyCoefficients(Calculation):
     def __init__(self, units, curvegen, curve_description, getter=lambda curve: curve.yy, weather_change=lambda region, x: x):
         super(YearlyCoefficients, self).__init__([units])
@@ -69,3 +75,10 @@ class YearlyCoefficients(Calculation):
     def column_info(self):
         description = "The combined result of yearly values, with coefficients from %s." % (str(self.curve_description))
         return [dict(name='response', title='Direct marginal response', description=description)]
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.output_unit, arguments.curvegen, arguments.curve_description,
+                               arguments.parameter_getter, arguments.input_change],
+                    description="Apply the results of a previous calculation to a curve, as a dot product on that curve's coefficients.")

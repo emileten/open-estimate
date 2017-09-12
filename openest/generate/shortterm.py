@@ -37,6 +37,13 @@ class SingleWeatherApply(Calculation):
         description = "Single value applied to " + self.curve_description
         return [dict(name='response', title='Direct marginal response', description=description)]
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.output_unit, arguments.curve_or_curvegen,
+                               arguments.curve_description, arguments.input_change],
+                    description="Apply a curve to each value individually and report it.")
+    
 class MonthlyClimateApply(Calculation):
     def __init__(self, units, curve, curve_description, monthmeans, regions, weather_change=lambda x: x):
         super(MonthlyClimateApply, self).__init__([units])
@@ -73,6 +80,14 @@ class MonthlyClimateApply(Calculation):
     def column_info(self):
         description = "Single monthly value from climate applied to " + self.curve_description
         return [dict(name='climatic', title='Direct climatic response', description=description)]
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.output_unit, arguments.curve_or_curvegen,
+                               arguments.curve_description, arguments.monthvalues,
+                               arguments.regions, arguments.input_change],
+                    description="Apply a curve to each region's climatological monthly value.")
 
 class InstaZScoreApply(Calculation, Application):
     def __init__(self, units, curve, curve_description, lasttime, weather_change=lambda x: x):
@@ -128,6 +143,13 @@ class InstaZScoreApply(Calculation, Application):
         description = "Single value applied to " + self.curve_description
         return [dict(name='response', title='Direct marginal response', description=description)]
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.output_unit, arguments.curve_or_curvegen,
+                               arguments.curve_description, arguments.time, arguments.input_change],
+                    description="Apply a curve to the z-score of inputs, based on values up to a given time.")
+
 class MonthlyZScoreApply(Calculation, Application):
     def __init__(self, units, curve, curve_description, monthmeans, monthsdevs, regions, weather_change=lambda x: x):
         super(MonthlyZScoreApply, self).__init__([units])
@@ -166,6 +188,16 @@ class MonthlyZScoreApply(Calculation, Application):
         description = "Single value as z-score applied to " + self.curve_description
         return [dict(name='response', title='Direct marginal response', description=description)]
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='month', output_timerate='month',
+                    arguments=[arguments.output_unit, arguments.curve_or_curvegen,
+                               arguments.curve_description,
+                               arguments.monthvalues.describe("Monthly means."),
+                               arguments.monthvalues.describe("Monthly standard deviations."),
+                               arguments.regions, arguments.input_change],
+                    description="Apply a curve to the z-score of inputs, based on monthly means and standard deviations.")
+
 class SplitByMonth(Calculation):
     def __init__(self, subcalc):
         super(SplitByMonth, self).__init__([subcalc.unitses[0]])
@@ -195,3 +227,9 @@ class SplitByMonth(Calculation):
     def column_info(self):
         description = "Separately applied by month"
         return [dict(name='split', title='Month split', description=description)]
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='month', output_timerate='month',
+                    arguments=[arguments.calculation],
+                    description="Apply the previous calculation separately for each month.")

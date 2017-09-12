@@ -45,6 +45,14 @@ class Scale(calculation.Calculation):
         description = "Computed from the %s variable, as %s." % (infos[0]['name'], equation)
         return [dict(name='scaled', title=title, description=description)] + infos
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.region_dictionary, arguments.input_unit,
+                               arguments.output_unit, arguments.input_reduce.optional(),
+                               arguments.latexpair],
+                    description="Scale each result by a region-specific value.")
+
 """
 Transform all results by a function.
 """
@@ -81,6 +89,15 @@ class Transform(calculation.Calculation):
         description = self.long_description
         return [dict(name='transformed', title=title, description=description)] + infos
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.input_unit,
+                               arguments.output_unit, arguments.input_change,
+                               arguments.description],
+                    description="Apply an arbitrary function to the results.")
+
+    
 class Instabase(calculation.CustomFunctionalCalculation):
     """Re-base the results of make_generator(...) to the values in baseyear
     baseyear is the year to use as the 'denominator'; None for the first year
@@ -138,6 +155,14 @@ class Instabase(calculation.CustomFunctionalCalculation):
         description = "The result calculated relative to the year %d, by re-basing variable %s." % (self.baseyear, infos[0]['name'])
         return [dict(name='rebased', title=title, description=description)] + infos
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.year,
+                               arguments.input_reduce.optional(), arguments.output_unit.optional(),
+                               arguments.skip_on_missing.optional()],
+                    description="Translate all results relative to the baseline year.")
+
 class SpanInstabase(Instabase):
     """Re-base the results of a calculation to the average of values between two years.
     Default func constructs a porportional change; x - y makes simple difference.
@@ -185,6 +210,15 @@ class SpanInstabase(Instabase):
                 diagnostic.record(self.region, year, 'baseline', self.denom)
                 # calculate this and tack it on
                 yield [year, func(result, self.denom)] + list(yearresult[1:])
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.year.describe("The starting year"),
+                               arguments.year.describe("The ending year"),
+                               arguments.input_reduce.optional(), arguments.output_unit.optional(),
+                               arguments.skip_on_missing.optional()],
+                    description="Translate all results relative to a span of baseline years.")
 
 class InstaZScore(calculation.CustomFunctionalCalculation):
     """
@@ -234,6 +268,13 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
         description = "Z-scores of %s calculated relative to the years before %d." % (infos[0]['name'], self.lastyear)
         return [dict(name='zscore', title=title, description=description)] + infos
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.year,
+                               arguments.output_unit.optional()],
+                    description="Translate all results to z-scores against results up to a given year.")
+
 """
 Sum two results
 """
@@ -268,6 +309,12 @@ class Sum(calculation.Calculation):
             fullinfos.extend(infos)
         return [dict(name='sum', title=title, description=description)] + fullinfos
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculationss],
+                    description="Sum the results of multiple previous calculations.")
+
 class Positive(calculation.Calculation):
     """
     Return 0 if subcalc is less than 0
@@ -294,6 +341,12 @@ class Positive(calculation.Calculation):
 
         return [dict(name='positive', title=title, description=description)] + infos
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation],
+                    description="Return the maximum of a previous result or 0.")
+
 class AuxillaryResult(calculation.Calculation):
     """
     Produce an additional output, but then pass the main result on.
@@ -318,6 +371,12 @@ class AuxillaryResult(calculation.Calculation):
         infos_aux[0]['name'] = self.auxname
 
         return [infos_main[0]] + infos_aux + infos_main[1:]
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.calculation.describe("An auxillary calculation, placed behind the main calculation.")],
+                    description="Add an additional result to the columns.")
 
 class AuxillaryResultApplication(calculation.Application):
     """

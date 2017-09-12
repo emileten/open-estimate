@@ -48,6 +48,13 @@ class MonthlyDayBins(Calculation):
         description = "The combined result of daily temperatures, organized into bins according to %s, divided by 12 to describe monthly effects." % (str(self.model))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='month', output_timerate='year',
+                    arguments=[arguments.model, arguments.output_unit, arguments.qval.optional(),
+                               arguments.input_change.optional()],
+                    description="Evaluate a curve in each month, and take the yearly average.")
+
 class YearlyDayBins(Calculation):
     def __init__(self, model, units, pval=.5):
         super(YearlyDayBins, self).__init__([units])
@@ -97,6 +104,12 @@ class YearlyDayBins(Calculation):
         description = "The combined result of daily temperatures, organized into bins according to %s." % (str(self.model))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='year',
+                    arguments=[arguments.model, arguments.output_unit, arguments.qval.optional()],
+                    description="Evaluate a binned curve, and sum over the year.")
+    
 class AverageByMonth(Calculation):
     def __init__(self, model, units, func=lambda x: x, pval=.5):
         super(AverageMonthToYear, self).__init__([units])
@@ -133,6 +146,13 @@ class AverageByMonth(Calculation):
         description = "The effects of monthly average temperatures, organized into bins according to %s, averaged over months." % (str(self.model))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='day', output_timerate='year',
+                    arguments=[arguments.model, arguments.output_unit, arguments.input_change.optional(),
+                               arguments.qval.optional()],
+                    description="Apply a curve to the average of each month, and average over the year.")
+
 class PercentWithin(Calculation):
     def __init__(self, endpoints):
         super(PercentWithin, self).__init__(['portion'])
@@ -157,6 +177,12 @@ class PercentWithin(Calculation):
     def column_info(self):
         return [dict(name='bin' + str(ii), title="Portion in bin " + str(ii), description="The portion of each year falling between %f and %f" % (self.endpoints[ii], self.endpoints[ii+1])) for ii in range(len(self.endpoints)-1)]
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='year',
+                    arguments=[arguments.ordered_list],
+                    description="Determine the portion of days that fall between pairs of points.")
+
 class Constant(Calculation):
     def __init__(self, value, units):
         super(Constant, self).__init__([units])
@@ -173,6 +199,12 @@ class Constant(Calculation):
 
     def column_info(self):
         return [dict(name='response', title="Constant value", description="Always equal to " + str(self.value))]
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='year',
+                    arguments=[arguments.numeric, arguments.output_unit],
+                    description="Return a given constant for each year.")
 
 class YearlyAverageDay(Calculation):
     def __init__(self, units, curvegen, curve_description, weather_change=lambda region, x: x, norecord=False):
@@ -216,6 +248,13 @@ class YearlyAverageDay(Calculation):
         description = "The average result across a year of daily temperatures applied to " + self.curve_description
         return [dict(name='response', title='Direct marginal response', description=description)]
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='year',
+                    arguments=[arguments.output_unit, arguments.curvegen, arguments.curve_description,
+                               arguments.input_change, arguments.debugging],
+                    description="Apply a curve to values and take the average over each year.")
+
 class YearlyDividedPolynomialAverageDay(Calculation):
     def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x):
         super(YearlyDividedPolynomialAverageDay, self).__init__([units])
@@ -252,6 +291,13 @@ class YearlyDividedPolynomialAverageDay(Calculation):
         description = "The average result across a year of daily temperatures applied to a polynomial."
         return [dict(name='response', title='Direct marginal response', description=description)]
 
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='year',
+                    arguments=[arguments.output_unit, arguments.curvgen, arguments.curve_description,
+                               arugments.input_change],
+                    description="Apply a curve to values and take the average over each year.")
+
 class ApplyCurve(Calculation):
     def __init__(self, curvegen, unitses, names, titles, descriptions):
         super(ApplyCurve, self).__init__(unitses)
@@ -277,3 +323,10 @@ class ApplyCurve(Calculation):
     def column_info(self):
         return [{'name': self.names[ii], 'title': self.titles[ii],
                  'description': self.descriptions[ii]} for ii in range(len(self.names))]
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='year',
+                    arguments=[arguments.curvegen, arguments.output_unitss, arguments.column_names,
+                               arguments.column_titles, arguments.column_descriptions],
+                    description="Apply a curve to values.")
