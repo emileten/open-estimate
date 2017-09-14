@@ -15,7 +15,7 @@ class FastDataset(xr.Dataset):
             self.attrs = {}
         else:
             self.attrs = attrs
-
+            
     def __str__(self):
         return str(xr.Dataset(self.original_data_vars, self.original_coords, self.attrs))
             
@@ -83,7 +83,25 @@ class FastDataArray(xr.DataArray):
 
     def __array__(self):
         return np.asarray(self._values)
-    
+
+def region_groupby(ds, year, regions):
+    timevar = ds.time
+    for ii in range(len(regions)):
+        region = regions[ii]
+            
+        newvars = {}
+        for var in ds:
+            if var in ['time', 'region']:
+                continue
+            dsdata = ds._variables[var]._data
+            if len(dsdata.shape) < 2:
+                continue
+                
+            newvars[var] = (['time'], dsdata[:, region_indices[region]])
+        subds = fast_dataset.FastDataset(newvars, coords={'time': timevar}, attrs={'year': year})
+            
+        yield region, subds
+
 FastDataArray.__array_priority__ = 80
 xr.core.ops.inject_binary_ops(FastDataArray)
     
