@@ -24,6 +24,17 @@ class Calculation(object):
         """
         raise NotImplementedError()
 
+    @staticmethod
+    def describe():
+        """
+        Returns dictionary containing:
+        - input_timerate: expected time rate of data, day, month, year, or any
+        - output_timerate: expected time rate of data, day, month, year, or same
+        - arguments: a list of subclasses of arguments.ArgumentType, describing each constructor argument
+        - description: text description
+        """
+        raise NotImplementedError()
+
 class FunctionalCalculation(Calculation):
     """Calculation that calls a handler when it's applied."""
     def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
