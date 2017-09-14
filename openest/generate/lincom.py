@@ -1,6 +1,10 @@
+import numpy as np
+from curvegen import CurveGenerator
+from calculation import Calculation, ApplicationByYear
+
 class LincomDay2Year(Calculation):
     def __init__(self, units, curvegen, curve_description):
-        super(LincomDay2Year, self).__init__([units])
+        super(LincomDay2Year, self).__init__([units, units])
         assert isinstance(curvegen, CurveGenerator)
 
         self.curvegen = curvegen
@@ -14,11 +18,12 @@ class LincomDay2Year(Calculation):
             assert year > checks['lastyear']
             checks['lastyear'] = year
 
-            terms = self.curvegen.get_lincom_terms(temps.sum(), *args)
+            terms = self.curvegen.get_lincom_terms(region, year, temps.sum())
 
             result = np.dot(terms, self.curvegen.get_csvv_coeff())
 
             vcv = self.curvegen.get_csvv_vcv()
+
             variance = 0
             for ii in range(len(terms)):
                 for jj in range(len(terms)):

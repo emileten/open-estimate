@@ -1,5 +1,6 @@
 import os, csv, random
 import numpy as np
+import xarray as xr
 import latextools, diagnostic
 from calculation import Calculation, Application, ApplicationByYear
 from ..models.model import Model
@@ -204,7 +205,12 @@ class YearlyAverageDay(Calculation):
             result = np.nansum(curve(temps2)) / len(temps2)
 
             if not self.norecord and diagnostic.is_recording():
-                diagnostic.record(region, year, 'avgv', float(np.nansum(temps2)) / len(temps2))
+                if isinstance(temps2, xr.Dataset):
+                    for var in temps2._variables:
+                        if var not in ['time', 'year']:
+                            diagnostic.record(region, year, var, float(np.nansum(temps2._variables[var])) / len(temps2._variables[var]))
+                else:
+                    diagnostic.record(region, year, 'avgv', float(np.nansum(temps2)) / len(temps2))
                 diagnostic.record(region, year, 'zero', float(np.nansum(curve(temps2) == 0)) / len(temps2))
 
             if not np.isnan(result):

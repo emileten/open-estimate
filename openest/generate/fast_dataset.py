@@ -1,15 +1,94 @@
+import functools
+import xarray as xr
+import numpy as np
+
 class FastDataset(xr.Dataset):
-    def __init__(self, data_vars, coords):
+    def __init__(self, data_vars, coords={}, attrs=None):
         # Do not call __init__ on Dataset, to avoid time cost
-        self.data_vars = data_vars
-        self.coords = coords
+        self.original_data_vars = data_vars
+        self.original_coords = coords
 
-        self._variables = {name: data_vars[name][1] for name in data_vars}
+        self._variables = {name: FastDataArray(data_vars[name][1], data_vars[name][0] if isinstance(data_vars[name][0], tuple) else (data_vars[name][0],)) for name in data_vars}
+        self._variables.update({name: FastDataArray(coords[name], (name,)) for name in coords})
+        self._dims = {key: getattr(self._variables[key]._data, 'shape', ()) for key in self._variables}
+        if attrs is None:
+            self.attrs = {}
+        else:
+            self.attrs = attrs
 
-    def __item__(self, name):
+    def __str__(self):
+        return str(xr.Dataset(self.original_data_vars, self.original_coords, self.attrs))
+            
+    def sum(self):
+        newvars = {}
+        for key in self._variables:
+            if key in self.original_coords:
+                continue
+            newvars[key] = ((), np.array(np.sum(self._variables[key]._data)))
+        return FastDataset(newvars, self.attrs)
+
+    def __getitem__(self, name):
+        return self._variables[name]
+    
+    def __getattr__(self, name):
         return self._variables[name]
 
 class FastDataArray(xr.DataArray):
-    def __init__(self, data):
+    def __init__(self, data, coords):
         # Do not call __init__ on DataArray, to avoid time cost
-        self.values = self._values = self.data = data
+        self.original_coords = coords
+        self._values = self._data = data
+
+    def __len__(self):
+        return len(self._values)
+
+    def __str__(self):
+        return str(xr.DataArray(self._data))
+
+    @property
+    def values(self):
+        return self._values
+    
+    @property
+    def _variable(self):
+        # We don't want this layer: if returning a numpy doesn't work, time to add a new function
+        return self._values
+
+    @staticmethod
+    def _binary_op(f, reflexive=False, join=None, **ignored_kwargs):
+        @functools.wraps(f)
+        def func(self, other):
+            other_values = getattr(other, '_values', other)
+
+            values = f(self._values, other_values)
+
+            return FastDataArray(values, self.original_coords)
+        
+        return func
+
+    def reduce(self, func, dim=None, axis=None, keep_attrs=False, **kwargs):
+        data = func(self._values)
+        # Only handles no reduction or total reduction
+        newshape = getattr(data, 'shape', ())
+        if newshape == ():
+            return FastDataArray(data, ())
+        elif newshape == self.shape:
+            return FastDataArray(data, self.original_coords)
+        else:
+            if dim is not None:
+                axis = self.original_coords.index(dim)
+            newcoords = list(self.original_coords)
+            del newcoords[axis]
+            return FastDataArray(data, newcoords)
+
+    def __array__(self):
+        return np.asarray(self._values)
+    
+FastDataArray.__array_priority__ = 80
+xr.core.ops.inject_binary_ops(FastDataArray)
+    
+if __name__ == '__main__':
+    ds = FastDataset({'x': ('time', np.ones(3))}, {'time': np.arange(3)})
+    print ds
+    print ds.x
+    print ds.x * 3
