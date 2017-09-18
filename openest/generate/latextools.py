@@ -1,33 +1,31 @@
-functions_count = 0
-functions_vars = ['f', 'g', 'h']
+import formatting
+from formatting import FormatElement
 
-variables_count = 0
-variables_vars = ['x', 'y', 'z']
-
-"""
-Return a representation of this call.
-"""
 def call(func, units, description=None, *args):
+    """Return a representation of this call.  Any elements in args can
+    be given their own FormatElements in the final dictionary.
+    """
+    
     if len(args) == 0:
-        funcvar = get_function()
-        yield ("Equation", funcvar + "()", units)
-        yield (funcvar + "()", description, units)
-        return
+        funcvar = formatting.get_function()
+        return {'main', FormatElement(funcvar + "()", units, [funcvar + '()'])
+                funcvar + '()': FormatElement(description, units)}
 
     latex = latex_function(func, args)
     if latex:
-        yield ("Equation", latex, units)
-        return
+        return {'main': FormatElement(latex, units, args)}
     
     if len(args) == 1:
         latex = latex_function(func, *args)
-        funcvar = get_function()
-        yield ("Equation", "%s(%s)" % (funcvar, args[0]), units)
-        yield (funcvar + r"(\cdot)", description, units)
+        funcvar = formatting.get_function()
+        retur {'main': FormatElement("%s(%s)" % (funcvar, args[0]), units,
+                                     funcvar + r"(\cdot)"),
+               funcvar + r"(\cdot)": FormatElement(description, units, args)}
     elif len(args) == 2:
-        funcvar = get_function()
-        yield ("Equation", "%s(%s, %s)" % (funcvar, args[0], args[1]), units)
-        yield (funcvar + r"(\cdot)", description, units)
+        funcvar = formatting.get_function()
+        return {'main': FormatElement("%s(%s, %s)" % (funcvar, args[0], args[1]),
+                                      units, [funcvar + r"(\cdot)"]),
+                funcvar + r"(\cdot)": FormatElement(description, units, args)}
 
 def latex_function(func, *args):
     if len(args) == 1:
@@ -82,10 +80,3 @@ def interpret2(func):
             return '*'
     except:
         return "unknown"
-
-def get_function():
-    global functions_count
-    
-    funcvar = functions_vars[functions_count]
-    functions_count += 1
-    return funcvar

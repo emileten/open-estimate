@@ -1,7 +1,8 @@
 import numpy as np
 from calculation import Calculation, ApplicationEach
 from curvegen import CurveGenerator
-import diagnostic
+import formatting, diagnostic
+from formatting import FormatElement
 
 class YearlyBins(Calculation):
     def __init__(self, units, curvegen, curve_description):
@@ -11,11 +12,13 @@ class YearlyBins(Calculation):
         self.curvegen = curvegen
         self.curve_description = curve_description
 
-    def latex(self):
-        funcvar = latextools.get_function()
-        yield ("Equation", r"\sum_{d \in y(t)} %s(T_d)" % (funcvar), self.unitses[0])
-        yield ("T_d", "Temperature", "deg. C")
-        yield ("%s(\cdot)" % (funcvar), str(self.curve), self.unitses[0])
+    def format(self, lang):
+        funcvar = formatting.get_function()
+        assert lang == 'latex'
+        return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
+                                      self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
+                'T_d': FormatElement("Temperature", "deg. C"),
+                "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):

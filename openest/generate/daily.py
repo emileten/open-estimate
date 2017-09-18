@@ -1,8 +1,9 @@
 import os, csv, random
 import numpy as np
 import xarray as xr
-import latextools, diagnostic
+import formatting, diagnostic
 from calculation import Calculation, Application, ApplicationByYear
+from formatting import FormatElement
 from ..models.model import Model
 from ..models.spline_model import SplineModel
 from ..models.bin_model import BinModel
@@ -27,11 +28,13 @@ class MonthlyDayBins(Calculation):
         self.spline = spline
         self.weather_change = weather_change
 
-    def latex(self):
-        funcvar = latextools.get_function()
-        yield ("Equation", r"\frac{1}{12} \sum_{d \in y(t)} %s(T_d)" % (funcvar), self.unitses[0])
-        yield ("T_d", "Temperature", "deg. C")
-        yield ("%s(\cdot)" % (funcvar), str(self.model), self.unitses[0])
+    def format(self, lang):
+        funcvar = formatting.get_function()
+        assert lang == 'latex'
+        return {'main': FormatElement(r"\frac{1}{12} \sum_{d \in y(t)} %s(T_d)",
+                                      self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
+                'T_d': FormatElement("Temperature", "deg. C"),
+                "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
@@ -73,11 +76,13 @@ class YearlyDayBins(Calculation):
             memomodel.set_x_cache_decimals(1)
             self.spline = memomodel.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
 
-    def latex(self):
-        funcvar = latextools.get_function()
-        yield ("Equation", r"\sum_{d \in y(t)} %s(T_d)" % (funcvar), self.unitses[0])
-        yield ("T_d", "Temperature", "deg. C")
-        yield ("%s(\cdot)" % (funcvar), str(self.model), self.unitses[0])
+    def format(self, lang):
+        funcvar = formatting.get_function()
+        assert lang == 'latex'
+        return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
+                                      self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
+                'T_d': FormatElement("Temperature", "deg. C"),
+                "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
@@ -124,11 +129,13 @@ class AverageByMonth(Calculation):
             model.set_x_cache_decimals(1)
             self.spline = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
 
-    def latex(self):
-        funcvar = latextools.get_function()
-        yield ("Equation", r"mean(\{mean_{d \in m(t)} %s(T_d)\})" % (funcvar), self.unitses[0])
-        yield ("T_d", "Temperature", "deg. C")
-        yield ("%s(\cdot)" % (funcvar), str(self.model), self.unitses[0])
+    def format(self, lang):
+        funcvar = formatting.get_function()
+        assert lang == 'latex'
+        return {'main': FormatElement(r"mean(\{mean_{d \in m(t)} %s(T_d)\})" % (funcvar),
+                                      self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
+                'T_d': FormatElement("Temperature", "deg. C"),
+                "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
@@ -159,9 +166,6 @@ class PercentWithin(Calculation):
         super(PercentWithin, self).__init__(['portion'])
         self.endpoints = endpoints
 
-    def latex(self):
-        pass
-
     def apply(self, region):
         def generate(region, year, temps, **kw):
             results = []
@@ -189,8 +193,8 @@ class Constant(Calculation):
         super(Constant, self).__init__([units])
         self.value = value
 
-    def latex(self):
-        yield ("Equation", str(self.value), self.unitses[0])
+    def format(self, lang):
+        return {'main': FormatElement(str(self.value), self.unitses[0])}
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
@@ -217,11 +221,13 @@ class YearlyAverageDay(Calculation):
         self.weather_change = weather_change
         self.norecord = norecord
 
-    def latex(self):
-        funcvar = latextools.get_function()
-        yield ("Equation", r"\frac{1}{365} \sum_{d \in y(t)} %s(T_d)" % (funcvar), self.unitses[0])
-        yield ("T_d", "Temperature", "deg. C")
-        yield ("%s(\cdot)" % (funcvar), self.curve_description, self.unitses[0])
+    def format(self, lang):
+        funcvar = formatting.get_function()
+        assert lang == 'latex'
+        return {'main': FormatElement(r"\frac{1}{365} \sum_{d \in y(t)} %s(T_d)" % (funcvar),
+                                      self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
+                'T_d': FormatElement("Temperature", "deg. C"),
+                "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
 
     def apply(self, region, *args):
         checks = dict(lastyear=-np.inf)
@@ -270,9 +276,6 @@ class YearlyDividedPolynomialAverageDay(Calculation):
         self.curve_description = curve_description
         self.weather_change = weather_change
 
-    def latex(self):
-        raise NotImplementedError
-
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
             temps = self.weather_change(temps)
@@ -314,9 +317,6 @@ class ApplyCurve(Calculation):
         self.names = names
         self.titles = titles
         self.descriptions = descriptions
-
-    def latex(self):
-        raise NotImplementedError()
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):

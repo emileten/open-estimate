@@ -1,5 +1,6 @@
 import numpy as np
 import latextools, calculation, diagnostic
+from formatting import FormatElement
 
 """Scale the results by the value in scale_dict, or the mean value (if it is set).
 make_generator: we encapsulate this function, passing in data and opporting on outputs
@@ -16,16 +17,14 @@ class Scale(calculation.Calculation):
         self.latexpair = latexpair
         self.from_units = from_units
 
-    def latex(self, *args, **kwargs):
-        for (key, value, units) in self.subcalc.latex(*args, **kwargs):
-            if key == "Equation":
-                for eqnstr in latextools.call(self.func, self.unitses[0], "Scaling function", value, self.latexpair[0]):
-                    yield eqnstr
-            else:
-                yield (key, value, units)
-
-        fulllatexpair = (self.latexpair[0], self.latexpair[1], self.from_units + ' -> ' + self.unitses[0])
-        yield fulllatexpair
+    def format(self, lang, *args, **kwargs):
+        assert lang == 'latex'
+        elements = self.subcalc.format(lang, *args, **kwargs)
+        elements.update(latextools.call(self.func, self.unitses[0],
+                                        "Scaling function", value,
+                                        self.latexpair[0]))
+        elements[self.latexpair[0]] = FormatElement(self.latexpair[1], self.from_units + ' -> ' + self.unitses[0])
+        return elements
 
     def apply(self, region, *args, **kwargs):
         def generate(year, result):
@@ -67,13 +66,12 @@ class Transform(calculation.Calculation):
         self.long_description = long_description
         self.from_units = from_units
 
-    def latex(self, *args, **kwargs):
-        for (key, value, units) in self.subcalc.latex(*args, **kwargs):
-            if key == "Equation":
-                for eqnstr in latextools.call(self.func, self.unitses[0], self.description, value):
-                    yield eqnstr
-            else:
-                yield (key, value, units)
+    def format(self, lang, *args, **kwargs):
+        assert lang == 'latex'
+        elements = self.subcalc.format(lang, *args, **kwargs)
+        elements.update(latextools.call(self.func, self.unitses[0],
+                                        self.description, value))
+        return elements
 
     def apply(self, region, *args, **kwargs):
         def generate(year, result):
@@ -113,9 +111,9 @@ class Instabase(calculation.CustomFunctionalCalculation):
         self.denom = None # The value in the baseyear
         self.pastresults = [] # results before baseyear
 
-    def latexhandler(self, equation, baseyear, func, skip_on_missing):
-        for eqnstr in latextools.call(func, self.unitses[0], "Re-basing function", equation, r"\left[%s\right]_{t = %d}" % (equation, baseyear)):
-            yield eqnstr
+    def format_handler(self, main, lang, baseyear, func, skip_on_missing):
+        assert lang == 'latex'
+        return latextools.call(func, self.unitses[0], "Re-basing function", equation, r"\left[%s\right]_{t = %d}" % (equation, baseyear))
 
     def init_apply(self):
         self.pastresults = [] # don't copy this across instances!
@@ -175,9 +173,9 @@ class SpanInstabase(Instabase):
         self.year2 = year2
         self.denomterms = []
 
-    def latexhandler(self, equation, baseyear, func, skip_on_missing):
-        for eqnstr in latextools.call(func, self.unitses[0], "Re-basing function", equation, r"Average\left[%s\right]_{%d \le t le %d}" % (equation, self.year1, self.year2)):
-            yield eqnstr
+    def format_handler(self, equation, lang, baseyear, func, skip_on_missing):
+        assert lang == 'latex'
+        return latextools.call(func, self.unitses[0], "Re-basing function", equation, r"Average\left[%s\right]_{%d \le t le %d}" % (equation, self.year1, self.year2))
 
     def init_apply(self):
         self.denomterms = [] # don't copy this across instances!
@@ -232,9 +230,6 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
         self.sdev = None # The sdev to divide by
         self.pastresults = [] # results before lastyear
 
-    def latexhandler(self, equation, lastyear):
-        raise NotImplementedError()
-
     def init_apply(self):
         self.pastresults = [] # don't copy this across instances!
 
@@ -288,9 +283,6 @@ class Sum(calculation.Calculation):
 
         self.subcalcs = subcalcs
 
-    def latex(self, *args, **kwargs):
-        raise NotImplementedError()
-
     def apply(self, region, *args, **kwargs):
         def generate(year, results):
             return np.sum(map(lambda x: x[1] if x is not None else np.nan, results))
@@ -323,9 +315,6 @@ class Positive(calculation.Calculation):
         super(Positive, self).__init__([subcalc.unitses[0]] + subcalc.unitses)
         self.subcalc = subcalc
 
-    def latex(self, *args, **kwargs):
-        raise NotImplementedError()
-
     def apply(self, region, *args, **kwargs):
         def generate(year, result):
             return result if result > 0 else 0
@@ -357,8 +346,8 @@ class AuxillaryResult(calculation.Calculation):
         self.subcalc_aux = subcalc_aux
         self.auxname = auxname
 
-    def latex(self, *args, **kwargs):
-        return self.subcalc_main.latex(*args, **kwargs)
+    def format(self, lang, *args, **kwargs):
+        return self.subcalc_main.format(lang, *args, **kwargs)
 
     def apply(self, region, *args, **kwargs):
         subapp_main = self.subcalc_main.apply(region, *args, **kwargs)

@@ -13,9 +13,6 @@ class SingleWeatherApply(Calculation):
         self.curve_description = curve_description
         self.weather_change = weather_change
 
-    def latex(self):
-        raise NotImplementedError()
-
     def apply(self, region, *args):
         if isinstance(self.curve, CurveGenerator):
             curve = self.curve.get_curve(region, *args)
@@ -55,9 +52,6 @@ class MonthlyClimateApply(Calculation):
         self.monthmeans = monthmeans
         self.regions = regions
         self.weather_change = weather_change
-
-    def latex(self):
-        raise NotImplementedError()
 
     def apply(self, region, *args):
         if isinstance(self.curve, CurveGenerator):
@@ -103,9 +97,6 @@ class InstaZScoreApply(Calculation, Application):
         self.mean = None # The mean to subtract off
         self.sdev = None # The sdev to divide by
         self.pastresults = [] # results before lasttime
-
-    def latex(self):
-        raise NotImplementedError()
 
     def apply(self, region, *args, **kwargs):
         app = copy.copy(self)
@@ -163,9 +154,6 @@ class MonthlyZScoreApply(Calculation, Application):
         self.regions = regions
         self.weather_change = weather_change
 
-    def latex(self):
-        raise NotImplementedError()
-
     def apply(self, region, *args, **kwargs):
         app = copy.copy(self)
 
@@ -202,9 +190,6 @@ class SplitByMonth(Calculation):
     def __init__(self, subcalc):
         super(SplitByMonth, self).__init__([subcalc.unitses[0]])
         self.subcalc = subcalc
-
-    def latex(self):
-        raise NotImplementedError()
 
     def apply(self, region, *args, **kwargs):
         bymonth = [self.subcalc.apply(region + '-' + str(month), *args, **kwargs) for month in range(1, 13)]

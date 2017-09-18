@@ -6,7 +6,9 @@ class Calculation(object):
     def __init__(self, unitses):
         self.unitses = unitses
 
-    def latex(self, *args, **kwargs):
+    def format(self, lang, *args, **kwargs):
+        """Returns a dictionary of FormatElements.
+        Only keys in the tree of dependencies will be output."""
         raise NotImplementedError()
 
     def test(self):
@@ -48,15 +50,13 @@ class FunctionalCalculation(Calculation):
         self.handler_args = handler_args
         self.handler_kw = handler_kw
 
-    def latex(self, *args, **kwargs):
-        for (key, value, units) in self.subcalc.latex(*args, **kwargs):
-            if key == "Equation":
-                for tuple2 in self.latexhandler(value, *self.handler_args, **self.handler_kw):
-                    yield tuple2
-            else:
-                yield (key, value, units)
+    def format(self, lang, *args, **kwargs):
+        elements = self.subcalc.format(lang, *args, **kwargs)
+        handler_elements = self.format_handler(elements['main'], lang, *self.handler_args, **self.handler_kw)
+        elements.update(handler_elements)
+        return elements
 
-    def latexhandler(self, latex, *handler_args, **handler_kw):
+    def format_handler(self, substr, lang, *handler_args, **handler_kw):
         raise NotImplementedError()
 
     def apply(self, region, *args, **kwargs):
