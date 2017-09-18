@@ -18,15 +18,29 @@ class FastDataset(xr.Dataset):
             
     def __str__(self):
         return str(xr.Dataset(self.original_data_vars, self.original_coords, self.attrs))
-            
+
     def sum(self):
+        return self.reduce(np.sum)
+
+    def mean(self):
+        return self.reduce(np.mean)
+
+    def reduce(self, func):
         newvars = {}
         for key in self._variables:
             if key in self.original_coords:
                 continue
-            newvars[key] = ((), np.array(np.sum(self._variables[key]._data)))
+            newvars[key] = ((), np.array(func(self._variables[key]._data)))
         return FastDataset(newvars, self.attrs)
 
+    def transform(self, func):
+        newvars = {}
+        for key in self._variables:
+            if key in self.original_coords:
+                continue
+            newvars[key] = (self._variables[key].original_coords, np.array(func(self._variables[key]._data)))
+        return FastDataset(newvars, self.attrs)        
+    
     def __getitem__(self, name):
         return self._variables[name]
     
