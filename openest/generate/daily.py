@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 import formatting, diagnostic
 from calculation import Calculation, Application, ApplicationByYear
-from formatting import FormatElement
+from formatting import FormatElementa
 from ..models.model import Model
 from ..models.spline_model import SplineModel
 from ..models.bin_model import BinModel
