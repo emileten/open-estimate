@@ -29,12 +29,12 @@ def call(func, units, description=None, *args):
 
 def latex_function(func, *args):
     if len(args) == 1:
-        interp = interpret1(func)
+        interp = formatting.interpret1(func)
         if interp == 'identity':
             return args[0]
 
     if len(args) == 2:
-        interp = interpret2(func)
+        interp = formatting.interpret2(func)
         if interp == '/':
             return r"\frac{%s}{%s}" % args
         elif interp == '-':
@@ -44,12 +44,12 @@ def latex_function(func, *args):
 
 def english_function(func, *args):
     if len(args) == 1:
-        interp = interpret1(func)
+        interp = formatting.interpret1(func)
         if interp == 'identity':
             return args[0]
 
     if len(args) == 2:
-        interp = interpret2(func)
+        interp = formatting.interpret2(func)
         if interp == '/':
             return r"%s / %s" % args
         elif interp == '-':
@@ -57,26 +57,3 @@ def english_function(func, *args):
         elif interp == '*':
             return r"%s x %s" % args
 
-def interpret1(func):
-    """
-    Try to determine the processing of `func`.
-    """
-    try:
-        if func('sillystring') == 'sillystring':
-            return "identity"
-    except:
-        return "unknown"
-
-def interpret2(func):
-    """
-    Try to determine the processing of `func`.
-    """
-    try:
-        if func(555., 111.) == 5.:
-            return '/'
-        if func(555., 111.) == 444.:
-            return '-'
-        if func(555., 111.) == 555. * 111.:
-            return '*'
-    except:
-        return "unknown"

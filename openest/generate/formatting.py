@@ -68,3 +68,27 @@ def get_variable():
         funcvar += str(variables_count / variables_vars + 1)
     variables_count += 1
     return varvar
+
+def interpret1(func):
+    """
+    Try to determine the processing of `func`.
+    """
+    try:
+        if func('sillystring') == 'sillystring':
+            return "identity"
+    except:
+        return "unknown"
+
+def interpret2(func):
+    """
+    Try to determine the processing of `func`.
+    """
+    try:
+        if func(555., 111.) == 5.:
+            return '/'
+        if func(555., 111.) == 444.:
+            return '-'
+        if func(555., 111.) == 555. * 111.:
+            return '*'
+    except:
+        return "unknown"
