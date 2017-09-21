@@ -30,11 +30,16 @@ class MonthlyDayBins(Calculation):
 
     def format(self, lang):
         funcvar = formatting.get_function()
-        assert lang == 'latex'
-        return {'main': FormatElement(r"\frac{1}{12} \sum_{d \in y(t)} %s(T_d)",
-                                      self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                'T_d': FormatElement("Temperature", "deg. C"),
-                "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+        if lang == 'latex':
+            return {'main': FormatElement(r"\frac{1}{12} \sum_{m \in y(t)} %s(T_m)",
+                                          self.unitses[0], ['T_m', "%s(\cdot)" % (funcvar)]),
+                    'T_m': FormatElement("Temperature", "days"),
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+        elif lang == 'julia':
+            return {'main': FormatElement(r"sum(%s(Tbymonth)) / 12",
+                                          self.unitses[0], ['Tbymonth', "%s(T)" % (funcvar)]),
+                    'Tbymonth': FormatElement("# Days of within each bin", "days"),
+                    "%s(T)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}            
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
@@ -78,11 +83,17 @@ class YearlyDayBins(Calculation):
 
     def format(self, lang):
         funcvar = formatting.get_function()
-        assert lang == 'latex'
-        return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
-                                      self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                'T_d': FormatElement("Temperature", "deg. C"),
-                "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+        if lang == 'latex':
+            return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
+                                          self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
+                    'T_d': FormatElement("Temperature", "deg. C"),
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+        elif lang == 'julia':
+            return {'main': FormatElement(r"sum(%s(Tbins))",
+                                          self.unitses[0], ['Tbins', "%s(T)" % (funcvar)]),
+                    'Tbins': FormatElement("# Temperature in bins", "deg. C"),
+                    "%s(T)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}            
+
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
@@ -131,11 +142,17 @@ class AverageByMonth(Calculation):
 
     def format(self, lang):
         funcvar = formatting.get_function()
-        assert lang == 'latex'
-        return {'main': FormatElement(r"mean(\{mean_{d \in m(t)} %s(T_d)\})" % (funcvar),
-                                      self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                'T_d': FormatElement("Temperature", "deg. C"),
-                "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+        if lang == 'latex':
+            return {'main': FormatElement(r"mean(\{mean_{d \in m(t)} %s(T_d)\})" % (funcvar),
+                                          self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
+                    'T_d': FormatElement("Temperature", "deg. C"),
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+        elif lang == 'julia':
+            return {'main': FormatElement("mean([mean(%s(Tbyday[monthday[ii]:monthday[ii+1]-1])) for ii in 1:12])" % (funcvar),
+                                          self.unitses[0], ['Tbyday', "monthday", "%s(T)" % (funcvar)]),
+                    'Tbyday': FormatElement("# Temperature by day", "deg. C"),
+                    'monthday': FormatElement("cumsum([1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])", "day of year"),
+                    "%s(T)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
@@ -223,11 +240,16 @@ class YearlyAverageDay(Calculation):
 
     def format(self, lang):
         funcvar = formatting.get_function()
-        assert lang == 'latex'
-        return {'main': FormatElement(r"\frac{1}{365} \sum_{d \in y(t)} %s(T_d)" % (funcvar),
-                                      self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                'T_d': FormatElement("Temperature", "deg. C"),
-                "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+        if lang == 'latex':
+            return {'main': FormatElement(r"\frac{1}{365} \sum_{d \in y(t)} %s(T_d)" % (funcvar),
+                                          self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
+                    'T_d': FormatElement("Temperature", "deg. C"),
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+        elif lang == 'julia':
+            return {'main': FormatElement(r"sum(%s(Tbyday)) / 365",
+                                          self.unitses[0], ['Tbyday', "%s(T)" % (funcvar)]),
+                    'Tbyday': FormatElement("# Daily temperature", "deg. C"),
+                    "%s(T)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}            
 
     def apply(self, region, *args):
         checks = dict(lastyear=-np.inf)

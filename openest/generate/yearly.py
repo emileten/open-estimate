@@ -14,11 +14,16 @@ class YearlyBins(Calculation):
 
     def format(self, lang):
         funcvar = formatting.get_function()
-        assert lang == 'latex'
-        return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
-                                      self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                'T_d': FormatElement("Temperature", "deg. C"),
-                "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+        if lang == 'latex':
+            return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
+                                          self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
+                    'T_d': FormatElement("Temperature", "days"),
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+        elif lang == 'julia':
+            return {'main': FormatElement(r"sum(%s(Tbins))" % (funcvar),
+                                          self.unitses[0], ['Tbins', "%s(T)" % (funcvar)]),
+                    'Tbins': FormatElement("# Temperature in bins", "days"),
+                    "%s(T)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}            
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
