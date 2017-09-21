@@ -8,7 +8,7 @@ def call(func, units, description=None, *args):
     
     if len(args) == 0:
         funcvar = formatting.get_function()
-        return {'main', FormatElement(funcvar + "()", units, [funcvar + '()'])
+        return {'main': FormatElement(funcvar + "()", units, [funcvar + '()']),
                 funcvar + '()': FormatElement(description, units)}
 
     latex = latex_function(func, args)
@@ -18,7 +18,7 @@ def call(func, units, description=None, *args):
     if len(args) == 1:
         latex = latex_function(func, *args)
         funcvar = formatting.get_function()
-        retur {'main': FormatElement("%s(%s)" % (funcvar, args[0]), units,
+        return {'main': FormatElement("%s(%s)" % (funcvar, args[0]), units,
                                      funcvar + r"(\cdot)"),
                funcvar + r"(\cdot)": FormatElement(description, units, args)}
     elif len(args) == 2:

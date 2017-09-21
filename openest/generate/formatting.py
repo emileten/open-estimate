@@ -23,8 +23,6 @@ def format_iterate(calculation, format):
         yield key, elements[key]
         queue.extend(elements[key].dependencies)
 
-    return content
-
 def format_latex(calculation):
     iter = format_iterate(calculation, 'latex')
     main = iter.next()
