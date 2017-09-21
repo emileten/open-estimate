@@ -44,10 +44,20 @@ class FastDataset(xr.Dataset):
     def subset(self, names):
         newvars = {}
         for key in self._variables:
-            if key in self.original_coords or key in names:
+            if key in self.original_coords or key not in names:
                 continue
             newvars[key] = (self._variables[key].original_coords, self._variables[key]._data)
-        return FastDataset(newvars, self.attrs)
+        return FastDataset(newvars, self.original_coords, self.attrs)
+
+    def rename(self, name_dict):
+        # Cannot rename coordinates
+        newvars = {}
+        for key in self._variables:
+            if key in self.original_coords or key not in name_dict:
+                continue
+            newvars[name_dict[key]] = (self._variables[key].original_coords, self._variables[key]._data)
+        return FastDataset(newvars, self.original_coords, self.attrs)
+        
     
     def __getitem__(self, name):
         return self._variables[name]

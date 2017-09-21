@@ -55,3 +55,14 @@ class CoefficientsCurve(SmartCurve):
             result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
             
         return result
+
+class SelectiveInputCurve(SmartCurve):
+    """Assumes input is a matrix, and only pass selected input columns to child curve."""
+    
+    def __init__(self, curve, variable):
+        super(SelectiveInputCurve, self).__init__()
+        self.curve = curve
+        self.variable = variable
+
+    def __call__(self, ds):
+        return self.curve(ds[self.variable]._data)

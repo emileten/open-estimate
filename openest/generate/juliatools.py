@@ -8,7 +8,7 @@ def call(func, units, description=None, *args):
     
     if len(args) == 0:
         funcvar = formatting.get_function()
-        return {'main', FormatElement(funcvar + "()", units, [funcvar + '()'])
+        return {'main': FormatElement(funcvar + "()", units, [funcvar + '()']),
                 funcvar + '()': FormatElement(description, units)}
 
     julia = julia_function(func, args)
@@ -18,7 +18,7 @@ def call(func, units, description=None, *args):
     if len(args) == 1:
         julia = julia_function(func, *args)
         funcvar = formatting.get_function()
-        retur {'main': FormatElement("%s(%s)" % (funcvar, args[0]), units,
+        return {'main': FormatElement("%s(%s)" % (funcvar, args[0]), units,
                                      funcvar + "(x)"),
                funcvar + "(x)": FormatElement(description, units, args)}
     elif len(args) == 2:
