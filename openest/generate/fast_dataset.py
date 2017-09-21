@@ -40,6 +40,14 @@ class FastDataset(xr.Dataset):
                 continue
             newvars[key] = (self._variables[key].original_coords, np.array(func(self._variables[key]._data)))
         return FastDataset(newvars, self.attrs)        
+
+    def subset(self, names):
+        newvars = {}
+        for key in self._variables:
+            if key in self.original_coords or key in names:
+                continue
+            newvars[key] = (self._variables[key].original_coords, self._variables[key]._data)
+        return FastDataset(newvars, self.attrs)
     
     def __getitem__(self, name):
         return self._variables[name]
@@ -98,7 +106,7 @@ class FastDataArray(xr.DataArray):
     def __array__(self):
         return np.asarray(self._values)
 
-def region_groupby(ds, year, regions):
+def region_groupby(ds, year, regions, region_indices):
     timevar = ds.time
     for ii in range(len(regions)):
         region = regions[ii]
@@ -112,7 +120,7 @@ def region_groupby(ds, year, regions):
                 continue
                 
             newvars[var] = (['time'], dsdata[:, region_indices[region]])
-        subds = fast_dataset.FastDataset(newvars, coords={'time': timevar}, attrs={'year': year})
+        subds = FastDataset(newvars, coords={'time': timevar}, attrs={'year': year})
             
         yield region, subds
 

@@ -1,5 +1,5 @@
 import numpy as np
-import latextools, calculation, diagnostic
+import juliatools, latextools, calculation, diagnostic
 from formatting import FormatElement
 
 """Scale the results by the value in scale_dict, or the mean value (if it is set).
@@ -18,13 +18,20 @@ class Scale(calculation.Calculation):
         self.from_units = from_units
 
     def format(self, lang, *args, **kwargs):
-        assert lang == 'latex'
         elements = self.subcalc.format(lang, *args, **kwargs)
-        elements.update(latextools.call(self.func, self.unitses[0],
-                                        "Scaling function", value,
-                                        self.latexpair[0]))
-        elements[self.latexpair[0]] = FormatElement(self.latexpair[1], self.from_units + ' -> ' + self.unitses[0])
-        return elements
+        scaledesc = FormatElement(self.latexpair[1], self.from_units + ' -> ' + self.unitses[0])
+        if lang == 'latex':
+            elements.update(latextools.call(self.func, self.unitses[0],
+                                            "Scaling function", value,
+                                            self.latexpair[0]))
+            elements[self.latexpair[0]] = scaledesc
+            return elements
+        elif lang == 'julia':
+            variable = formatting.get_variable()
+            elements.update(latextools.call(self.func, self.unitses[0],
+                                            "Scaling function", value, variable))
+            elements[variable] = scaledesc
+            return elements
 
     def apply(self, region, *args, **kwargs):
         def generate(year, result):
@@ -67,10 +74,14 @@ class Transform(calculation.Calculation):
         self.from_units = from_units
 
     def format(self, lang, *args, **kwargs):
-        assert lang == 'latex'
         elements = self.subcalc.format(lang, *args, **kwargs)
-        elements.update(latextools.call(self.func, self.unitses[0],
-                                        self.description, value))
+        if lang == 'latex':
+            elements.update(latextools.call(self.func, self.unitses[0],
+                                            self.description, value))
+        elif lang == 'julia':
+            elements.update(juliatools.call(self.func, self.unitses[0],
+                                            self.description, value))
+            
         return elements
 
     def apply(self, region, *args, **kwargs):
@@ -112,8 +123,11 @@ class Instabase(calculation.CustomFunctionalCalculation):
         self.pastresults = [] # results before baseyear
 
     def format_handler(self, main, lang, baseyear, func, skip_on_missing):
-        assert lang == 'latex'
-        return latextools.call(func, self.unitses[0], "Re-basing function", equation, r"\left[%s\right]_{t = %d}" % (equation, baseyear))
+        if lang == 'latex':
+            return latextools.call(func, self.unitses[0], "Re-basing function", equation, r"\left[%s\right]_{t = %d}" % (equation, baseyear))
+        elif lang == 'julia':
+            return juliatools.call(func, self.unitses[0], "Re-basing function", equation,
+                                   "%s[findfirst(year .== %d)" % (equation, baseyear))
 
     def init_apply(self):
         self.pastresults = [] # don't copy this across instances!
@@ -174,8 +188,10 @@ class SpanInstabase(Instabase):
         self.denomterms = []
 
     def format_handler(self, equation, lang, baseyear, func, skip_on_missing):
-        assert lang == 'latex'
-        return latextools.call(func, self.unitses[0], "Re-basing function", equation, r"Average\left[%s\right]_{%d \le t le %d}" % (equation, self.year1, self.year2))
+        if lang == 'latex':
+            return latextools.call(func, self.unitses[0], "Re-basing function", equation, r"Average\left[%s\right]_{%d \le t le %d}" % (equation, self.year1, self.year2))
+        elif lang == 'julia':
+            return juliatools.call(func, self.unitses[0], "Re-basing function", equation, "mean(%s[(year .>= %d) & (year .<= %d)])" % (equation, self.year1, self.year2))
 
     def init_apply(self):
         self.denomterms = [] # don't copy this across instances!
