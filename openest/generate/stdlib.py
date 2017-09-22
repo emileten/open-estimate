@@ -1,4 +1,5 @@
 import numpy as np
+from base import *
 from daily import *
 from yearly import *
 from functions import *

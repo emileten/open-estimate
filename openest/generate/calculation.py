@@ -256,7 +256,8 @@ class ApplicationByYear(ApplicationByChunks):
             for values in self.func(self.region, year, ds, *self.args, **self.kwargs):
                 yield values
             return
-            
+
+        print "Seeing an unexpected %d values." % len(ds.time)
         for year, yeards in ds.groupby('time.year'):
             if len(yeards.time) < 365:
                 self.saved_ds = yeards

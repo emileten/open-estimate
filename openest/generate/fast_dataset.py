@@ -53,9 +53,12 @@ class FastDataset(xr.Dataset):
         # Cannot rename coordinates
         newvars = {}
         for key in self._variables:
-            if key in self.original_coords or key not in name_dict:
+            if key in self.original_coords:
                 continue
-            newvars[name_dict[key]] = (self._variables[key].original_coords, self._variables[key]._data)
+            if key in name_dict:
+                newvars[name_dict[key]] = (self._variables[key].original_coords, self._variables[key]._data)
+            else:
+                newvars[key] = (self._variables[key].original_coords, self._variables[key]._data)
         return FastDataset(newvars, self.original_coords, self.attrs)
         
     

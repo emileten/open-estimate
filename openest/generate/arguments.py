@@ -2,26 +2,9 @@ import numpy as np
 from openest.models.curve import UnivariateCurve, LinearCurve
 from openest.models.univariate_model import UnivariateModel
 from openest.generate.calculation import Calculation
-from openest.generate.daily import Constant
+from openest.generate.base import Constant
 from openest.generate.curvegen import CurveGenerator, ConstantCurveGenerator
-
-class ArgumentType(object):
-    def __init__(self, name, types, description, examplemaker):
-        self.name = name
-        self.types = types
-        self.description = description
-        self.examplemaker = examplemaker
-
-    def optional(self, keyword=None):
-        child = copy.copy(self)
-        child.optional = True
-        child.keyword = keyword
-        return child
-
-    def describe(self, description):
-        child = copy.copy(self)
-        child.description = description
-        return child
+from arguments_base import *
 
 ## Meta-calculation
 
@@ -46,8 +29,6 @@ input_reduce = ArgumentType('input_reduce', "A function of multiple arguments wh
 
 input_unit = ArgumentType("input_unit", "Units for the input.",
                           [str], lambda context: 'resources')
-output_unit = ArgumentType("output_unit", "Units for the result.",
-                           [str], lambda context: 'widgets')
 output_unitss = ArgumentType("ouput_unitss", "Units for each of the results.",
                       [list], lambda context: ['widgets'])
 
@@ -55,8 +36,6 @@ output_unitss = ArgumentType("ouput_unitss", "Units for each of the results.",
 
 ordered_list = ArgumentType('ordered_list', "A list of numeric values, in order.",
                             [list], lambda context: [-np.inf, 0, np.inf])
-numeric = ArgumentType('numeric', "A numeric value.",
-                       [float], lambda context: np.pi)
 region_dictionary = ArgumentType('region_dictionary', "A dictionary with a value for each region.",
                                  [dict], lambda context: {'here': np.pi})
 year = ArgumentType('year', "A specified year.", [int], lambda context: 1981)
@@ -82,3 +61,7 @@ column_titles = ArgumentType('column_titles', "A list of the titles of the resul
                             [list], lambda context: ['Capacity of widget production.'])
 column_descriptions = ArgumentType('column_descriptions', "A list of the descriptions of the result columns.",
                                    [list], lambda context: ['A calculation that produces the capacity of widget producing.'])
+curve_description = ArgumentType('curve_description', "A text description of the curve.",
+                                 str, lambda context: "A basic curve.")
+description = ArgumentType('description', "An english description of what an operation does.",
+                           str, lambda context: "Geworfenheit")

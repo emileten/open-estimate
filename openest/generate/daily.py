@@ -1,7 +1,7 @@
 import os, csv, random
 import numpy as np
 import xarray as xr
-import formatting, diagnostic
+import formatting, arguments, diagnostic
 from calculation import Calculation, Application, ApplicationByYear
 from formatting import FormatElement
 from ..models.model import Model
@@ -33,7 +33,7 @@ class MonthlyDayBins(Calculation):
         if lang == 'latex':
             return {'main': FormatElement(r"\frac{1}{12} \sum_{m \in y(t)} %s(T_m)",
                                           self.unitses[0], ['T_m', "%s(\cdot)" % (funcvar)]),
-                    'T_m': FormatElement("Temperature", "days"),
+                    'T_m': FormatElement("Temperature", "days", is_abstract=True),
                     "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
         elif lang == 'julia':
             return {'main': FormatElement(r"sum(%s(Tbymonth)) / 12",
@@ -86,7 +86,7 @@ class YearlyDayBins(Calculation):
         if lang == 'latex':
             return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
                                           self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                    'T_d': FormatElement("Temperature", "deg. C"),
+                    'T_d': FormatElement("Temperature", "deg. C", is_abstract=True),
                     "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
         elif lang == 'julia':
             return {'main': FormatElement(r"sum(%s(Tbins))",
@@ -145,14 +145,14 @@ class AverageByMonth(Calculation):
         if lang == 'latex':
             return {'main': FormatElement(r"mean(\{mean_{d \in m(t)} %s(T_d)\})" % (funcvar),
                                           self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                    'T_d': FormatElement("Temperature", "deg. C"),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+                    'T_d': FormatElement("Temperature", "deg. C", is_abstract=True),
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.spline), self.unitses[0])}
         elif lang == 'julia':
             return {'main': FormatElement("mean([mean(%s(Tbyday[monthday[ii]:monthday[ii+1]-1])) for ii in 1:12])" % (funcvar),
                                           self.unitses[0], ['Tbyday', "monthday", "%s(T)" % (funcvar)]),
                     'Tbyday': FormatElement("# Temperature by day", "deg. C"),
                     'monthday': FormatElement("cumsum([1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])", "day of year"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+                    "%s(T)" % (funcvar): FormatElement(str(self.spline), self.unitses[0])}
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
@@ -168,7 +168,7 @@ class AverageByMonth(Calculation):
         return ApplicationByYear(region, generate)
 
     def column_info(self):
-        description = "The effects of monthly average temperatures, organized into bins according to %s, averaged over months." % (str(self.model))
+        description = "The effects of monthly average temperatures, organized into bins according to %s, averaged over months." % (str(self.spline))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
     @staticmethod
@@ -205,29 +205,6 @@ class PercentWithin(Calculation):
                     arguments=[arguments.ordered_list],
                     description="Determine the portion of days that fall between pairs of points.")
 
-class Constant(Calculation):
-    def __init__(self, value, units):
-        super(Constant, self).__init__([units])
-        self.value = value
-
-    def format(self, lang):
-        return {'main': FormatElement(str(self.value), self.unitses[0])}
-
-    def apply(self, region):
-        def generate(region, year, temps, **kw):
-            yield (year, self.value)
-
-        return ApplicationByYear(region, generate)
-
-    def column_info(self):
-        return [dict(name='response', title="Constant value", description="Always equal to " + str(self.value))]
-
-    @staticmethod
-    def describe():
-        return dict(input_timerate='any', output_timerate='year',
-                    arguments=[arguments.numeric, arguments.output_unit],
-                    description="Return a given constant for each year.")
-
 class YearlyAverageDay(Calculation):
     def __init__(self, units, curvegen, curve_description, weather_change=lambda region, x: x, norecord=False):
         super(YearlyAverageDay, self).__init__([units])
@@ -239,17 +216,17 @@ class YearlyAverageDay(Calculation):
         self.norecord = norecord
 
     def format(self, lang):
-        funcvar = formatting.get_function()
         if lang == 'latex':
-            return {'main': FormatElement(r"\frac{1}{365} \sum_{d \in y(t)} %s(T_d)" % (funcvar),
-                                          self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                    'T_d': FormatElement("Temperature", "deg. C"),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+            result = self.curvegen.format_call(lang, "T_d")
+            result.update({'main': FormatElement(r"\frac{1}{365} \sum_{d \in y(t)} %s" % result['main'].repstr,
+                                                 self.unitses[0], ['T_d'] + result['main'].dependencies),
+                           'T_d': FormatElement("Temperature", "deg. C", is_abstract=True)})
         elif lang == 'julia':
-            return {'main': FormatElement(r"sum(%s(Tbyday)) / 365",
-                                          self.unitses[0], ['Tbyday', "%s(T)" % (funcvar)]),
-                    'Tbyday': FormatElement("# Daily temperature", "deg. C"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}            
+            result = self.curvegen.format_call(lang, "Tbyday")
+            result.update({'main': FormatElement(r"sum(%s) / 365" % result['main'].repstr,
+                                                 self.unitses[0], ['Tbyday'] + result['main'].dependencies),
+                           'Tbyday': FormatElement("Daily temperature", "deg. C", is_abstract=True)})
+        return result
 
     def apply(self, region, *args):
         checks = dict(lastyear=-np.inf)
@@ -285,8 +262,9 @@ class YearlyAverageDay(Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='year',
-                    arguments=[arguments.output_unit, arguments.curvegen, arguments.curve_description,
-                               arguments.input_change, arguments.debugging],
+                    arguments=[arguments.output_unit.rename('units'),
+                               arguments.curvegen, arguments.curve_description,
+                               arguments.input_change.optional(), arguments.debugging.optional()],
                     description="Apply a curve to values and take the average over each year.")
 
 class YearlyDividedPolynomialAverageDay(Calculation):

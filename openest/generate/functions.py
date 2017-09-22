@@ -1,5 +1,5 @@
 import numpy as np
-import juliatools, latextools, calculation, diagnostic
+import juliatools, latextools, calculation, diagnostic, arguments, formatting
 from formatting import FormatElement
 
 """Scale the results by the value in scale_dict, or the mean value (if it is set).
@@ -77,11 +77,10 @@ class Transform(calculation.Calculation):
         elements = self.subcalc.format(lang, *args, **kwargs)
         if lang == 'latex':
             elements.update(latextools.call(self.func, self.unitses[0],
-                                            self.description, value))
+                                            self.long_description, elements['main']))
         elif lang == 'julia':
             elements.update(juliatools.call(self.func, self.unitses[0],
-                                            self.description, value))
-            
+                                            self.long_description, elements['main']))
         return elements
 
     def apply(self, region, *args, **kwargs):
@@ -103,7 +102,7 @@ class Transform(calculation.Calculation):
         return dict(input_timerate='any', output_timerate='same',
                     arguments=[arguments.calculation, arguments.input_unit,
                                arguments.output_unit, arguments.input_change,
-                               arguments.description],
+                               arguments.description, arguments.description.rename('long_description')],
                     description="Apply an arbitrary function to the results.")
 
     
@@ -122,12 +121,17 @@ class Instabase(calculation.CustomFunctionalCalculation):
         self.denom = None # The value in the baseyear
         self.pastresults = [] # results before baseyear
 
-    def format_handler(self, main, lang, baseyear, func, skip_on_missing):
+    def format_handler(self, equation, lang, baseyear, func, skip_on_missing):
+        eqvar = formatting.get_variable(equation)
         if lang == 'latex':
-            return latextools.call(func, self.unitses[0], "Re-basing function", equation, r"\left[%s\right]_{t = %d}" % (equation, baseyear))
+            result = latextools.call(func, self.unitses[0], "Re-basing function", eqvar,
+                                     r"\left[%s\right]_{t = %d}" % (eqvar, baseyear))
         elif lang == 'julia':
-            return juliatools.call(func, self.unitses[0], "Re-basing function", equation,
-                                   "%s[findfirst(year .== %d)" % (equation, baseyear))
+            result = juliatools.call(func, self.unitses[0], "Re-basing function", eqvar,
+                                     "%s[findfirst(year .== %d)" % (eqvar, baseyear))
+        result['main'].dependencies.append(eqvar)
+        result[eqvar] = equation
+        return result
 
     def init_apply(self):
         self.pastresults = [] # don't copy this across instances!
@@ -188,10 +192,20 @@ class SpanInstabase(Instabase):
         self.denomterms = []
 
     def format_handler(self, equation, lang, baseyear, func, skip_on_missing):
+        eqvar = formatting.get_variable(equation)
         if lang == 'latex':
-            return latextools.call(func, self.unitses[0], "Re-basing function", equation, r"Average\left[%s\right]_{%d \le t le %d}" % (equation, self.year1, self.year2))
+            result = latextools.call(func, self.unitses[0], "Re-basing function", eqvar,
+                                     r"Average\left[%s\right]_{%d \le t le %d}" % (formatting.get_repstr(eqvar), self.year1, self.year2))
         elif lang == 'julia':
-            return juliatools.call(func, self.unitses[0], "Re-basing function", equation, "mean(%s[(year .>= %d) & (year .<= %d)])" % (equation, self.year1, self.year2))
+            result = juliatools.call(func, self.unitses[0], "Re-basing function", eqvar,
+                                     "mean(%s[(year .>= %d) & (year .<= %d)])" % (formatting.get_repstr(eqvar), self.year1, self.year2))
+        if isinstance(eqvar, str):
+            result['main'].dependencies.append(eqvar)
+            result[eqvar] = equation
+        else:
+            # FormatElement
+            result['main'].dependencies.extend(eqvar.dependencies)
+        return result
 
     def init_apply(self):
         self.denomterms = [] # don't copy this across instances!

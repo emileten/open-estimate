@@ -1,7 +1,7 @@
 import numpy as np
 from calculation import Calculation, ApplicationEach
 from curvegen import CurveGenerator
-import formatting, diagnostic
+import formatting, arguments, diagnostic
 from formatting import FormatElement
 
 class YearlyBins(Calculation):
