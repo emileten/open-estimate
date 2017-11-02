@@ -1,15 +1,18 @@
 import copy
 
 class ArgumentType(object):
-    def __init__(self, name, types, description, examplemaker):
+    def __init__(self, name, description, types, examplemaker):
         self.name = name
-        self.types = types
         self.description = description
+        self.types = types
         self.examplemaker = examplemaker
+
+    def __str__(self):
+        return "%s argument: %s" % (self.name, self.description)
 
     def optional(self, keyword=None):
         child = copy.copy(self)
-        child.optional = True
+        child.is_optional = True
         child.keyword = keyword
         return child
 
