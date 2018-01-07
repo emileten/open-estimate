@@ -137,6 +137,61 @@ def region_groupby(ds, year, regions, region_indices):
             
         yield region, subds
 
+def merge(dss):
+    all_data_vars = {}
+    all_coords = {}
+    all_attrs = {}
+
+    for ds in dss:
+        if isinstance(ds, FastDataset):
+            for key in ds.original_coords:
+                if key in all_coords:
+                    all_coords[key] = assert_index_equal(all_coords[key], ds.original_coords[key])
+                else:
+                    all_coords[key] = ds.original_coords[key]
+            for key in ds.original_data_vars:
+                if key in all_coords:
+                    all_coords[key] = assert_index_equal(all_coords[key], ds.original_coords[key])
+                    continue
+                all_data_vars[key] = ds.original_data_vars[key]
+        else:
+            for key in ds._dims:
+                if key in all_coords:
+                    all_coords[key] = assert_index_equal(all_coords[key], ds._dims[key])
+                else:
+                    all_coords[key] = ds._dims[key]
+            for key in ds._variables:
+                if key in all_coords:
+                    all_coords[key] = assert_index_equal(all_coords[key], ds._variables[key])
+                    continue
+                all_data_vars[key] = ds._variables[key]
+
+        if ds.attrs is not None:
+            for key in ds.attrs:
+                all_attrs[key] = ds.attrs[key]
+
+    return FastDataset(all_data_vars, all_coords, all_attrs)
+
+def assert_index_equal(one, two):
+    if np.array(one).dtype != np.array(two).dtype:
+        if not isinstance(one, int) and np.array(one).dtype == np.int32 and one[0] == 1 and one[-1] == len(one):
+            one = len(one)
+        if not isinstance(two, int) and np.array(two).dtype == np.int32 and two[0] == 1 and two[-1] == len(two):
+            two = len(two)
+        
+    if isinstance(one, int) and isinstance(two, int):
+        assert two == one
+        return one
+    elif isinstance(one, int):
+        assert len(two) == one
+        return two
+    elif isinstance(two, int):
+        assert len(one) == two
+        return one
+    else:
+        assert np.array_equal(two, one), "Not equal: %s <> %s" % (str(two), str(one))
+        return one
+
 FastDataArray.__array_priority__ = 80
 xr.core.ops.inject_binary_ops(FastDataArray)
     
