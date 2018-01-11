@@ -1,6 +1,7 @@
 import numpy as np
 from base import *
 from daily import *
+from irregular import *
 from yearly import *
 from functions import *
 from shortterm import *

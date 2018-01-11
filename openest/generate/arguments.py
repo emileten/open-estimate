@@ -10,7 +10,7 @@ from arguments_base import *
 
 calculation = ArgumentType("calculation", "A previous calculation step.",
                            [Calculation], lambda context: Constant(np.pi, 'widgets/radius'))
-calculationss = ArgumentType("calculation", "A previous calculation step.",
+calculationss = ArgumentType("calculations", "A list of previous calculations steps.",
                              [list], lambda context: [Constant(np.pi, 'widgets/radius')])
 model = ArgumentType("model", "A univariate curve or OpenEstimate model.",
                               [UnivariateCurve, UnivariateModel], lambda context: LinearCurve(.5))

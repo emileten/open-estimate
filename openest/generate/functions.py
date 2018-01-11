@@ -366,6 +366,33 @@ class Positive(calculation.Calculation):
                     arguments=[arguments.calculation],
                     description="Return the maximum of a previous result or 0.")
 
+class Exponentiate(calculation.Calculation):
+    def __init__(self, subcalc):
+        assert subcalc.unitses[0][:3] == 'log'
+        super(Exponentiate, self).__init__([subcalc.unitses[0][3:].strip()] + subcalc.unitses)
+        self.subcalc = subcalc
+
+    def apply(self, region, *args, **kwargs):
+        def generate(year, result):
+            return np.exp(result)
+
+        # Prepare the generator from our encapsulated operations
+        subapp = self.subcalc.apply(region, *args, **kwargs)
+        return calculation.ApplicationPassCall(region, subapp, generate, unshift=True)
+
+    def column_info(self):
+        infos = self.subcalc.column_info()
+        title = 'exp(' + infos[0]['title'] + ')'
+        description = 'Exponentiation of ' + infos[0]['title']
+
+        return [dict(name='exp', title=title, description=description)] + infos
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation],
+                    description="Return the the exponentiation of a previous result.")
+
 class AuxillaryResult(calculation.Calculation):
     """
     Produce an additional output, but then pass the main result on.

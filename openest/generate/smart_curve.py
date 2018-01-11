@@ -69,7 +69,7 @@ class CoefficientsCurve(SmartCurve):
         self.coeffs = coeffs
         self.variables = variables
 
-        assert isinstance(variables, list) and len(variables) == len(coeffs)
+        assert isinstance(variables, list) and len(variables) == len(coeffs), "Variables do not match coefficients: %s <> %s" % (variables, coeffs)
 
     def __call__(self, ds):
         result = np.zeros(ds[self.variables[0]].shape)
@@ -86,6 +86,56 @@ class CoefficientsCurve(SmartCurve):
         elif lang == 'julia':
             return {'main': FormatElement(' + '.join(["%s[%s] * %s_%d" % (dsname, self.variables[ii], coeffvar, ii + 1) for ii in range(len(self.variables))]), None)}
 
+class ZeroInterceptPolynomialCurve(CoefficientsCurve):
+    def __init__(self, coeffs, variables, allow_raising=False):
+        super(ZeroInterceptPolynomialCurve, self).__init__(coeffs, variables)
+        self.allow_raising = allow_raising
+    
+    def __call__(self, ds):
+        result = np.zeros(ds[self.variables[0]].shape)
+        for ii in range(len(self.variables)):
+            if not self.allow_raising:
+                result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
+            elif self.variables[ii] in ds._variables:
+                #result += self.coeffs[ii] * ds[self.variables[ii]].values # TOO SLOW
+                result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
+            else:
+                result += self.coeffs[ii] * (ds._variables[self.variables[0]]._data ** (ii + 1))
+            
+        return result
+        
+class TransformCoefficientsCurve(SmartCurve):
+    def __init__(self, coeffs, transforms, descriptions):
+        super(TransformCoefficientsCurve, self).__init__()
+        self.coeffs = coeffs
+        self.transforms = transforms
+        self.descriptions = descriptions
+
+        assert isinstance(transforms, list) and len(transforms) == len(coeffs), "Transforms do not match coefficients: %s <> %s" % (transforms, coeffs)
+
+    def __call__(self, ds):
+        result = None
+        for ii in range(len(self.transforms)):
+            if result is None:
+                result = np.array(self.coeffs[ii] * self.transforms[ii](ds))
+            else:
+                result += self.coeffs[ii] * self.transforms[ii](ds)
+
+        return result
+
+    def format(self, lang, dsname):
+        coeffvar = formatting.get_variable()
+        funcvars = [formatting.get_function() for transform in self.transforms]
+        if lang == 'latex':
+            result = {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join(["%s(%s)" % (funcvars[ii], dsname) for ii in range(len(funcvars))]), coeffvar), None)}
+        elif lang == 'julia':
+            result = {'main': FormatElement(' + '.join(["%s(%s) * %s_%d" % (funcvars[ii], dsname, coeffvar, ii + 1) for ii in range(len(funcvars))]), None)}
+
+        for ii in range(len(funcvars)):
+            result[funcvars[ii]] = FormatElement(self.descriptions[ii], None)
+
+        return result
+    
 class SelectiveInputCurve(SmartCurve):
     """Assumes input is a matrix, and only pass selected input columns to child curve."""
     

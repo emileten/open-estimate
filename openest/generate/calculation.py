@@ -267,3 +267,19 @@ class ApplicationByYear(ApplicationByChunks):
                 yield values
 
         self.saved_ds = None
+
+class ApplicationByIrregular(Application):
+    def __init__(self, region, func, *args, **kwargs):
+        super(ApplicationByIrregular, self).__init__(region)
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def push(self, ds):
+        year = ds.attrs.get('year')
+        if year is None:
+            year = ds['time.year'].values[0]
+
+        for values in self.func(self.region, year, ds, *self.args, **self.kwargs):
+            yield values
+                                    

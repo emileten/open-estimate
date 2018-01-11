@@ -1,3 +1,4 @@
+import traceback
 from calculation import Calculation
 import latextools, juliatools
 
@@ -35,7 +36,13 @@ class TransformCurveGenerator(CurveGenerator):
         self.transform = transform
 
     def get_curve(self, region, year, *args, **kw):
-        return self.transform(region, *tuple([curvegen.get_curve(region, year, *args, **kw) for curvegen in self.curvegens]))
+        try:
+            return self.transform(region, *tuple([curvegen.get_curve(region, year, *args, **kw) for curvegen in self.curvegens]))
+        except Exception as ex:
+            print self.curvegens
+            print args, kw
+            traceback.print_exc()
+            raise ex
 
     def format_call(self, lang, *args):
         result = {}
