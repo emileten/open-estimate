@@ -1,7 +1,7 @@
 import numpy as np
 import juliatools, latextools, formatting
 from statsmodels.distributions.empirical_distribution import StepFunction
-
+    
 ## Smart Curves fall back on Curve logic, but take xarray DataSets and know which variables they want
 
 class SmartCurve(object):
@@ -117,7 +117,7 @@ class TransformCoefficientsCurve(SmartCurve):
         result = None
         for ii in range(len(self.transforms)):
             if result is None:
-                result = np.array(self.coeffs[ii] * self.transforms[ii](ds))
+                result = (self.coeffs[ii] * self.transforms[ii](ds))._data
             else:
                 result += self.coeffs[ii] * self.transforms[ii](ds)
 
