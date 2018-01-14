@@ -34,6 +34,10 @@ class FastDataset(xr.Dataset):
 
         return result
 
+    @property
+    def coords(self):
+        return self.original_coords
+    
     def sum(self, dim=None):
         return self.reduce(np.sum, dim=dim)
 
@@ -135,6 +139,10 @@ class FastDataArray(xr.DataArray):
         # We don't want this layer: if returning a numpy doesn't work, time to add a new function
         return self._values
 
+    @property
+    def coords(self):
+        return self.original_coords
+    
     @staticmethod
     def _binary_op(f, reflexive=False, join=None, **ignored_kwargs):
         @functools.wraps(f)
@@ -186,15 +194,25 @@ def region_groupby(ds, year, regions, region_indices):
         region = regions[ii]
             
         newvars = {}
+        newcoords = {'time': timevar}
         for var in ds:
             if var in ['time', 'region']:
                 continue
+            if var in ds.coords:
+                newcoords[var] = ds.coords[var]
+                continue
+            
             dsdata = ds._variables[var]._data
             if len(dsdata.shape) < 2:
                 continue
-                
-            newvars[var] = (['time'], dsdata[:, region_indices[region]])
-        subds = FastDataset(newvars, coords={'time': timevar}, attrs={'year': year, 'region': region})
+
+            if len(dsdata.shape) == 2:
+                newvars[var] = (['time'], dsdata[:, region_indices[region]])
+            else:
+                coords = list(ds._variables[var].coords)
+                coords.remove('region')
+                newvars[var] = (coords, dsdata[:, region_indices[region]])
+        subds = FastDataset(newvars, coords=newcoords, attrs={'year': year, 'region': region})
             
         yield region, subds
 

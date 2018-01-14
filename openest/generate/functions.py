@@ -313,6 +313,18 @@ class Sum(calculation.Calculation):
 
         self.subcalcs = subcalcs
 
+    def format(self, lang, *args, **kwargs):
+        mains = []
+        elements = {}
+        for subcalc in self.subcalcs:
+            elements.update(subcalc.format(lang, *args, **kwargs))
+            mains.append(elements['main'])
+            
+        if lang in ['latex', 'julia']:
+            elements['main'] = FormatElement(' + '.join([main.repstr for main in mains]), self.unitses[0])
+
+        return elements
+        
     def apply(self, region, *args, **kwargs):
         def generate(year, results):
             return np.sum(map(lambda x: x[1] if x is not None else np.nan, results))
@@ -372,6 +384,14 @@ class Exponentiate(calculation.Calculation):
         super(Exponentiate, self).__init__([subcalc.unitses[0][3:].strip()] + subcalc.unitses)
         self.subcalc = subcalc
 
+    def format(self, lang, *args, **kwargs):
+        elements = self.subcalc.format(lang, *args, **kwargs)
+        if lang == 'latex':
+            elements.update({'main': FormatElement(r"\exp{%s}" % elements['main'].repstr, self.unitses[0])})
+        elif lang == 'julia':
+            elements.update({'main': FormatElement(r"exp(%s)" % elements['main'].repstr, self.unitses[0])})
+        return elements
+            
     def apply(self, region, *args, **kwargs):
         def generate(year, result):
             return np.exp(result)

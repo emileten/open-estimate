@@ -92,19 +92,36 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
         self.allow_raising = allow_raising
     
     def __call__(self, ds):
-        result = np.zeros(ds[self.variables[0]].shape)
-        for ii in range(len(self.variables)):
+        if isinstance(self.variables[0], str):
+            result = np.zeros(ds[self.variables[0]].shape)
+            iis = range(len(self.variables))
+        else:
+            result = self.coeffs[0] * self.variables[0](ds)._data
+            iis = range(1, len(self.variables))
+            
+        for ii in iis:
             if not self.allow_raising:
-                result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
+                if isinstance(self.variables[ii], str):
+                    result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
+                else:
+                    result += self.coeffs[ii] * self.variables[ii](ds)._data
             elif self.variables[ii] in ds._variables:
                 #result += self.coeffs[ii] * ds[self.variables[ii]].values # TOO SLOW
-                result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
+                if isinstance(self.variables[ii], str):
+                    result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
+                else:
+                    result += self.coeffs[ii] * self.variables[ii](ds)._data
             else:
-                result += self.coeffs[ii] * (ds._variables[self.variables[0]]._data ** (ii + 1))
-            
+                if isinstance(self.variables[0], str):
+                    result += self.coeffs[ii] * (ds._variables[self.variables[0]]._data ** (ii + 1))
+                else:
+                    result += self.coeffs[ii] * (self.variables[0](ds)._data ** (ii + 1))
+                    
         return result
         
 class TransformCoefficientsCurve(SmartCurve):
+    """Use a transformation of ds to produce each predictor."""
+    
     def __init__(self, coeffs, transforms, descriptions):
         super(TransformCoefficientsCurve, self).__init__()
         self.coeffs = coeffs

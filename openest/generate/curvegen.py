@@ -45,19 +45,23 @@ class TransformCurveGenerator(CurveGenerator):
             raise ex
 
     def format_call(self, lang, *args):
-        result = {}
-        curveargs = []
-        for curvegen in self.curvegens:
-            equation = curvegen.format_call(lang, *args)
-            result.update(equation)
-            curveargs.append(equation['main'])
+        try:
+            result = {}
+            curveargs = []
+            for curvegen in self.curvegens:
+                equation = curvegen.format_call(lang, *args)
+                result.update(equation)
+                curveargs.append(equation['main'])
 
-        if lang == 'latex':
-            result.update(latextools.call(self.transform, self.depenunit, self.description, *tuple(curveargs)))
-        elif lang == 'julia':
-            result.update(juliatools.call(self.transform, self.depenunit, self.description, *tuple(curveargs)))
+            if lang == 'latex':
+                result.update(latextools.call(self.transform, self.depenunit, self.description, *tuple(curveargs)))
+            elif lang == 'julia':
+                result.update(juliatools.call(self.transform, self.depenunit, self.description, *tuple(curveargs)))
             
-        return result
+            return result
+        except Exception as ex:
+            print self.curvegens
+            raise ex
 
 class DelayedCurveGenerator(CurveGenerator):
     def __init__(self, curvegen):
@@ -87,6 +91,10 @@ class DelayedCurveGenerator(CurveGenerator):
         return self.curvegen.get_curve(region, year, *args, **kwargs)
 
     def format_call(self, lang, *args):
-        result = self.curvegen.format_call(lang, *tuple(map(lambda x: x + '[t-1]', args)))
-        result['main'].unit = self.depenunit
-        return result
+        try:
+            result = self.curvegen.format_call(lang, *tuple(map(lambda x: x + '[t-1]', args)))
+            result['main'].unit = self.depenunit
+            return result
+        except Exception as ex:
+            print self.curvegen
+            raise ex
