@@ -1,5 +1,5 @@
 import numpy as np
-import juliatools, latextools, formatting
+import juliatools, latextools, formatting, diagnostic
 from statsmodels.distributions.empirical_distribution import StepFunction
     
 ## Smart Curves fall back on Curve logic, but take xarray DataSets and know which variables they want
@@ -122,21 +122,26 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
 class TransformCoefficientsCurve(SmartCurve):
     """Use a transformation of ds to produce each predictor."""
     
-    def __init__(self, coeffs, transforms, descriptions):
+    def __init__(self, coeffs, transforms, descriptions, diagnames=None):
         super(TransformCoefficientsCurve, self).__init__()
         self.coeffs = coeffs
         self.transforms = transforms
         self.descriptions = descriptions
+        self.diagnames = diagnames
 
         assert isinstance(transforms, list) and len(transforms) == len(coeffs), "Transforms do not match coefficients: %s <> %s" % (transforms, coeffs)
+        assert diagnames is None or isinstance(diagnames, list) and len(diagnames) == len(transforms)
 
     def __call__(self, ds):
         result = None
         for ii in range(len(self.transforms)):
+            predictor = self.transforms[ii](ds)
+            if self.diagnames:
+                diagnostic.record(ds.region, ds.year, self.diagnames[ii], np.sum(predictor._data))
             if result is None:
-                result = (self.coeffs[ii] * self.transforms[ii](ds))._data
+                result = (self.coeffs[ii] * predictor)._data
             else:
-                result += self.coeffs[ii] * self.transforms[ii](ds)
+                result += self.coeffs[ii] * predictor
 
         return result
 

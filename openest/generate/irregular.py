@@ -40,7 +40,7 @@ class YearlySumIrregular(Calculation):
 
             if isinstance(weather, xr.Dataset):
                 for var in weather._variables:
-                    if var not in ['time', 'year']:
+                    if var not in ['time', 'year'] and var not in weather.coords:
                         diagnostic.record(region, year, var, float(np.nansum(weather._variables[var]._data)))
             else:
                 diagnostic.record(region, year, 'avgv', float(np.nansum(weather)))

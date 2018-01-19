@@ -12,6 +12,11 @@ class FastDataset(xr.Dataset):
         self.original_data_vars = data_vars
         self.original_coords = coords
 
+        for key in data_vars:
+            assert isinstance(data_vars[key], tuple) or isinstance(data_vars[key], xr.DataArray) or isinstance(data_vars[key], FastDataArray), "Unexpected variable type: %s" % data_vars[key]
+        for key in coords:
+            assert isinstance(coords[key], np.ndarray) or isinstance(coords[key], xr.DataArray) or isinstance(coords[key], xr.IndexVariable), "Unexpected coordinate type: %s" % coords[key]
+
         self._variables = {}
         for name in data_vars:
             if isinstance(data_vars[name], tuple):
@@ -29,6 +34,10 @@ class FastDataset(xr.Dataset):
             
     def __str__(self):
         result = "FastDataset: [%s] x [%s]" % (', '.join(self.original_data_vars.keys()), ', '.join(self.original_coords.keys()))
+        for key in self.original_data_vars:
+            result += "\n\tVariable %s: %s" % (key, self.original_data_vars[key][0] if isinstance(self.original_data_vars[key], tuple) else self.original_data_vars[key].shape)
+        for key in self.coords:
+            result += "\n\tCoord %s: %s" % (key, self.original_coords[key].shape)
         for key in self.attrs:
             result += "\n\t%s: %s" % (key, str(self.attrs[key]))
 
@@ -254,6 +263,7 @@ def merge(dss):
 def concat(objs, dim=None):
     data_vars = {}
     dimdata_vars = {}
+    dimdata_coords = {}
     coords = {}
     dimcoords = {}
     attrs = {}
@@ -278,10 +288,23 @@ def concat(objs, dim=None):
                     else:
                         dimcoords[key].append(ds.original_data_vars[key]._data)
                 elif dim in ds._variables[key].original_coords:
-                    if key not in dimdata_vars:
-                        dimdata_vars[key] = [ds.original_data_vars[key]]
+                    if isinstance(ds.original_data_vars[key], tuple):
+                        dimdata_coords[key] = ds.original_data_vars[key][0]
+                        if key not in dimdata_vars:
+                            dimdata_vars[key] = [ds.original_data_vars[key][1]]
+                        else:
+                            dimdata_vars[key].append(ds.original_data_vars[key][1])
                     else:
-                        dimdata_vars[key].append(ds.original_data_vars[key])
+                        if isinstance(ds.original_data_vars[key], xr.Variable):
+                            dimdata_coords[key] = ds.original_data_vars[key].dims
+                        elif len(ds.original_data_vars[key]) == 2 and ds.original_data_vars[key].shape[1] == len(ds.regions):
+                            dimdata_coords[key] = ('time', 'region')
+                        else:
+                            assert False, "Cannot guess dims for %s" % ds.original_data_vars[key]
+                        if key not in dimdata_vars:
+                            dimdata_vars[key] = [ds.original_data_vars[key]]
+                        else:
+                            dimdata_vars[key].append(ds.original_data_vars[key])
                 else:
                     data_vars[key] = ds.original_data_vars[key]
         else:
@@ -300,6 +323,7 @@ def concat(objs, dim=None):
                 if key == dim:
                     dimcoords[key].append(ds._variables[key]._data)
                 elif dim in ds._variables[key].dims:
+                    dimdata_coords[key] = ds._variables[key].coords
                     if key not in datadata_vars:
                         dimdata_vars[key] = [ds._variables[key]._data]
                     else:
@@ -335,8 +359,15 @@ def assert_index_equal(one, two):
         assert len(one) == two
         return one
     else:
-        assert np.array_equal(two, one), "Not equal: %s <> %s" % (str(two), str(one))
-        return one
+        if np.min(one) == 0 and np.min(two) == 1:
+            assert np.array_equal(two, one + 1), "Not equal: %s <> %s" % (str(two), str(one))
+            return two
+        if np.min(one) == 1 and np.min(two) == 0:
+            assert np.array_equal(two + 1, one), "Not equal: %s <> %s" % (str(two), str(one))
+            return one
+        else:
+            assert np.array_equal(two, one), "Not equal: %s <> %s" % (str(two), str(one))
+            return one
 
 FastDataArray.__array_priority__ = 80
 xr.core.ops.inject_binary_ops(FastDataArray)
