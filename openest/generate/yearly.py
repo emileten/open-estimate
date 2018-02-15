@@ -90,3 +90,65 @@ class YearlyCoefficients(Calculation):
                     arguments=[arguments.output_unit, arguments.curvegen, arguments.curve_description,
                                arguments.parameter_getter, arguments.input_change],
                     description="Apply the results of a previous calculation to a curve, as a dot product on that curve's coefficients.")
+
+class YearlyApply(Calculation):
+    def __init__(self, units, curvegen, curve_description, weather_change=lambda region, x: x, norecord=False):
+        super(YearlyApply, self).__init__([units])
+        assert isinstance(curvegen, CurveGenerator)
+
+        self.curvegen = curvegen
+        self.curve_description = curve_description
+        self.weather_change = weather_change
+        self.norecord = norecord
+
+    def format(self, lang):
+        if lang == 'latex':
+            result = self.curvegen.format_call(lang, "T_t")
+            result.update({'main': FormatElement(r"%s" % result['main'].repstr,
+                                                 self.unitses[0], ['T_d'] + result['main'].dependencies),
+                           'T_t': FormatElement("Summed Temperature", "deg. C", is_abstract=True)})
+        elif lang == 'julia':
+            result = self.curvegen.format_call(lang, "Tbyyear")
+            result.update({'main': FormatElement(r"%s" % result['main'].repstr,
+                                                 self.unitses[0], ['Tbyday'] + result['main'].dependencies),
+                           'Tbyyear': FormatElement("Summed temperature", "deg. C", is_abstract=True)})
+        return result
+
+    def apply(self, region, *args):
+        checks = dict(lastyear=-np.inf)
+
+        def generate(region, year, temps, **kw):
+            # Ensure that we aren't called with a year twice
+            assert year > checks['lastyear'], "Push of %d, but already did %d." % (year, checks['lastyear'])
+            checks['lastyear'] = year
+
+            curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
+
+            temps2 = self.weather_change(region, temps)
+            assert len(temps2) == 1
+            result = curve(temps2)
+
+            if not self.norecord and diagnostic.is_recording():
+                if isinstance(temps2, xr.Dataset):
+                    for var in temps2._variables:
+                        if var not in ['time', 'year']:
+                            diagnostic.record(region, year, var, temps2._variables[var])
+                else:
+                    diagnostic.record(region, year, 'avgv', temps2)
+
+            if not np.isnan(result):
+                yield (year, result)
+
+        return ApplicationEach(region, generate)
+
+    def column_info(self):
+        description = "The result of applying a yearly value to " + self.curve_description
+        return [dict(name='response', title='Direct marginal response', description=description)]
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='year', output_timerate='year',
+                    arguments=[arguments.output_unit.rename('units'),
+                               arguments.curvegen, arguments.curve_description,
+                               arguments.input_change.optional(), arguments.debugging.optional()],
+                    description="Apply a curve to a value for each year.")

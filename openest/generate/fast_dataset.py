@@ -115,6 +115,19 @@ class FastDataset(xr.Dataset):
                 
         return FastDataset(newdata_vars, newcoords, self.attrs)
 
+    def isel(self, **kwargs):
+        newcoords = {key: self.original_coords[key] for key in self.original_coords if key not in kwargs}
+
+        newdata_vars = {}
+        for key in self.original_data_vars:
+            if isinstance(self.original_data_vars[key], tuple):
+                coords = [dim for dim in self.original_data_vars[key][0] if dim not in kwargs]
+                newdata_vars[key] = (coords, self._variables[key].isel(**kwargs))
+            else:
+                newdata_vars[key] = self.original_data_vars[key].isel(**kwargs)
+                
+        return FastDataset(newdata_vars, newcoords, self.attrs)
+
     def __getitem__(self, name):
         return self._variables[name]
     
@@ -190,7 +203,19 @@ class FastDataArray(xr.DataArray):
             indices[axis] = self.parentds[dim]._values == kwargs[dim]
             
         return FastDataArray(self._data[tuple(indices)], newcoords, self.parentds)
-    
+
+    def isel(self, **kwargs):
+        newcoords = tuple([self.original_coords[ii] for ii in range(len(self.original_coords)) if self.original_coords[ii] not in kwargs])
+        if newcoords == self.original_coords:
+            return self
+
+        indices = [slice(None)] * len(self.original_coords)
+        for dim in kwargs:
+            axis = self.original_coords.index(dim)
+            indices[axis] = kwargs[dim]
+            
+        return FastDataArray(self._data[tuple(indices)], newcoords, self.parentds)
+
     def __array__(self):
         return np.asarray(self._values)
 
