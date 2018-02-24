@@ -143,6 +143,8 @@ class FastDataArray(xr.DataArray):
     def __init__(self, data, coords, parentds):
         # Do not call __init__ on DataArray, to avoid time cost
         self.original_coords = coords
+        if isinstance(data, xr.DataArray):
+            data = data.values
         self._values = self._data = data
         self.parentds = parentds
 
@@ -213,7 +215,7 @@ class FastDataArray(xr.DataArray):
         for dim in kwargs:
             axis = self.original_coords.index(dim)
             indices[axis] = kwargs[dim]
-            
+
         return FastDataArray(self._data[tuple(indices)], newcoords, self.parentds)
 
     def __array__(self):

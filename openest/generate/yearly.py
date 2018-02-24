@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 from calculation import Calculation, ApplicationEach
 from curvegen import CurveGenerator
 import formatting, arguments, diagnostic
@@ -123,9 +124,10 @@ class YearlyApply(Calculation):
             checks['lastyear'] = year
 
             curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
-
+            
             temps2 = self.weather_change(region, temps)
-            assert len(temps2) == 1
+            if isinstance(temps2, np.ndarray):
+                assert len(temps2) == 1, "More than one value in " + str(temps)
             result = curve(temps2)
 
             if not self.norecord and diagnostic.is_recording():
