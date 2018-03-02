@@ -134,7 +134,7 @@ class YearlyApply(Calculation):
                 if isinstance(temps2, xr.Dataset):
                     for var in temps2._variables:
                         if var not in ['time', 'year']:
-                            diagnostic.record(region, year, var, temps2._variables[var])
+                            diagnostic.record(region, year, var, float(temps2._variables[var].values))
                 else:
                     diagnostic.record(region, year, 'avgv', temps2)
 
