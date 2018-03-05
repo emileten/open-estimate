@@ -63,7 +63,9 @@ class FastDataset(xr.Dataset):
                 continue
             if dim is not None and dim in self._variables[key].original_coords:
                 axis = self._variables[key].original_coords.index(dim)
-                newvars[key] = ((), np.array(func(self._variables[key]._data, axis=axis)))
+                remaining = list(self._variables[key].original_coords)
+                remaining.remove(dim)
+                newvars[key] = (tuple(remaining), np.array(func(self._variables[key]._data, axis=axis)))
             else:
                 newvars[key] = ((), np.array(func(self._variables[key]._data)))
 
