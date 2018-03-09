@@ -145,7 +145,7 @@ class FastDataArray(xr.DataArray):
     def __init__(self, data, coords, parentds):
         # Do not call __init__ on DataArray, to avoid time cost
         self.original_coords = coords
-        if isinstance(data, xr.DataArray):
+        if isinstance(data, xr.DataArray) or isinstance(data, xr.Variable):
             data = data.values
         self._values = self._data = data
         self.parentds = parentds
