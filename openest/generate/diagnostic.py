@@ -53,7 +53,7 @@ The DiagnosticManager used by `begin`, `close`, and `record` below.
 """
 default_manager = None
 
-def begin(filepath):
+def begin(filepath, finishset=set()):
     """Open up a new default DiagnosticManager, if none is currently in
     use.
     """
@@ -62,7 +62,7 @@ def begin(filepath):
     if default_manager is not None:
         raise RuntimeError("Default manager already in use.  Please run close() first.")
 
-    default_manager = DiagnosticManager(filepath)
+    default_manager = DiagnosticManager(filepath, finishset=finishset)
 
 def close():
     """Close the existing default DiagnosticManager, writing out any
@@ -87,13 +87,14 @@ def record(region, year, column, value):
 def is_recording():
     return default_manager is not None
 
-def finish(region, year):
+def finish(region, year, group=None):
     """Write out the information for the given region, year combination.
+    if group is not None, and finishset given to diagnostic, will collect multiple finishes before completion.
     """
     if default_manager is None:
         raise RuntimeError("No default manager in use.  Please run begin(filepath) first.")
 
-    default_manager.finish(region, year)
+    default_manager.finish(region, year, group=group)
 
 class DiagnosticManager(object):
     """Manager of the data for one diagnostic file.
@@ -105,7 +106,7 @@ class DiagnosticManager(object):
         incomplete: The data not yet written to the file.
     """
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, finishset=set()):
         """Create a new diagnostic manager.  Does not write any data yet."""
 
         self.filepath = filepath
@@ -113,6 +114,8 @@ class DiagnosticManager(object):
         self.header = []
         #self.header_info = [] # by header column
         self.incomplete = {} # {(region, year) : [columns]}}
+        self.finishset = finishset
+        self.partfinish = {}
 
     def __del__(self):
         self.close()
@@ -148,9 +151,17 @@ class DiagnosticManager(object):
                 columns.append("NA")
             columns.append(value)
 
-    def finish(self, region, year):
+    def finish(self, region, year, group=None):
         """Finish a given region-year combination, and write out its data."""
 
+        if group is not None:
+            if (region, year) not in self.partfinish:
+                self.partfinish[(region, year)] = set()
+                
+            self.partfinish[(region, year)].add(group)
+            if not self.finishset.issubset(self.partfinish[(region, year)]):
+                return # Don't print out yet
+        
         with self._open() as writer:
             self._writerow(writer, region, year)
 
