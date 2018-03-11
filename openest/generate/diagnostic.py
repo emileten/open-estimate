@@ -92,6 +92,8 @@ def finish(region, year, group=None):
     if group is not None, and finishset given to diagnostic, will collect multiple finishes before completion.
     """
     if default_manager is None:
+        if group is not None:
+            return # Silently drop the part-finish
         raise RuntimeError("No default manager in use.  Please run begin(filepath) first.")
 
     default_manager.finish(region, year, group=group)
