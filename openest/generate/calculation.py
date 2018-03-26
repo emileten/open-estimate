@@ -53,7 +53,9 @@ class FunctionalCalculation(Calculation):
     def format(self, lang, *args, **kwargs):
         elements = self.subcalc.format(lang, *args, **kwargs)
         handler_elements = self.format_handler(elements['main'], lang, *self.handler_args, **self.handler_kw)
+        elements = copy.copy(elements) # don't update possibly saved elements
         elements.update(handler_elements)
+
         return elements
 
     def format_handler(self, substr, lang, *handler_args, **handler_kw):

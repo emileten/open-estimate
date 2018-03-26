@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 from calculation import Calculation, ApplicationEach
 from curvegen import CurveGenerator
-import formatting, arguments, diagnostic
+import formatting, arguments, diagnostic, latextools, juliatools
 from formatting import FormatElement
 
 class YearlyBins(Calculation):
@@ -103,16 +103,21 @@ class YearlyApply(Calculation):
         self.norecord = norecord
 
     def format(self, lang):
+        variable = formatting.get_variable()
         if lang == 'latex':
-            result = self.curvegen.format_call(lang, "T_t")
+            result1 = latextools.call(self.weather_change, self.unitses[0], variable + '_t')
+            result = self.curvegen.format_call(lang, result1)
             result.update({'main': FormatElement(r"%s" % result['main'].repstr,
-                                                 self.unitses[0], ['T_d'] + result['main'].dependencies),
-                           'T_t': FormatElement("Summed Temperature", "deg. C", is_abstract=True)})
+                                                 self.unitses[0], result['main'].dependencies),
+                           variable + '_t': FormatElement("Weather variable", '', is_abstract=True)})
         elif lang == 'julia':
-            result = self.curvegen.format_call(lang, "Tbyyear")
+            result1 = juliatools.call(self.weather_change, self.unitses[0], variable + '[t]')
+            result = self.curvegen.format_call(lang, result1)
             result.update({'main': FormatElement(r"%s" % result['main'].repstr,
-                                                 self.unitses[0], ['Tbyday'] + result['main'].dependencies),
-                           'Tbyyear': FormatElement("Summed temperature", "deg. C", is_abstract=True)})
+                                                 self.unitses[0], result['main'].dependencies),
+                           variable + '[t]': FormatElement("Weather variable", '', is_abstract=True)})
+
+        formatting.add_label('response', result)
         return result
 
     def apply(self, region, *args):

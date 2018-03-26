@@ -11,16 +11,13 @@ class SmartCurve(object):
     def __call__(self, ds):
         raise NotImplementedError("call not implemented")
 
-    def format(self, lang, dsname):
+    def format(self, lang):
         raise NotImplementedError()
 
     @staticmethod
     def format_call(lang, curve, *args):
         if isinstance(curve, SmartCurve):
-            if len(args) == 1:
-                return curve.format(lang, args[0])
-            else:
-                return curve.format(lang, '[' + ', '.join(args) + ']')
+            return curve.format(lang)
 
         if lang == 'latex':
             return latextools.call(curve, None, None, *args)
@@ -36,8 +33,8 @@ class CurveCurve(SmartCurve):
     def __call__(self, ds):
         return self.curve(ds[self.variable])
 
-    def format(self, lang, dsname):
-        return SmartCurve.format_call(self.curve, lang, "%s[%s]" % (dsname, self.variable))
+    def format(self, lang):
+        return SmartCurve.format_call(self.curve, lang, self.variable)
 
 class ConstantCurve(SmartCurve):
     def __init__(self, constant, dimension):
@@ -48,7 +45,7 @@ class ConstantCurve(SmartCurve):
     def __call__(self, ds):
         return np.repeat(self.constant, len(ds[self.dimension]))
 
-    def format(self, lang, dsname):
+    def format(self, lang):
         return {'main': FormatElement(str(self.contant), None)}
     
 class LinearCurve(CurveCurve):
@@ -79,12 +76,12 @@ class CoefficientsCurve(SmartCurve):
             
         return result
 
-    def format(self, lang, dsname):
+    def format(self, lang):
         coeffvar = formatting.get_variable()
         if lang == 'latex':
-            return {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join(["%s[%s]" % (dsname, varname) for varname in self.variables]), coeffvar), None)}
+            return {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join([varname for varname in self.variables]), coeffvar), None)}
         elif lang == 'julia':
-            return {'main': FormatElement(' + '.join(["%s[%s] * %s_%d" % (dsname, self.variables[ii], coeffvar, ii + 1) for ii in range(len(self.variables))]), None)}
+            return {'main': FormatElement(' + '.join(["%s * %s_%d" % (self.variables[ii], coeffvar, ii + 1) for ii in range(len(self.variables))]), None)}
 
 class ZeroInterceptPolynomialCurve(CoefficientsCurve):
     def __init__(self, coeffs, variables, allow_raising=False):
@@ -118,7 +115,7 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
                     result += self.coeffs[ii] * (self.variables[0](ds)._data ** (ii + 1))
                     
         return result
-        
+
 class TransformCoefficientsCurve(SmartCurve):
     """Use a transformation of ds to produce each predictor."""
     
@@ -145,13 +142,13 @@ class TransformCoefficientsCurve(SmartCurve):
 
         return result
 
-    def format(self, lang, dsname):
+    def format(self, lang):
         coeffvar = formatting.get_variable()
         funcvars = [formatting.get_function() for transform in self.transforms]
         if lang == 'latex':
-            result = {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join(["%s(%s)" % (funcvars[ii], dsname) for ii in range(len(funcvars))]), coeffvar), None)}
+            result = {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join(["%s" % funcvars[ii] for ii in range(len(funcvars))]), coeffvar), None)}
         elif lang == 'julia':
-            result = {'main': FormatElement(' + '.join(["%s(%s) * %s_%d" % (funcvars[ii], dsname, coeffvar, ii + 1) for ii in range(len(funcvars))]), None)}
+            result = {'main': FormatElement(' + '.join(["%s() * %s_%d" % (funcvars[ii], coeffvar, ii + 1) for ii in range(len(funcvars))]), None)}
 
         for ii in range(len(funcvars)):
             result[funcvars[ii]] = FormatElement(self.descriptions[ii], None)
@@ -170,4 +167,4 @@ class SelectiveInputCurve(SmartCurve):
         return self.curve(ds[self.variable]._data)
 
     def format(self, lang, dsname):
-        return SmartCurve.format_call(self.curve, lang, "%s[%s]" % (dsname, self.variable))
+        return SmartCurve.format_call(self.curve, lang, self.variable)

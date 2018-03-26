@@ -131,6 +131,8 @@ class Instabase(calculation.CustomFunctionalCalculation):
                                      "%s[findfirst(year .== %d)" % (eqvar, baseyear))
         result['main'].dependencies.append(eqvar)
         result[eqvar] = equation
+
+        formatting.add_label('rebased', result)
         return result
 
     def init_apply(self):
@@ -205,6 +207,8 @@ class SpanInstabase(Instabase):
         else:
             # FormatElement
             result['main'].dependencies.extend(eqvar.dependencies)
+
+        formatting.add_label('rebased', result)
         return result
 
     def init_apply(self):
@@ -316,13 +320,16 @@ class Sum(calculation.Calculation):
     def format(self, lang, *args, **kwargs):
         mains = []
         elements = {}
+        alldeps = set()
         for subcalc in self.subcalcs:
             elements.update(subcalc.format(lang, *args, **kwargs))
             mains.append(elements['main'])
+            alldeps.update(elements['main'].dependencies)
             
         if lang in ['latex', 'julia']:
-            elements['main'] = FormatElement(' + '.join([main.repstr for main in mains]), self.unitses[0])
+            elements['main'] = FormatElement(' + '.join([main.repstr for main in mains]), self.unitses[0], list(alldeps))
 
+        formatting.add_label('sum', elements)
         return elements
         
     def apply(self, region, *args, **kwargs):

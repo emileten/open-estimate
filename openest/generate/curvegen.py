@@ -1,6 +1,6 @@
 import traceback
 from calculation import Calculation
-import latextools, juliatools
+import latextools, juliatools, formatting
 
 ## Top-level class
 class CurveGenerator(object):
@@ -53,7 +53,10 @@ class TransformCurveGenerator(CurveGenerator):
                 result.update(equation)
                 curveargs.append(equation['main'])
 
-            if lang == 'latex':
+            if self.description is None and len(curveargs) == 1:
+                # Pretend like nothing happened (used, e.g., for smart_curve transformation)
+                pass # already in main
+            elif lang == 'latex':
                 result.update(latextools.call(self.transform, self.depenunit, self.description, *tuple(curveargs)))
             elif lang == 'julia':
                 result.update(juliatools.call(self.transform, self.depenunit, self.description, *tuple(curveargs)))
@@ -91,10 +94,30 @@ class DelayedCurveGenerator(CurveGenerator):
         return self.curvegen.get_curve(region, year, *args, **kwargs)
 
     def format_call(self, lang, *args):
+        argstrs = []
+        extradeps = []
+        elements = {}
+        for arg in args:
+            if isinstance(arg, str):
+                argstrs.append(arg)
+            else:
+                if arg['main'].is_primitive:
+                    argstrs.append(formatting.get_repstr(arg['main']))
+                else:
+                    var = get_variable()
+                    argstrs.append(var)
+                    args[var] = arg['main']
+                    extradeps.append(var)
+                elements.update(arg)
+
         try:
-            result = self.curvegen.format_call(lang, *tuple(map(lambda x: x + '[t-1]', args)))
-            result['main'].unit = self.depenunit
-            return result
+            if lang == 'latex':
+                elements.update(self.curvegen.format_call(lang, *tuple(map(lambda x: x.replace('t', '{t-1}'), argstrs))))
+            elif lang == 'julia':
+                elements.update(self.curvegen.format_call(lang, *tuple(map(lambda x: x.replace('t', 't-1'), argstrs))))
+            elements['main'].unit = self.depenunit
+            elements['main'].dependencies.extend(extradeps)
+            return elements
         except Exception as ex:
             print self.curvegen
             raise ex
