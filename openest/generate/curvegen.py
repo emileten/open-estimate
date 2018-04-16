@@ -64,7 +64,7 @@ class TransformCurveGenerator(CurveGenerator):
             return result
         except Exception as ex:
             print self.curvegens
-            raise ex
+            raise
 
 class DelayedCurveGenerator(CurveGenerator):
     def __init__(self, curvegen):
@@ -110,14 +110,14 @@ class DelayedCurveGenerator(CurveGenerator):
                     extradeps.append(var)
                 elements.update(arg)
 
-        try:
-            if lang == 'latex':
-                elements.update(self.curvegen.format_call(lang, *tuple(map(lambda x: x.replace('t', '{t-1}'), argstrs))))
-            elif lang == 'julia':
-                elements.update(self.curvegen.format_call(lang, *tuple(map(lambda x: x.replace('t', 't-1'), argstrs))))
-            elements['main'].unit = self.depenunit
-            elements['main'].dependencies.extend(extradeps)
-            return elements
-        except Exception as ex:
-            print self.curvegen
-            raise ex
+        #try:
+        if lang == 'latex':
+            elements.update(self.curvegen.format_call(lang, *tuple(map(lambda x: x.replace('t', '{t-1}'), argstrs))))
+        elif lang == 'julia':
+            elements.update(self.curvegen.format_call(lang, *tuple(map(lambda x: x.replace('t', 't-1'), argstrs))))
+        elements['main'].unit = self.depenunit
+        elements['main'].dependencies.extend(extradeps)
+        return elements
+        #except Exception as ex:
+        #    print self.curvegen
+        #    raise ex

@@ -84,9 +84,10 @@ class CoefficientsCurve(SmartCurve):
             return {'main': FormatElement(' + '.join(["%s * %s_%d" % (self.variables[ii], coeffvar, ii + 1) for ii in range(len(self.variables))]), None)}
 
 class ZeroInterceptPolynomialCurve(CoefficientsCurve):
-    def __init__(self, coeffs, variables, allow_raising=False):
+    def __init__(self, coeffs, variables, allow_raising=False, descriptions={}):
         super(ZeroInterceptPolynomialCurve, self).__init__(coeffs, variables)
         self.allow_raising = allow_raising
+        self.descriptions = descriptions
     
     def __call__(self, ds):
         if isinstance(self.variables[0], str):
@@ -114,6 +115,49 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
                 else:
                     result += self.coeffs[ii] * (self.variables[0](ds)._data ** (ii + 1))
                     
+        return result
+
+    def format(self, lang):
+        coeffvar = formatting.get_variable()
+        variable = formatting.get_variable()
+        funcvars = {}
+
+        repterms = []
+        if lang == 'latex':
+            if isinstance(self.variables[0], str):
+                repterms.append(r"%s_1 %s" % (coeffvar, variable))
+            else:
+                funcvar = formatting.get_function()
+                funcvars[self.variables[0]] = funcvar
+                repterms.append(r"%s_1 %s(%s)" % (coeffvar, funcvar, variable))
+        elif lang == 'julia':
+            if isinstance(self.variables[0], str):
+                repterms.append(r"%s[1] * %s" % (coeffvar, variable))
+            else:
+                funcvar = formatting.get_function()
+                funcvars[self.variables[0]] = funcvar
+                repterms.append(r"%s[1] * %s(%s)" % (coeffvar, funcvar, variable))
+        
+        for ii in range(1, len(self.variables)):
+            if lang == 'latex':
+                if isinstance(self.variables[0], str):
+                    repterms.append(r"%s_1 %s^%d" % (coeffvar, variable, ii + 1))
+                else:
+                    funcvar = formatting.get_function()
+                    funcvars[self.variables[ii]] = funcvar
+                    repterms.append(r"%s_1 %s(%s)^%d" % (coeffvar, funcvar, variable, ii + 1))
+            elif lang == 'julia':
+                if isinstance(self.variables[0], str):
+                    repterms.append(r"%s[1] * %s^%d" % (coeffvar, variable, ii + 1))
+                else:
+                    funcvar = formatting.get_function()
+                    funcvars[self.variables[ii]] = funcvar
+                    repterms.append(r"%s[1] * %s(%s)^%d" % (coeffvar, funcvar, variable, ii + 1))
+
+        result = {'main': FormatElement(' + '.join(repterms), None)}
+        for variable in funcvars:
+            result[funcvars[variable]] = FormatElement(self.descriptions.get(variable, "Unknown"), None)
+
         return result
 
 class TransformCoefficientsCurve(SmartCurve):

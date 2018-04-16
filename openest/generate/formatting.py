@@ -20,7 +20,7 @@ class ParameterFormatElement(FormatElement):
     def __init__(self, extname, repstr, unit):
         super(ParameterFormatElement, self).__init__(repstr, unit)
         self.extname = extname
-        
+
 def format_iterate(elements, format):
     main = elements['main']
     yield main # only case without key
@@ -95,13 +95,15 @@ def format_julia(elements, parameters={}, include_comments=True):
     return "\n".join(reversed(content))
 
 def format_reset():
-    global functions_count, variables_count, format_labels
+    global functions_count, variables_count, format_labels, functions_known, betaonly_count
 
-    functions_count = variables_count = 0
+    functions_count = variables_count = betaonly_count = 0
     format_labels = []
+    functions_known = {}
 
 functions_count = 0
 functions_vars = ['f', 'g', 'h']
+functions_known = {}
 
 variables_count = 0
 variables_vars = ['x', 'y', 'z']
@@ -110,13 +112,20 @@ betaonly_count = 0
 
 format_labels = []
     
-def get_function():
-    global functions_count
+def get_function(func=None):
+    global functions_count, functions_known
+
+    if func is not None:
+        if func in functions_known:
+            return functions_knowns[func]
     
     funcvar = functions_vars[functions_count % len(functions_vars)]
     if functions_count / len(functions_vars) > 0:
         funcvar += str(functions_count / len(functions_vars) + 1)
     functions_count += 1
+
+    functions_known[func] = funcvar
+    
     return funcvar
 
 def get_variable(element=None):

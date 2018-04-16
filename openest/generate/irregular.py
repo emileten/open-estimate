@@ -14,16 +14,17 @@ class YearlySumIrregular(Calculation):
         self.curve_description = curve_description
 
     def format(self, lang):
+        variable = formatting.get_variable()
         if lang == 'latex':
-            result = self.curvegen.format_call(lang, "X_t")
+            result = self.curvegen.format_call(lang, variable + "_t")
             result.update({'main': FormatElement(r"\sum_{s \in y(t)} %s" % result['main'].repstr,
-                                                 self.unitses[0], ['X_t'] + result['main'].dependencies),
-                           'X_d': FormatElement("Weather", "unknown", is_abstract=True)})
+                                                 self.unitses[0], [variable + '_t'] + result['main'].dependencies),
+                           variable + '_t': FormatElement("Weather", "", is_abstract=True)})
         elif lang == 'julia':
-            result = self.curvegen.format_call(lang, "Xbyt")
+            result = self.curvegen.format_call(lang, variable + "[t]")
             result.update({'main': FormatElement(r"sum(%s)" % result['main'].repstr,
-                                                 self.unitses[0], ['Xbyt'] + result['main'].dependencies),
-                           'Xbyt': FormatElement("Weather", "unknown", is_abstract=True)})
+                                                 self.unitses[0], [variable + '[t]'] + result['main'].dependencies),
+                           variable + '[t]': FormatElement("Weather", "", is_abstract=True)})
         return result
 
     def apply(self, region, *args):
