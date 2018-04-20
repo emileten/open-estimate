@@ -6,22 +6,25 @@ class FormatElement(object):
     def __init__(self, repstr, unit, dependencies=[], is_abstract=False, is_primitive=False):
         self.repstr = repstr
         self.unit = unit
+        
+        assert isinstance(dependencies, list) or isinstance(dependencies, set) or isinstance(dependencies, tuple)
         self.dependencies = dependencies
+        
         self.is_abstract = is_abstract # Is this an English description?
         self.is_primitive = is_primitive # Can this be inserted straight into an equation?
 
     def __str__(self):
-        return "FormatElement(\"%s\")" % self.repstr
+        return "FormatElement(\"%s\"; %s)" % (self.repstr, self.dependencies)
 
     def __repr__(self):
-        return "FormatElement(\"%s\")" % self.repstr
+        return "FormatElement(\"%s\"; %s)" % (self.repstr, self.dependencies)
 
 class ParameterFormatElement(FormatElement):
-    def __init__(self, extname, repstr, unit):
-        super(ParameterFormatElement, self).__init__(repstr, unit)
+    def __init__(self, extname, repstr, unit, dependencies=[]):
+        super(ParameterFormatElement, self).__init__(repstr, unit, dependencies=dependencies)
         self.extname = extname
 
-def format_iterate(elements, format):
+def format_iterate(elements):
     main = elements['main']
     yield main # only case without key
     used_keys = set(['main'])
@@ -29,7 +32,11 @@ def format_iterate(elements, format):
     
     while queue:
         key = queue.popleft()
-        if key in used_keys or key not in elements:
+        if key in used_keys:
+            continue
+
+        if key not in elements:
+            yield key, None
             continue
 
         used_keys.add(key)
@@ -37,13 +44,15 @@ def format_iterate(elements, format):
         queue.extend(elements[key].dependencies)
 
 def format_latex(elements, parameters={}):
-    iter = format_iterate(elements, 'latex')
+    iter = format_iterate(elements)
     main = iter.next()
     content = "Main calculation (Units: %s)\n\\[\n  %s\n\\]\n\n" % (main.unit, main.repstr)
 
     content += "\\begin{description}"
     for key, element in iter:
-        if isinstance(element, ParameterFormatElement):
+        if element is None:
+            pass
+        elif isinstance(element, ParameterFormatElement):
             if element.extname in parameters:
                 value = parameters[element.extname]
                 if isinstance(value, np.ndarray):
@@ -62,7 +71,7 @@ def format_latex(elements, parameters={}):
     return content
 
 def format_julia(elements, parameters={}, include_comments=True):
-    iter = format_iterate(elements, 'julia')
+    iter = format_iterate(elements)
     main = iter.next()
     if include_comments:
         content = ["\n# Main calculation [%s]\n%s" % (main.unit, main.repstr)]
@@ -70,11 +79,17 @@ def format_julia(elements, parameters={}, include_comments=True):
         content = [main.repstr]
         
     for key, element in iter:
-        if isinstance(element, ParameterFormatElement):
+        if element is None:
+            if include_comments:
+                content.append("# %s missing" % key)
+        elif isinstance(element, ParameterFormatElement):
             if element.extname in parameters:
                 value = parameters[element.extname]
                 if isinstance(value, np.ndarray):
-                    valstr = '[' + ', '.join(map(str, value)) + ']'
+                    if len(value.shape) == 2:
+                        valstr = '[' + '; '.join(map(lambda xxs: ' '.join(map(str, xxs)), value)) + ']'
+                    else:
+                        valstr = '[' + ', '.join(map(str, value)) + ']'
                 else:
                     valstr = str(value)
                 if include_comments:

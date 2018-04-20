@@ -25,6 +25,9 @@ class YearlySumIrregular(Calculation):
             result.update({'main': FormatElement(r"sum(%s)" % result['main'].repstr,
                                                  self.unitses[0], [variable + '[t]'] + result['main'].dependencies),
                            variable + '[t]': FormatElement("Weather", "", is_abstract=True)})
+
+        formatting.add_label('response', result)
+            
         return result
 
     def apply(self, region, *args):

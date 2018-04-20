@@ -17,7 +17,8 @@ def call(func, units, description=None, *args):
     
     if len(args) == 1:
         funcvar = formatting.get_function()
-        argvar = formatting.get_variable(args[0])
+        
+        argvar = call_argvar(args[0])
 
         if isinstance(argvar, FormatElement):
             return {'main': FormatElement("%s(%s)" % (funcvar, argvar.repstr), units,
@@ -35,14 +36,8 @@ def call(func, units, description=None, *args):
     elif len(args) == 2:
         funcvar = formatting.get_function()
 
-        if isinstance(args[0], FormatElement):
-            argname0 = formatting.get_variable()
-        else:
-            argname0 = args[0]
-        if isinstance(args[1], FormatElement):
-            argname1 = formatting.get_variable()
-        else:
-            argname1 = args[1]
+        argname0 = call_argvar(args[0])
+        argname1 = call_argvar(args[1])
             
         result = {'main': FormatElement("%s(%s, %s)" % (funcvar, argname0, argname1),
                                         units, [funcvar + r"(\cdot)"], is_primitive=True),
@@ -55,7 +50,9 @@ def call(func, units, description=None, *args):
             result['main'].dependencies.append(argname1)
 
         return result
-            
+
+    raise RuntimeError("Cannot format %s(%s)" % (func, ', '.join(["%s" % arg for arg in args])))
+    
 def latex_function(func, *args):
     if len(args) == 1:
         interp = formatting.interpret1(func)
