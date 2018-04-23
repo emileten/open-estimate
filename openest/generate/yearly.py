@@ -17,14 +17,14 @@ class YearlyBins(Calculation):
         funcvar = formatting.get_function()
         if lang == 'latex':
             return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
-                                          self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                    'T_d': FormatElement("Temperature", "days"),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+                                          ['T_d', "%s(\cdot)" % (funcvar)]),
+                    'T_d': FormatElement("Temperature"),
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model))}
         elif lang == 'julia':
             return {'main': FormatElement(r"sum(%s(Tbins))" % (funcvar),
-                                          self.unitses[0], ['Tbins', "%s(T)" % (funcvar)]),
-                    'Tbins': FormatElement("# Temperature in bins", "days"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}            
+                                          ['Tbins', "%s(T)" % (funcvar)]),
+                    'Tbins': FormatElement("# Temperature in bins"),
+                    "%s(T)" % (funcvar): FormatElement(str(self.model))}
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
@@ -105,17 +105,17 @@ class YearlyApply(Calculation):
     def format(self, lang):
         variable = formatting.get_variable()
         if lang == 'latex':
-            result1 = latextools.call(self.weather_change, self.unitses[0], variable + '_t')
+            result1 = latextools.call(self.weather_change, variable + '_t')
             result = self.curvegen.format_call(lang, result1)
             result.update({'main': FormatElement(r"%s" % result['main'].repstr,
-                                                 self.unitses[0], result['main'].dependencies),
-                           variable + '_t': FormatElement("Weather variable", '', is_abstract=True)})
+                                                 result['main'].dependencies),
+                           variable + '_t': FormatElement("Weather variable", is_abstract=True)})
         elif lang == 'julia':
-            result1 = juliatools.call(self.weather_change, self.unitses[0], variable + '[t]')
+            result1 = juliatools.call(self.weather_change, variable + '[t]')
             result = self.curvegen.format_call(lang, result1)
             result.update({'main': FormatElement(r"%s" % result['main'].repstr,
-                                                 self.unitses[0], result['main'].dependencies),
-                           variable + '[t]': FormatElement("Weather variable", '', is_abstract=True)})
+                                                 result['main'].dependencies),
+                           variable + '[t]': FormatElement("Weather variable", is_abstract=True)})
 
         formatting.add_label('response', result)
         return result

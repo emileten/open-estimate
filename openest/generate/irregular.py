@@ -18,13 +18,13 @@ class YearlySumIrregular(Calculation):
         if lang == 'latex':
             result = self.curvegen.format_call(lang, variable + "_t")
             result.update({'main': FormatElement(r"\sum_{s \in y(t)} %s" % result['main'].repstr,
-                                                 self.unitses[0], [variable + '_t'] + result['main'].dependencies),
-                           variable + '_t': FormatElement("Weather", "", is_abstract=True)})
+                                                 [variable + '_t'] + result['main'].dependencies),
+                           variable + '_t': FormatElement("Weather", is_abstract=True)})
         elif lang == 'julia':
             result = self.curvegen.format_call(lang, variable + "[t]")
             result.update({'main': FormatElement(r"sum(%s)" % result['main'].repstr,
-                                                 self.unitses[0], [variable + '[t]'] + result['main'].dependencies),
-                           variable + '[t]': FormatElement("Weather", "", is_abstract=True)})
+                                                 [variable + '[t]'] + result['main'].dependencies),
+                           variable + '[t]': FormatElement("Weather", is_abstract=True)})
 
         formatting.add_label('response', result)
             

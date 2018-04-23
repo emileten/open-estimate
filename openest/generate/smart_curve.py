@@ -20,9 +20,9 @@ class SmartCurve(object):
             return curve.format(lang)
 
         if lang == 'latex':
-            return latextools.call(curve, None, None, *args)
+            return latextools.call(curve, None, *args)
         elif lang == 'julia':
-            return juliatools.call(curve, None, None, *args)
+            return juliatools.call(curve, None, *args)
 
 class CurveCurve(SmartCurve):
     def __init__(self, curve, variable):
@@ -46,7 +46,7 @@ class ConstantCurve(SmartCurve):
         return np.repeat(self.constant, len(ds[self.dimension]))
 
     def format(self, lang):
-        return {'main': FormatElement(str(self.contant), None)}
+        return {'main': FormatElement(str(self.contant))}
     
 class LinearCurve(CurveCurve):
     def __init__(self, slope, variable):
@@ -79,9 +79,9 @@ class CoefficientsCurve(SmartCurve):
     def format(self, lang):
         coeffvar = formatting.get_variable()
         if lang == 'latex':
-            return {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join([varname for varname in self.variables]), coeffvar), None)}
+            return {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join([varname for varname in self.variables]), coeffvar))}
         elif lang == 'julia':
-            return {'main': FormatElement(' + '.join(["%s * %s_%d" % (self.variables[ii], coeffvar, ii + 1) for ii in range(len(self.variables))]), None)}
+            return {'main': FormatElement(' + '.join(["%s * %s_%d" % (self.variables[ii], coeffvar, ii + 1) for ii in range(len(self.variables))]))}
 
 class ZeroInterceptPolynomialCurve(CoefficientsCurve):
     def __init__(self, coeffs, variables, allow_raising=False, descriptions={}):
@@ -154,9 +154,9 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
                     funcvars[self.variables[ii]] = funcvar
                     repterms.append(r"%s[1] * %s(%s)^%d" % (coeffvar, funcvar, variable, ii + 1))
 
-        result = {'main': FormatElement(' + '.join(repterms), None)}
+        result = {'main': FormatElement(' + '.join(repterms))}
         for variable in funcvars:
-            result[funcvars[variable]] = FormatElement(self.descriptions.get(variable, "Unknown"), None)
+            result[funcvars[variable]] = FormatElement(self.descriptions.get(variable, "Unknown"))
 
         return result
 
@@ -190,12 +190,12 @@ class TransformCoefficientsCurve(SmartCurve):
         coeffvar = formatting.get_variable()
         funcvars = [formatting.get_function() for transform in self.transforms]
         if lang == 'latex':
-            result = {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join(["%s" % funcvars[ii] for ii in range(len(funcvars))]), coeffvar), None)}
+            result = {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join(["%s" % funcvars[ii] for ii in range(len(funcvars))]), coeffvar))}
         elif lang == 'julia':
-            result = {'main': FormatElement(' + '.join(["%s() * %s_%d" % (funcvars[ii], coeffvar, ii + 1) for ii in range(len(funcvars))]), None)}
+            result = {'main': FormatElement(' + '.join(["%s() * %s_%d" % (funcvars[ii], coeffvar, ii + 1) for ii in range(len(funcvars))]))}
 
         for ii in range(len(funcvars)):
-            result[funcvars[ii]] = FormatElement(self.descriptions[ii], None)
+            result[funcvars[ii]] = FormatElement(self.descriptions[ii])
 
         return result
     

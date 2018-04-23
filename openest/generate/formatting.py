@@ -3,9 +3,8 @@ from collections import deque
 import numpy as np
 
 class FormatElement(object):
-    def __init__(self, repstr, unit, dependencies=[], is_abstract=False, is_primitive=False):
+    def __init__(self, repstr, dependencies=[], is_abstract=False, is_primitive=False):
         self.repstr = repstr
-        self.unit = unit
         
         assert isinstance(dependencies, list) or isinstance(dependencies, set) or isinstance(dependencies, tuple)
         self.dependencies = dependencies
@@ -20,8 +19,8 @@ class FormatElement(object):
         return "FormatElement(\"%s\"; %s)" % (self.repstr, self.dependencies)
 
 class ParameterFormatElement(FormatElement):
-    def __init__(self, extname, repstr, unit, dependencies=[]):
-        super(ParameterFormatElement, self).__init__(repstr, unit, dependencies=dependencies)
+    def __init__(self, extname, repstr, dependencies=[]):
+        super(ParameterFormatElement, self).__init__(repstr, dependencies=dependencies)
         self.extname = extname
 
 def format_iterate(elements):
@@ -46,7 +45,7 @@ def format_iterate(elements):
 def format_latex(elements, parameters={}):
     iter = format_iterate(elements)
     main = iter.next()
-    content = "Main calculation (Units: %s)\n\\[\n  %s\n\\]\n\n" % (main.unit, main.repstr)
+    content = "Main calculation\n\\[\n  %s\n\\]\n\n" % (main.repstr)
 
     content += "\\begin{description}"
     for key, element in iter:
@@ -59,13 +58,13 @@ def format_latex(elements, parameters={}):
                     valstr = '\\left(' + ', '.join(map(str, value)) + '\\right)'
                 else:
                     valstr = str(value)
-                content.append("\n  \\item[$%s$ (%s)]\n    %s\n" % (key, element.unit, valstr))
+                content.append("\n  \\item[$%s$]\n    %s\n" % (key, valstr))
             else:
-                content.append("\n  \\item[$%s$ (%s)]\n    (parameter)\n" % (key, element.unit))
+                content.append("\n  \\item[$%s$]\n    (parameter)\n" % (key))
         elif element.is_abstract:
-            content += "\n  \\item[$%s$ (%s)]\n    %s\n" % (key, element.unit, element.repstr)
+            content += "\n  \\item[$%s$]\n    %s\n" % (key, element.repstr)
         else:
-            content += "\n  \\item[$%s$ (%s)]\n    $%s$\n" % (key, element.unit, element.repstr)
+            content += "\n  \\item[$%s$]\n    $%s$\n" % (key, element.repstr)
     content += "\\end{description}\n"
 
     return content
@@ -74,7 +73,7 @@ def format_julia(elements, parameters={}, include_comments=True):
     iter = format_iterate(elements)
     main = iter.next()
     if include_comments:
-        content = ["\n# Main calculation [%s]\n%s" % (main.unit, main.repstr)]
+        content = ["\n# Main calculation\n%s" % (main.repstr)]
     else:
         content = [main.repstr]
         
@@ -93,17 +92,17 @@ def format_julia(elements, parameters={}, include_comments=True):
                 else:
                     valstr = str(value)
                 if include_comments:
-                    content.append("%s = %s # %s [%s]" % (element.repstr, valstr, key, element.unit))
+                    content.append("%s = %s # %s" % (element.repstr, valstr, key))
                 else:
                     content.append("%s = %s" % (element.repstr, valstr))
             elif include_comments:
-                content.append("# %s (parameter) %s [%s]" % (element.repstr, key, element.unit))
+                content.append("# %s (parameter) %s" % (element.repstr, key))
         elif element.is_abstract:
             if include_comments:
-                content.append("\n# %s [%s]:\n# %s" % (key, element.unit, element.repstr))
+                content.append("\n# %s:\n# %s" % (key, element.repstr))
         else:
             if include_comments:
-                content.append("\n# [%s]:\n%s = %s" % (element.unit, key, element.repstr))
+                content.append("\n#:\n%s = %s" % (key, element.repstr))
             else:
                 content.append("%s = %s" % (key, element.repstr))
 
