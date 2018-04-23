@@ -7,7 +7,7 @@ class Constant(Calculation):
         self.value = value
 
     def format(self, lang):
-        return {'main': FormatElement(str(self.value), self.unitses[0])}
+        return {'main': FormatElement(str(self.value))}
 
     def apply(self, region):
         def generate(region, year, temps, **kw):

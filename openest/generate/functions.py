@@ -19,16 +19,16 @@ class Scale(calculation.Calculation):
 
     def format(self, lang, *args, **kwargs):
         elements = self.subcalc.format(lang, *args, **kwargs)
-        scaledesc = FormatElement(self.latexpair[1], self.from_units + ' -> ' + self.unitses[0])
+        scaledesc = FormatElement(self.latexpair[1])
         if lang == 'latex':
-            elements.update(latextools.call(self.func, self.unitses[0],
+            elements.update(latextools.call(self.func,
                                             "Scaling function", value,
                                             self.latexpair[0]))
             elements[self.latexpair[0]] = scaledesc
             return elements
         elif lang == 'julia':
             variable = formatting.get_variable()
-            elements.update(latextools.call(self.func, self.unitses[0],
+            elements.update(latextools.call(self.func,
                                             "Scaling function", value, variable))
             elements[variable] = scaledesc
             return elements
@@ -76,10 +76,10 @@ class Transform(calculation.Calculation):
     def format(self, lang, *args, **kwargs):
         elements = self.subcalc.format(lang, *args, **kwargs)
         if lang == 'latex':
-            elements.update(latextools.call(self.func, self.unitses[0],
+            elements.update(latextools.call(self.func,
                                             self.long_description, elements['main']))
         elif lang == 'julia':
-            elements.update(juliatools.call(self.func, self.unitses[0],
+            elements.update(juliatools.call(self.func,
                                             self.long_description, elements['main']))
         return elements
 
@@ -124,10 +124,10 @@ class Instabase(calculation.CustomFunctionalCalculation):
     def format_handler(self, equation, lang, baseyear, func, skip_on_missing):
         eqvar = formatting.get_variable(equation)
         if lang == 'latex':
-            result = latextools.call(func, self.unitses[0], "Re-basing function", eqvar,
+            result = latextools.call(func, "Re-basing function", eqvar,
                                      r"\left[%s\right]_{t = %d}" % (eqvar, baseyear))
         elif lang == 'julia':
-            result = juliatools.call(func, self.unitses[0], "Re-basing function", eqvar,
+            result = juliatools.call(func, "Re-basing function", eqvar,
                                      "%s[findfirst(year .== %d)" % (eqvar, baseyear))
         result['main'].dependencies.append(eqvar)
         result[eqvar] = equation
@@ -196,10 +196,10 @@ class SpanInstabase(Instabase):
     def format_handler(self, equation, lang, baseyear, func, skip_on_missing):
         eqvar = formatting.get_variable(equation)
         if lang == 'latex':
-            result = latextools.call(func, self.unitses[0], "Re-basing function", eqvar,
+            result = latextools.call(func, "Re-basing function", eqvar,
                                      r"Average\left[%s\right]_{%d \le t le %d}" % (formatting.get_repstr(eqvar), self.year1, self.year2))
         elif lang == 'julia':
-            result = juliatools.call(func, self.unitses[0], "Re-basing function", eqvar,
+            result = juliatools.call(func, "Re-basing function", eqvar,
                                      "mean(%s[(year .>= %d) & (year .<= %d)])" % (formatting.get_repstr(eqvar), self.year1, self.year2))
         if isinstance(eqvar, str):
             result['main'].dependencies.append(eqvar)
@@ -327,7 +327,7 @@ class Sum(calculation.Calculation):
             alldeps.update(elements['main'].dependencies)
             
         if lang in ['latex', 'julia']:
-            elements['main'] = FormatElement(' + '.join([main.repstr for main in mains]), self.unitses[0], list(alldeps))
+            elements['main'] = FormatElement(' + '.join([main.repstr for main in mains]), list(alldeps))
 
         formatting.add_label('sum', elements)
         return elements
@@ -394,9 +394,9 @@ class Exponentiate(calculation.Calculation):
     def format(self, lang, *args, **kwargs):
         elements = self.subcalc.format(lang, *args, **kwargs)
         if lang == 'latex':
-            elements.update({'main': FormatElement(r"\exp{%s}" % elements['main'].repstr, self.unitses[0])})
+            elements.update({'main': FormatElement(r"\exp{%s}" % elements['main'].repstr)})
         elif lang == 'julia':
-            elements.update({'main': FormatElement(r"exp(%s)" % elements['main'].repstr, self.unitses[0])})
+            elements.update({'main': FormatElement(r"exp(%s)" % elements['main'].repstr)})
         return elements
             
     def apply(self, region, *args, **kwargs):

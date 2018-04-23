@@ -1,52 +1,47 @@
 import formatting
 from formatting import FormatElement
 
-def call(func, units, description=None, *args):
+def call(func, description=None, *args):
     """Return a representation of this call.  Any elements in args can
     be given their own FormatElements in the final dictionary.
     """
     
     if len(args) == 0:
         funcvar = formatting.get_function()
-        return {'main': FormatElement(funcvar + "()", units, [funcvar + '()'], is_primitive=True),
-                funcvar + '()': FormatElement(description, units, is_abstract=True)}
+        return {'main': FormatElement(funcvar + "()", [funcvar + '()'], is_primitive=True),
+                funcvar + '()': FormatElement(description, is_abstract=True)}
 
     latex = latex_function(func, *tuple(map(formatting.get_repstr, args)))
     if latex:
-        return {'main': FormatElement(latex, units)}
+        return {'main': FormatElement(latex)}
     
     if len(args) == 1:
         funcvar = formatting.get_function()
-        argvar = formatting.get_variable(args[0])
+        
+        argvar = call_argvar(args[0])
 
         if isinstance(argvar, FormatElement):
-            return {'main': FormatElement("%s(%s)" % (funcvar, argvar.repstr), units,
+            return {'main': FormatElement("%s(%s)" % (funcvar, argvar.repstr),
                                           [funcvar + r"(\cdot)"] + argvar.dependencies, is_primitive=True),
-                    funcvar + r"(\cdot)": FormatElement(description, units, is_abstract=True)}
+                    funcvar + r"(\cdot)": FormatElement(description, is_abstract=True)}
         elif isinstance(args[0], FormatElement):
-            return {'main': FormatElement("%s(%s)" % (funcvar, argvar), units,
+            return {'main': FormatElement("%s(%s)" % (funcvar, argvar),
                                           [funcvar + r"(\cdot)", argvar], is_primitive=True),
-                    funcvar + r"(\cdot)": FormatElement(description, units, is_abstract=True),
+                    funcvar + r"(\cdot)": FormatElement(description, is_abstract=True),
                     argvar: args[0]}
         else:
-            return {'main': FormatElement("%s(%s)" % (funcvar, args[0]), units,
+            return {'main': FormatElement("%s(%s)" % (funcvar, args[0]),
                                           [funcvar + r"(\cdot)"], is_primitive=True),
-                    funcvar + r"(\cdot)": FormatElement(description, units, is_abstract=True)}
+                    funcvar + r"(\cdot)": FormatElement(description, is_abstract=True)}
     elif len(args) == 2:
         funcvar = formatting.get_function()
 
-        if isinstance(args[0], FormatElement):
-            argname0 = formatting.get_variable()
-        else:
-            argname0 = args[0]
-        if isinstance(args[1], FormatElement):
-            argname1 = formatting.get_variable()
-        else:
-            argname1 = args[1]
+        argname0 = call_argvar(args[0])
+        argname1 = call_argvar(args[1])
             
         result = {'main': FormatElement("%s(%s, %s)" % (funcvar, argname0, argname1),
-                                        units, [funcvar + r"(\cdot)"], is_primitive=True),
-                  funcvar + r"(\cdot)": FormatElement(description, units, is_abstract=True)}
+                                        [funcvar + r"(\cdot)"], is_primitive=True),
+                  funcvar + r"(\cdot)": FormatElement(description, is_abstract=True)}
         if isinstance(args[0], FormatElement):
             result[argname0] = args[0]
             result['main'].dependencies.append(argname0)
@@ -55,7 +50,9 @@ def call(func, units, description=None, *args):
             result['main'].dependencies.append(argname1)
 
         return result
-            
+
+    raise RuntimeError("Cannot format %s(%s)" % (func, ', '.join(["%s" % arg for arg in args])))
+    
 def latex_function(func, *args):
     if len(args) == 1:
         interp = formatting.interpret1(func)

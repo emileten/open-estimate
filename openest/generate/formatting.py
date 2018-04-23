@@ -3,25 +3,27 @@ from collections import deque
 import numpy as np
 
 class FormatElement(object):
-    def __init__(self, repstr, unit, dependencies=[], is_abstract=False, is_primitive=False):
+    def __init__(self, repstr, dependencies=[], is_abstract=False, is_primitive=False):
         self.repstr = repstr
-        self.unit = unit
+        
+        assert isinstance(dependencies, list) or isinstance(dependencies, set) or isinstance(dependencies, tuple)
         self.dependencies = dependencies
+        
         self.is_abstract = is_abstract # Is this an English description?
         self.is_primitive = is_primitive # Can this be inserted straight into an equation?
 
     def __str__(self):
-        return "FormatElement(\"%s\")" % self.repstr
+        return "FormatElement(\"%s\"; %s)" % (self.repstr, self.dependencies)
 
     def __repr__(self):
-        return "FormatElement(\"%s\")" % self.repstr
+        return "FormatElement(\"%s\"; %s)" % (self.repstr, self.dependencies)
 
 class ParameterFormatElement(FormatElement):
-    def __init__(self, extname, repstr, unit):
-        super(ParameterFormatElement, self).__init__(repstr, unit)
+    def __init__(self, extname, repstr, dependencies=[]):
+        super(ParameterFormatElement, self).__init__(repstr, dependencies=dependencies)
         self.extname = extname
-        
-def format_iterate(elements, format):
+
+def format_iterate(elements):
     main = elements['main']
     yield main # only case without key
     used_keys = set(['main'])
@@ -29,7 +31,11 @@ def format_iterate(elements, format):
     
     while queue:
         key = queue.popleft()
-        if key in used_keys or key not in elements:
+        if key in used_keys:
+            continue
+
+        if key not in elements:
+            yield key, None
             continue
 
         used_keys.add(key)
@@ -37,71 +43,81 @@ def format_iterate(elements, format):
         queue.extend(elements[key].dependencies)
 
 def format_latex(elements, parameters={}):
-    iter = format_iterate(elements, 'latex')
+    iter = format_iterate(elements)
     main = iter.next()
-    content = "Main calculation (Units: %s)\n\\[\n  %s\n\\]\n\n" % (main.unit, main.repstr)
+    content = "Main calculation\n\\[\n  %s\n\\]\n\n" % (main.repstr)
 
     content += "\\begin{description}"
     for key, element in iter:
-        if isinstance(element, ParameterFormatElement):
+        if element is None:
+            pass
+        elif isinstance(element, ParameterFormatElement):
             if element.extname in parameters:
                 value = parameters[element.extname]
                 if isinstance(value, np.ndarray):
                     valstr = '\\left(' + ', '.join(map(str, value)) + '\\right)'
                 else:
                     valstr = str(value)
-                content.append("\n  \\item[$%s$ (%s)]\n    %s\n" % (key, element.unit, valstr))
+                content.append("\n  \\item[$%s$]\n    %s\n" % (key, valstr))
             else:
-                content.append("\n  \\item[$%s$ (%s)]\n    (parameter)\n" % (key, element.unit))
+                content.append("\n  \\item[$%s$]\n    (parameter)\n" % (key))
         elif element.is_abstract:
-            content += "\n  \\item[$%s$ (%s)]\n    %s\n" % (key, element.unit, element.repstr)
+            content += "\n  \\item[$%s$]\n    %s\n" % (key, element.repstr)
         else:
-            content += "\n  \\item[$%s$ (%s)]\n    $%s$\n" % (key, element.unit, element.repstr)
+            content += "\n  \\item[$%s$]\n    $%s$\n" % (key, element.repstr)
     content += "\\end{description}\n"
 
     return content
 
 def format_julia(elements, parameters={}, include_comments=True):
-    iter = format_iterate(elements, 'julia')
+    iter = format_iterate(elements)
     main = iter.next()
     if include_comments:
-        content = ["\n# Main calculation [%s]\n%s" % (main.unit, main.repstr)]
+        content = ["\n# Main calculation\n%s" % (main.repstr)]
     else:
         content = [main.repstr]
         
     for key, element in iter:
-        if isinstance(element, ParameterFormatElement):
+        if element is None:
+            if include_comments:
+                content.append("# %s missing" % key)
+        elif isinstance(element, ParameterFormatElement):
             if element.extname in parameters:
                 value = parameters[element.extname]
                 if isinstance(value, np.ndarray):
-                    valstr = '[' + ', '.join(map(str, value)) + ']'
+                    if len(value.shape) == 2:
+                        valstr = '[' + '; '.join(map(lambda xxs: ' '.join(map(str, xxs)), value)) + ']'
+                    else:
+                        valstr = '[' + ', '.join(map(str, value)) + ']'
                 else:
                     valstr = str(value)
                 if include_comments:
-                    content.append("%s = %s # %s [%s]" % (element.repstr, valstr, key, element.unit))
+                    content.append("%s = %s # %s" % (element.repstr, valstr, key))
                 else:
                     content.append("%s = %s" % (element.repstr, valstr))
             elif include_comments:
-                content.append("# %s (parameter) %s [%s]" % (element.repstr, key, element.unit))
+                content.append("# %s (parameter) %s" % (element.repstr, key))
         elif element.is_abstract:
             if include_comments:
-                content.append("\n# %s [%s]:\n# %s" % (key, element.unit, element.repstr))
+                content.append("\n# %s:\n# %s" % (key, element.repstr))
         else:
             if include_comments:
-                content.append("\n# [%s]:\n%s = %s" % (element.unit, key, element.repstr))
+                content.append("\n#:\n%s = %s" % (key, element.repstr))
             else:
                 content.append("%s = %s" % (key, element.repstr))
 
     return "\n".join(reversed(content))
 
 def format_reset():
-    global functions_count, variables_count, format_labels
+    global functions_count, variables_count, format_labels, functions_known, betaonly_count
 
-    functions_count = variables_count = 0
+    functions_count = variables_count = betaonly_count = 0
     format_labels = []
+    functions_known = {}
 
 functions_count = 0
 functions_vars = ['f', 'g', 'h']
+functions_known = {}
 
 variables_count = 0
 variables_vars = ['x', 'y', 'z']
@@ -110,13 +126,20 @@ betaonly_count = 0
 
 format_labels = []
     
-def get_function():
-    global functions_count
+def get_function(func=None):
+    global functions_count, functions_known
+
+    if func is not None:
+        if func in functions_known:
+            return functions_knowns[func]
     
     funcvar = functions_vars[functions_count % len(functions_vars)]
     if functions_count / len(functions_vars) > 0:
         funcvar += str(functions_count / len(functions_vars) + 1)
     functions_count += 1
+
+    functions_known[func] = funcvar
+    
     return funcvar
 
 def get_variable(element=None):

@@ -32,14 +32,14 @@ class MonthlyDayBins(Calculation):
         funcvar = formatting.get_function()
         if lang == 'latex':
             return {'main': FormatElement(r"\frac{1}{12} \sum_{m \in y(t)} %s(T_m)",
-                                          self.unitses[0], ['T_m', "%s(\cdot)" % (funcvar)]),
-                    'T_m': FormatElement("Temperature", "days", is_abstract=True),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+                                          ['T_m', "%s(\cdot)" % (funcvar)]),
+                    'T_m': FormatElement("Temperature", is_abstract=True),
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model))}
         elif lang == 'julia':
             return {'main': FormatElement(r"sum(%s(Tbymonth)) / 12",
-                                          self.unitses[0], ['Tbymonth', "%s(T)" % (funcvar)]),
-                    'Tbymonth': FormatElement("# Days of within each bin", "days"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}            
+                                          ['Tbymonth', "%s(T)" % (funcvar)]),
+                    'Tbymonth': FormatElement("# Days of within each bin"),
+                    "%s(T)" % (funcvar): FormatElement(str(self.model))}            
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
@@ -85,14 +85,14 @@ class YearlyDayBins(Calculation):
         funcvar = formatting.get_function()
         if lang == 'latex':
             return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
-                                          self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                    'T_d': FormatElement("Temperature", "deg. C", is_abstract=True),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}
+                                          ['T_d', "%s(\cdot)" % (funcvar)]),
+                    'T_d': FormatElement("Temperature", is_abstract=True),
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model))}
         elif lang == 'julia':
             return {'main': FormatElement(r"sum(%s(Tbins))",
-                                          self.unitses[0], ['Tbins', "%s(T)" % (funcvar)]),
-                    'Tbins': FormatElement("# Temperature in bins", "deg. C"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.model), self.unitses[0])}            
+                                          ['Tbins', "%s(T)" % (funcvar)]),
+                    'Tbins': FormatElement("# Temperature in bins"),
+                    "%s(T)" % (funcvar): FormatElement(str(self.model))}
 
 
     def apply(self, region, *args):
@@ -144,15 +144,15 @@ class AverageByMonth(Calculation):
         funcvar = formatting.get_function()
         if lang == 'latex':
             return {'main': FormatElement(r"mean(\{mean_{d \in m(t)} %s(T_d)\})" % (funcvar),
-                                          self.unitses[0], ['T_d', "%s(\cdot)" % (funcvar)]),
-                    'T_d': FormatElement("Temperature", "deg. C", is_abstract=True),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.spline), self.unitses[0])}
+                                          ['T_d', "%s(\cdot)" % (funcvar)]),
+                    'T_d': FormatElement("Temperature", is_abstract=True),
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.spline))}
         elif lang == 'julia':
             return {'main': FormatElement("mean([mean(%s(Tbyday[monthday[ii]:monthday[ii+1]-1])) for ii in 1:12])" % (funcvar),
-                                          self.unitses[0], ['Tbyday', "monthday", "%s(T)" % (funcvar)]),
-                    'Tbyday': FormatElement("# Temperature by day", "deg. C"),
-                    'monthday': FormatElement("cumsum([1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])", "day of year"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.spline), self.unitses[0])}
+                                          ['Tbyday', "monthday", "%s(T)" % (funcvar)]),
+                    'Tbyday': FormatElement("# Temperature by day"),
+                    'monthday': FormatElement("cumsum([1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])"),
+                    "%s(T)" % (funcvar): FormatElement(str(self.spline))}
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
@@ -219,13 +219,13 @@ class YearlyAverageDay(Calculation):
         if lang == 'latex':
             result = self.curvegen.format_call(lang, "T_d")
             result.update({'main': FormatElement(r"\frac{1}{365} \sum_{d \in y(t)} %s" % result['main'].repstr,
-                                                 self.unitses[0], ['T_d'] + result['main'].dependencies),
-                           'T_d': FormatElement("Temperature", "deg. C", is_abstract=True)})
+                                                 ['T_d'] + result['main'].dependencies),
+                           'T_d': FormatElement("Temperature", is_abstract=True)})
         elif lang == 'julia':
             result = self.curvegen.format_call(lang, "Tbyday")
             result.update({'main': FormatElement(r"sum(%s) / 365" % result['main'].repstr,
-                                                 self.unitses[0], ['Tbyday'] + result['main'].dependencies),
-                           'Tbyday': FormatElement("Daily temperature", "deg. C", is_abstract=True)})
+                                                 ['Tbyday'] + result['main'].dependencies),
+                           'Tbyday': FormatElement("Daily temperature", is_abstract=True)})
         return result
 
     def apply(self, region, *args):
@@ -275,13 +275,13 @@ class YearlySumDay(YearlyAverageDay):
         if lang == 'latex':
             result = self.curvegen.format_call(lang, "T_d")
             result.update({'main': FormatElement(r"\sum_{d \in y(t)} %s" % result['main'].repstr,
-                                                 self.unitses[0], ['T_d'] + result['main'].dependencies),
-                           'T_d': FormatElement("Temperature", "deg. C", is_abstract=True)})
+                                                 ['T_d'] + result['main'].dependencies),
+                           'T_d': FormatElement("Temperature", is_abstract=True)})
         elif lang == 'julia':
             result = self.curvegen.format_call(lang, "Tbyday")
             result.update({'main': FormatElement(r"sum(%s)" % result['main'].repstr,
-                                                 self.unitses[0], ['Tbyday'] + result['main'].dependencies),
-                           'Tbyday': FormatElement("Daily temperature", "deg. C", is_abstract=True)})
+                                                 ['Tbyday'] + result['main'].dependencies),
+                           'Tbyday': FormatElement("Daily temperature", is_abstract=True)})
         return result
 
     def apply(self, region, *args):
