@@ -23,6 +23,24 @@ class ParameterFormatElement(FormatElement):
         super(ParameterFormatElement, self).__init__(repstr, dependencies=dependencies)
         self.extname = extname
 
+def build_format(reppattern, *formatargs):
+    mainargs = []
+    alldeps = []
+    allelts = {}
+    for formatarg in formatargs:
+        assert not self.is_abstract
+        mainargs.append(formatargs['main'].repstr)
+        alldeps.extend(formatargs['main'].dependencies)
+        allelts.update(formatargs)
+
+    allelts['main'] = FormatElement(reppattern % tuple(mainargs), alldeps)
+    return allelts
+
+def build_recursive(reppatterns, lang, *formattableargs):
+    assert lang in reppatterns
+    formatargs = map(lambda arg: arg.format(lang), formattableargs)
+    return build_format(reppatterns[lang], *formatargs)
+        
 def format_iterate(elements):
     main = elements['main']
     yield main # only case without key
