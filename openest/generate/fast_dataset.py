@@ -245,6 +245,8 @@ def region_groupby(ds, year, regions, region_indices):
                 continue
 
             if len(dsdata.shape) == 2:
+                if ii == 0:
+                    assert dsdata.shape[1] > 1, "Only one entry in the second (region) dimension; check that order is [time, region]"
                 newvars[var] = (['time'], dsdata[:, region_indices[region]])
             else:
                 coords = list(ds._variables[var].coords)
