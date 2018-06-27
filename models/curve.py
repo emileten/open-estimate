@@ -43,13 +43,15 @@ class LinearCurve(CurveCurve):
         super(LinearCurve, self).__init__([-np.inf, np.inf], lambda x: yy * x)
 
 class StepCurve(CurveCurve):
-    def __init__(self, xxlimits, yy, xtrans):
+    def __init__(self, xxlimits, yy, xtrans=None):
         step_function = StepFunction(xxlimits[1:-1], yy[1:], ival=yy[0])
-        super(StepCurve, self).__init__((np.array(xxlimits[0:-1]) + np.array(xxlimits[1:])) / 2, lambda x: step_function(xtrans(x)))
+        if xtrans is None:
+            super(StepCurve, self).__init__((np.array(xxlimits[0:-1]) + np.array(xxlimits[1:])) / 2, lambda x: step_function(x))
+        else:
+            super(StepCurve, self).__init__((np.array(xxlimits[0:-1]) + np.array(xxlimits[1:])) / 2, lambda x: step_function(xtrans(x)))
 
         self.xxlimits = xxlimits
         self.yy = yy
-        self.xtrans = xtrans
 
 class ZeroInterceptPolynomialCurve(UnivariateCurve):
     def __init__(self, xx, ccs):

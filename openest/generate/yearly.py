@@ -6,12 +6,13 @@ import formatting, arguments, diagnostic, latextools, juliatools
 from formatting import FormatElement
 
 class YearlyBins(Calculation):
-    def __init__(self, units, curvegen, curve_description):
+    def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x):
         super(YearlyBins, self).__init__([units])
         assert isinstance(curvegen, CurveGenerator)
 
         self.curvegen = curvegen
         self.curve_description = curve_description
+        self.weather_change = weather_change
 
     def format(self, lang):
         funcvar = formatting.get_function()
@@ -27,15 +28,16 @@ class YearlyBins(Calculation):
                     "%s(T)" % (funcvar): FormatElement(str(self.model))}
 
     def apply(self, region, *args):
-        def generate(region, year, temps, **kw):
-            curve = self.curvegen.get_curve(region, year, *args, weather=temps)
+        def generate(region, year, weather, **kw):
+            curve = self.curvegen.get_curve(region, year, *args, weather=weather)
 
-            if len(temps) == len(curve.xx):
+            weather2 = self.weather_change(weather)
+            if len(weather2) == len(curve.xx):
                 yy = curve(curve.xx)
                 yy[np.isnan(yy)] = 0
-                result = np.sum(temps.dot(yy))
+                result = np.sum(weather2.dot(yy))
             else:
-                raise RuntimeError("Unknown format for temps: " + str(temps.shape) + " <> len " + str(curve.xx))
+                raise RuntimeError("Unknown format for weather: " + str(weather2.shape) + " <> len " + str(curve.xx))
 
             if not np.isnan(result):
                 yield (year, result)
