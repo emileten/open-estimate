@@ -6,13 +6,14 @@ import formatting, arguments, diagnostic, latextools, juliatools
 from formatting import FormatElement
 
 class YearlyBins(Calculation):
-    def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x):
+    def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x, norecord=False):
         super(YearlyBins, self).__init__([units])
         assert isinstance(curvegen, CurveGenerator)
 
         self.curvegen = curvegen
         self.curve_description = curve_description
         self.weather_change = weather_change
+        self.norecord = norecord
 
     def format(self, lang):
         funcvar = formatting.get_function()
