@@ -1,5 +1,5 @@
 import numpy as np
-import juliatools, latextools, formatting, diagnostic
+import juliatools, latextools, formatting, diagnostic, formattools
 from statsmodels.distributions.empirical_distribution import StepFunction
     
 ## Smart Curves fall back on Curve logic, but take xarray DataSets and know which variables they want
@@ -212,3 +212,24 @@ class SelectiveInputCurve(SmartCurve):
 
     def format(self, lang, dsname):
         return SmartCurve.format_call(self.curve, lang, self.variable)
+    
+class SumByTimeCurve(SmartCurve):
+    def __init__(self, curves, variable):
+        super(CurveCurve, self).__init__()
+        self.curves = curves
+        self.variable
+
+    def __call__(self, ds):
+        data = ds[self.variable]._data
+        total = 0
+        for ii in range(len(data)):
+            total += self.curves[ii](data[ii])
+        return total
+
+    def format(self, lang):
+        if lang == 'latex':
+            formatteds = [SmartCurve.format_call(self.curves[ii], lang, self.variable + '_%d' % ii) for ii in range(len(self.curves))]
+        else:
+            formatteds = [SmartCurve.format_call(self.curves[ii], lang, self.variable + '[%d]' % ii) for ii in range(len(self.curves))]
+            
+        return formattools.join(' + ', formatteds)
