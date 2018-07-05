@@ -57,9 +57,9 @@ class TransformCurveGenerator(CurveGenerator):
                 # Pretend like nothing happened (used, e.g., for smart_curve transformation)
                 pass # already in main
             elif lang == 'latex':
-                result.update(latextools.call(self.transform, self.depenunit, self.description, *tuple(curveargs)))
+                result.update(latextools.call(self.transform, self.description, *tuple(curveargs)))
             elif lang == 'julia':
-                result.update(juliatools.call(self.transform, self.depenunit, self.description, *tuple(curveargs)))
+                result.update(juliatools.call(self.transform, self.description, *tuple(curveargs)))
             
             return result
         except Exception as ex:
