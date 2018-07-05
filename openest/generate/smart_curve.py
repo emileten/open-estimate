@@ -214,16 +214,14 @@ class SelectiveInputCurve(SmartCurve):
         return SmartCurve.format_call(self.curve, lang, self.variable)
     
 class SumByTimeCurve(SmartCurve):
-    def __init__(self, curves, variable):
+    def __init__(self, curves):
         super(CurveCurve, self).__init__()
         self.curves = curves
-        self.variable
 
     def __call__(self, ds):
-        data = ds[self.variable]._data
         total = 0
-        for ii in range(len(data)):
-            total += self.curves[ii](data[ii])
+        for ii in range(len(ds['time'])):
+            total += self.curves[ii](ds.isel(time=ii))
         return total
 
     def format(self, lang):
