@@ -215,7 +215,7 @@ class SelectiveInputCurve(SmartCurve):
     
 class SumByTimeCurve(SmartCurve):
     def __init__(self, curves):
-        super(CurveCurve, self).__init__()
+        super(SmartCurve, self).__init__()
         self.curves = curves
 
     def __call__(self, ds):
