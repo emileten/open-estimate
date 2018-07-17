@@ -213,21 +213,17 @@ class SelectiveInputCurve(SmartCurve):
     def format(self, lang, dsname):
         return SmartCurve.format_call(self.curve, lang, self.variable)
     
-class SumByTimeCurve(SmartCurve):
+class SumCurve(SmartCurve):
     def __init__(self, curves):
         super(SmartCurve, self).__init__()
         self.curves = curves
 
     def __call__(self, ds):
         total = 0
-        for ii in range(len(ds['time'])):
-            total += self.curves[ii](ds.isel(time=ii))
+        for curve in self.curves:
+            total += curve(ds)
         return total
 
     def format(self, lang):
-        if lang == 'latex':
-            formatteds = [SmartCurve.format_call(self.curves[ii], lang, self.variable + '_%d' % ii) for ii in range(len(self.curves))]
-        else:
-            formatteds = [SmartCurve.format_call(self.curves[ii], lang, self.variable + '[%d]' % ii) for ii in range(len(self.curves))]
-            
+        formatteds = [SmartCurve.format_call(self.curves[ii], lang, self.variable) for ii in range(len(self.curves))]
         return formattools.join(' + ', formatteds)
