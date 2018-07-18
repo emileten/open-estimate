@@ -65,3 +65,4 @@ curve_description = ArgumentType('curve_description', "A text description of the
                                  str, lambda context: "A basic curve.")
 description = ArgumentType('description', "An english description of what an operation does.",
                            str, lambda context: "Geworfenheit")
+label = ArgumentType('label', "A short name for this result", str, lambda context: 'token')
