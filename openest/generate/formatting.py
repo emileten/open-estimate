@@ -125,7 +125,13 @@ variables_vars = ['x', 'y', 'z']
 betaonly_count = 0
 
 format_labels = []
-    
+
+def call_argvar(elt):
+    if isinstance(elt, FormatElement):
+        formatting.get_variable(elt)
+    else:
+        return elt
+
 def get_function(func=None):
     global functions_count, functions_known
 
