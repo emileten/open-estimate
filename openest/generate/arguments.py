@@ -45,6 +45,7 @@ monthvalues = ArgumentType('monthvalues', "The values for each month, in a list 
 regions = ArgumentType('regions', "The list of region names.", [list], lambda context: ['here'])
 parameter_getter = ArgumentType('parameter_getter', "A function that retrieves the underlying parameters from an object.",
                                 [type(lambda x: x)], lambda x: x.coeffs)
+coefficient = ArgumentType('coeff', "A given coefficient.", [float], lambda context: 3.)
 
 ## Configuration
 
