@@ -93,7 +93,7 @@ class YearlyCoefficients(Calculation):
                     description="Apply the results of a previous calculation to a curve, as a dot product on that curve's coefficients.")
 
 class YearlyApply(Calculation):
-    def __init__(self, units, curvegen, curve_description, weather_change=lambda region, x: x, norecord=False):
+    def __init__(self, units, curvegen, curve_description, weather_change=lambda region, x: x, norecord=False, label='response'):
         super(YearlyApply, self).__init__([units])
         assert isinstance(curvegen, CurveGenerator)
 
@@ -101,6 +101,7 @@ class YearlyApply(Calculation):
         self.curve_description = curve_description
         self.weather_change = weather_change
         self.norecord = norecord
+        self.label = label
 
     def format(self, lang):
         variable = formatting.get_variable()
@@ -117,7 +118,7 @@ class YearlyApply(Calculation):
                                                  result['main'].dependencies),
                            variable + '[t]': FormatElement("Weather variable", is_abstract=True)})
 
-        formatting.add_label('response', result)
+        formatting.add_label(self.label, result)
         return result
 
     def apply(self, region, *args):
@@ -150,12 +151,13 @@ class YearlyApply(Calculation):
 
     def column_info(self):
         description = "The result of applying a yearly value to " + self.curve_description
-        return [dict(name='response', title='Direct marginal response', description=description)]
+        return [dict(name=self.label, title='Direct marginal response', description=description)]
 
     @staticmethod
     def describe():
         return dict(input_timerate='year', output_timerate='year',
                     arguments=[arguments.output_unit.rename('units'),
                                arguments.curvegen, arguments.curve_description,
-                               arguments.input_change.optional(), arguments.debugging.optional()],
+                               arguments.input_change.optional(), arguments.debugging.optional(),
+                               arguments.label.optional()],
                     description="Apply a curve to a value for each year.")

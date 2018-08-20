@@ -305,7 +305,7 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
                     description="Translate all results to z-scores against results up to a given year.")
 
 """
-Sum two results
+Sum two or more results
 """
 class Sum(calculation.Calculation):
     def __init__(self, subcalcs):
@@ -355,6 +355,44 @@ class Sum(calculation.Calculation):
         return dict(input_timerate='any', output_timerate='same',
                     arguments=[arguments.calculationss],
                     description="Sum the results of multiple previous calculations.")
+
+"""
+ConstantScale
+"""
+class ConstantScale(calculation.Calculation):
+    def __init__(self, subcalc, coeff):
+        super(ConstantScale, self).__init__([subcalc.unitses[0]] + subcalc.unitses)
+        self.subcalc = subcalc
+        self.coeff = coeff
+
+    def format(self, lang, *args, **kwargs):
+        elements = self.subcalc.format(lang, *args, **kwargs)
+            
+        if lang in ['latex', 'julia']:
+            elements['main'] = FormatElement('%f * (%s)' % (self.coeff, elements['main'].repstr), elements['main'].dependencies)
+
+        return elements
+        
+    def apply(self, region, *args, **kwargs):
+        def generate(year, result):
+            return self.coeff * result
+
+        # Prepare the generator from our encapsulated operations
+        subapp = self.subcalc.apply(region, *args, **kwargs)
+        return calculation.ApplicationPassCall(region, subapp, generate, unshift=True)
+
+    def column_info(self):
+        infos = self.subcalc.column_info()
+        title = 'Previous result multiplied by %f' % self.coeff
+        description = 'Previous result multiplied by %f' % self.coeff
+
+        return [dict(name='constscale', title=title, description=description)] + infos
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.coefficient],
+                    description="Multiply the result by a constant factor.")
 
 class Positive(calculation.Calculation):
     """
