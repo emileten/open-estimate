@@ -212,3 +212,17 @@ class SelectiveInputCurve(SmartCurve):
 
     def format(self, lang, dsname):
         return SmartCurve.format_call(self.curve, lang, self.variable)
+
+class ProductCurve(SmartCurve):
+    def __init__(self, curve1, curve2):
+        super(ProductCurve, self).__init__()
+        self.curve1 = curve1
+        self.curve2 = curve2
+
+    def __call__(self, ds):
+        return self.curve1(ds) * self.curve2(ds)
+
+    def format(self, lang):
+        return formatting.build_recursive({'latex': r"(%s) (%s)",
+                                           'julia': r"(%s) .* (%s)"}, lang,
+                                          self.curve1, self.curve2)
