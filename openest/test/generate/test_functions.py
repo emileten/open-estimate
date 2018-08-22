@@ -1,5 +1,6 @@
 import numpy as np
-from openest.generate.daily import YearlyDayBins, Constant
+from openest.generate.base import Constant
+from openest.generate.daily import YearlyDayBins
 from openest.generate.functions import Scale, Instabase, SpanInstabase
 from test_daily import test_model
 
