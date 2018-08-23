@@ -2,7 +2,8 @@ import numpy as np
 import xarray as xr
 from openest.models.bin_model import BinModel
 from openest.models.spline_model import SplineModel
-from openest.generate.daily import YearlyDayBins, Constant
+from openest.generate.daily import YearlyDayBins
+from openest.generate.base import Constant
 
 test_model = BinModel([-40, 0, 80], SplineModel.create_gaussian({0: (0, 1), 1: (1, 1)}, order=range(2)))
 
