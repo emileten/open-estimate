@@ -36,6 +36,7 @@ class CurveCurve(UnivariateCurve):
 
 class FlatCurve(CurveCurve):
     def __init__(self, yy):
+        self.yy = yy
         super(FlatCurve, self).__init__([-np.inf, np.inf], lambda x: yy)
 
 class LinearCurve(CurveCurve):

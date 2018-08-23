@@ -41,7 +41,7 @@ class YearlyBins(Calculation):
         return [dict(name='response', title='Direct marginal response', description=description)]
 
 class YearlyCoefficients(Calculation):
-    def __init__(self, units, curvegen, curve_description, getter=lambda curve: curve.yy, weather_change=lambda region, x: x):
+    def __init__(self, units, curvegen, curve_description, getter=lambda curve: curve.yy, weather_change=lambda region, x: x, label='response'):
         super(YearlyCoefficients, self).__init__([units])
         assert isinstance(curvegen, CurveGenerator)
 
@@ -49,14 +49,18 @@ class YearlyCoefficients(Calculation):
         self.curve_description = curve_description
         self.getter = getter
         self.weather_change = weather_change
+        self.label = label
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
             curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
 
             coeffs = self.getter(region, year, temps, curve)
-            if len(temps) == len(coeffs):
-                result = np.sum(self.weather_change(region, temps).dot(coeffs))
+            temps2 = self.weather_change(region, temps)
+            if np.isscalar(temps2) and np.isscalar(coeffs):
+                result = temps2 * coeffs
+            elif len(temps) == len(coeffs):
+                result = np.sum(np.array(temps).dot(coeffs))
             else:
                 raise RuntimeError("Unknown format for temps: " + str(temps.shape) + " <> len " + str(coeffs))
 
@@ -71,4 +75,4 @@ class YearlyCoefficients(Calculation):
 
     def column_info(self):
         description = "The combined result of yearly values, with coefficients from %s." % (str(self.curve_description))
-        return [dict(name='response', title='Direct marginal response', description=description)]
+        return [dict(name=self.label, title='Direct marginal response', description=description)]
