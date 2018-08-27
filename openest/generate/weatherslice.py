@@ -11,7 +11,7 @@ class WeatherSlice(object):
           the regions dimension should be excluded iff this is for a single region
           the last dimension is optional, if more than one value is returned for each time.
     """
-    def __init__(self, times, weathers, manyregion=True):
+    def __init__(self, times, weathers, manyregion=True, ignore_regionnum=False):
         self.times = np.array(times)
         T = len(times)
 
@@ -19,7 +19,8 @@ class WeatherSlice(object):
             if len(weathers.shape) == 1:
                 weathers = np.expand_dims(weathers, axis=0)
 
-            assert weathers.shape[1] > MIN_REGIONS, "The second dimension does not have enough regions: %d < %d" % (weathers.shape[1], MIN_REGIONS)
+            if not ignore_regionnum:
+                assert weathers.shape[1] > MIN_REGIONS, "The second dimension does not have enough regions: %d < %d" % (weathers.shape[1], MIN_REGIONS)
         else:
             assert len(weathers.shape) < 2, "Without the region dimension, WeatherSlice may only have 1 or 2 dimensions."
             
@@ -65,11 +66,14 @@ class YearlyWeatherSlice(WeatherSlice):
         return self.times
     
     @staticmethod
-    def convert(weatherslice):
+    def convert(weatherslice, accum=None):
         """Converts other slices to yearly values, taking the mean by year"""
         
         if isinstance(weatherslice, YearlyWeatherSlice):
             return weatherslice
+
+        if accum is None:
+            accum = lambda xx: np.mean(xx, axis=0)
         
         origyears = np.array(weatherslice.get_years())
         years, indexes = np.unique(origyears, return_index=True)
@@ -78,19 +82,19 @@ class YearlyWeatherSlice(WeatherSlice):
 
         weather_byyear = []
         for year in years:
-            summed = np.mean(weatherslice.weathers[origyears == year], axis=0)
+            summed = accum(weatherslice.weathers[origyears == year])
             summed = np.expand_dims(summed, axis=0)
             weather_byyear.append(summed)
 
         return YearlyWeatherSlice(years, np.concatenate(weather_byyear, axis=0))
 
 class TriMonthlyWeatherSlice(WeatherSlice):
-    def __init__(self, times, weathers):
-        super(TriMonthlyWeatherSlice, self).__init__(times, weathers)
+    def __init__(self, times, weathers, ignore_regionnum=False):
+        super(TriMonthlyWeatherSlice, self).__init__(times, weathers, ignore_regionnum=ignore_regionnum)
 
 class ForecastMonthlyWeatherSlice(TriMonthlyWeatherSlice):
-    def __init__(self, month, ahead, weathers):
-        super(ForecastMonthlyWeatherSlice, self).__init__([month + ahead], weathers)
+    def __init__(self, month, ahead, weathers, ignore_regionnum=False):
+        super(ForecastMonthlyWeatherSlice, self).__init__([month + ahead], weathers, ignore_regionnum=ignore_regionnum)
 
         self.month = month
         self.ahead = ahead

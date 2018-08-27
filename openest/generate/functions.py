@@ -299,7 +299,7 @@ class AuxillaryResult(calculation.Calculation):
     Produce an additional output, but then pass the main result on.
     """
     def __init__(self, subcalc_main, subcalc_aux, auxname):
-        super(AuxillaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
+        super(AuxillaryResult, self).__init__([subcalc_main.unitses[0]] + subcalc_aux.unitses + subcalc_main.unitses[1:])
         self.subcalc_main = subcalc_main
         self.subcalc_aux = subcalc_aux
         self.auxname = auxname
