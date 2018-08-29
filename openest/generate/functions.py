@@ -332,7 +332,7 @@ class AuxillaryResultApplication(calculation.Application):
         for yearresult in self.subapp_main.push(weatherslice):
             for yearresult_aux in self.subapp_aux.push(weatherslice):
                 next # Just take the last one
-            yield list(yearresult[0:2]) + [yearresult_aux[1]] + list(yearresult[2:])
+            yield list(yearresult[0:2]) + list(yearresult_aux[1:]) + list(yearresult[2:])
 
     def done(self):
         self.subapp_main.done()
