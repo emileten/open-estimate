@@ -40,11 +40,11 @@ class WeatherSlice(object):
         return child
 
 class DailyWeatherSlice(WeatherSlice):
-    def __init__(self, times, weathers):
+    def __init__(self, times, weathers, manyregion=True):
         if len(weathers.shape) == 2 and weathers.shape[1] == len(times): # Wrong order
             weathers = np.transpose(weathers)
 
-        super(DailyWeatherSlice, self).__init__(times, weathers)
+        super(DailyWeatherSlice, self).__init__(times, weathers, manyregion=manyregion)
 
         assert np.all(self.times > 1000000)
 
