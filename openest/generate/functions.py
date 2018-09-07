@@ -231,6 +231,9 @@ class SpanInstabase(Instabase):
                 # Print out all past results, re-based
                 for pastresult in self.pastresults:
                     diagnostic.record(self.region, pastresult[0], 'baseline', self.denom)
+                    if self.deltamethod:
+                        self.subapp.get_deltamethod()
+                        
                     yield [pastresult[0], func(pastresult[1], self.denom)] + list(pastresult[1:])
 
             if self.denom is None:

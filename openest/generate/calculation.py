@@ -5,6 +5,7 @@ import numpy as np
 class Calculation(object):
     def __init__(self, unitses):
         self.unitses = unitses
+        self.deltamethod = False
 
     def format(self, lang, *args, **kwargs):
         """Returns a dictionary of FormatElements.
@@ -26,6 +27,16 @@ class Calculation(object):
         """
         raise NotImplementedError()
 
+    def enable_deltamethod(self):
+        self.deltamethod = True
+
+    def get_deltamethod(self):
+        """
+        Retrieves the coefficient multiplicands
+        as a vector the list of the CSVV coefficients.
+        """
+        raise NotImplementedError()        
+    
     @staticmethod
     def describe():
         """
