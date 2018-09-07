@@ -6,6 +6,7 @@ class Calculation(object):
     def __init__(self, unitses):
         self.unitses = unitses
         self.deltamethod = False
+        self.dm_array = None
 
     def format(self, lang, *args, **kwargs):
         """Returns a dictionary of FormatElements.
@@ -28,14 +29,11 @@ class Calculation(object):
         raise NotImplementedError()
 
     def enable_deltamethod(self):
-        self.deltamethod = True
-
-    def get_deltamethod(self):
         """
-        Retrieves the coefficient multiplicands
+        When applied, after yield self.dm_array contains coefficient multiplicands
         as a vector the list of the CSVV coefficients.
         """
-        raise NotImplementedError()        
+        self.deltamethod = True
     
     @staticmethod
     def describe():
