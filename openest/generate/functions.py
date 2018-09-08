@@ -214,10 +214,6 @@ class SpanInstabase(Instabase):
     def init_apply(self):
         self.denomterms = [] # don't copy this across instances!
         self.pastresults = []
-        if self.deltamethod:
-            self.dm_denomterms = []
-            self.dm_pastresults = []
-            self.dm_denom = None
 
     def pushhandler(self, ds, baseyear, func, skip_on_missing):
         """
@@ -230,17 +226,14 @@ class SpanInstabase(Instabase):
             # Should we base everything off this year?
             if year == self.year2:
                 self.denomterms.append(result)
-                self.denom = np.mean(self.denomterms)
-                if self.deltamethod:
-                    self.dm_denomterms.append(self.subapp.dm_array)
-                    self.dm_denom = np.mean(self.dm_denomterms, 0)
+                if not self.deltamethod:
+                    self.denom = np.mean(self.denomterms)
+                else:
+                    self.denom = np.mean(self.denomterms, 0)
 
                 # Print out all past results, re-based
-                for ii in range(len(self.pastresults)):
-                    pastresult = self.pastresults[ii]
+                for pastresult in self.pastresults:
                     diagnostic.record(self.region, pastresult[0], 'baseline', self.denom)
-                    if self.deltamethod:
-                        self.dm_array = func(self.dm_pastresults[ii], self.dm_denom)
                     yield [pastresult[0], func(pastresult[1], self.denom)] + list(pastresult[1:])
 
             if self.denom is None:
@@ -248,14 +241,8 @@ class SpanInstabase(Instabase):
                 self.pastresults.append(yearresult)
                 if year >= self.year1:
                     self.denomterms.append(result)
-                if self.deltamethod:
-                    self.dm_pastresults.append(self.subapp.dm_array)
-                    if year >= self.year1:
-                        self.dm_denomterms.append(self.subapp.dm_array)
             else:
                 diagnostic.record(self.region, year, 'baseline', self.denom)
-                if self.deltamethod:
-                    self.dm_array = func(self.subapp.dm_array, self.dm_denom)
                 # calculate this and tack it on
                 yield [year, func(result, self.denom)] + list(yearresult[1:])
 
@@ -350,7 +337,10 @@ class Sum(calculation.Calculation):
         
     def apply(self, region, *args, **kwargs):
         def generate(year, results):
-            return np.sum(map(lambda x: x[1] if x is not None else np.nan, results))
+            if not self.deltamethod:
+                return np.sum(map(lambda x: x[1] if x is not None else np.nan, results))
+            else:
+                return np.sum(map(lambda x: x[1] if x is not None else np.nan, results), 0)
 
         # Prepare the generator from our encapsulated operations
         subapps = [subcalc.apply(region, *args, **kwargs) for subcalc in self.subcalcs]
