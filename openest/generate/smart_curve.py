@@ -7,6 +7,7 @@ from statsmodels.distributions.empirical_distribution import StepFunction
 class SmartCurve(object):
     def __init__(self):
         self.xx = [-np.inf, np.inf] # Backwards compatibility to functions expecting curves
+        self.deltamethod = False
     
     def __call__(self, ds):
         raise NotImplementedError("call not implemented")

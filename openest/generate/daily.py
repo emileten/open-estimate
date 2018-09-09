@@ -292,9 +292,14 @@ class YearlySumDay(YearlyAverageDay):
             assert year > checks['lastyear'], "Push of %d, but already did %d." % (year, checks['lastyear'])
             checks['lastyear'] = year
 
-            curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
-
             temps2 = self.weather_change(region, temps)
+
+            if self.deltamethod:
+                terms = self.curvegen.get_lincom_terms(region, year, temps.sum())
+                yield (year, terms)
+                return
+            
+            curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
             result = np.nansum(curve(temps2))
 
             if not self.norecord and diagnostic.is_recording():
