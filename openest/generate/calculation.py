@@ -83,6 +83,10 @@ class FunctionalCalculation(Calculation):
         print "completing make"
         self.subcalc.cleanup()
 
+    def enable_deltamethod(self):
+        self.deltamethod = True
+        self.subcalc.enable_deltamethod()
+        
 class Application(object):
     def __init__(self, region):
         self.region = region

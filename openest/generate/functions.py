@@ -356,6 +356,11 @@ class Sum(calculation.Calculation):
             fullinfos.extend(infos)
         return [dict(name='sum', title=title, description=description)] + fullinfos
 
+    def enable_deltamethod(self):
+        self.deltamethod = True
+        for subcalc in self.subcalcs:
+            subcalc.enable_deltamethod()
+
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',

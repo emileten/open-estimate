@@ -4,7 +4,6 @@ from calculation import Calculation, ApplicationEach
 from curvegen import CurveGenerator
 import formatting, arguments, diagnostic, latextools, juliatools
 from formatting import FormatElement
-from smart_curve_dm import DeltaMethodCurve
 
 class YearlyBins(Calculation):
     def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x, norecord=False):

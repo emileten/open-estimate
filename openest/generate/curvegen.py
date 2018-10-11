@@ -44,6 +44,12 @@ class TransformCurveGenerator(CurveGenerator):
             traceback.print_exc()
             raise ex
 
+    def get_lincom_terms(self, region, year, predictors):
+        raise NotImplementedError("Cannot produce deltamethod terms for transform %s" % self.description)
+
+    def get_lincom_terms_simple(self, predictors, covariates={}):
+        raise NotImplementedError("Cannot produce deltamethod terms for transform %s" % self.description)
+
     def format_call(self, lang, *args):
         try:
             result = {}
