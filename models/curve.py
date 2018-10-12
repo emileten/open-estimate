@@ -148,7 +148,7 @@ class OtherClippedCurve(ClippedCurve):
         clipping = self.clipping_curve(xs)
         ys = map(lambda y: y if y is not None else 0, ys)
         clipping = map(lambda y: y if not np.isnan(y) else 0, clipping)
-        return ys * (clipping > self.clipy)
+        return ys * (np.array(clipping) > self.clipy)
 
 class MinimumCurve(UnivariateCurve):
     def __init__(self, curve1, curve2):
