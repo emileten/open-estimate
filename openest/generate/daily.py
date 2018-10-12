@@ -73,7 +73,7 @@ class YearlyDayBins(Calculation):
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
-            if isinstance(curvegen, CurveGenerator):
+            if isinstance(self.model, CurveGenerator):
                 spline = self.spline.get_spline.get_curve(region, year, *args, weather=temps)
             else:
                 spline = self.spline
