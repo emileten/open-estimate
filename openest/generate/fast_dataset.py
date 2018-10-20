@@ -82,7 +82,7 @@ class FastDataset(xr.Dataset):
             if key in self.original_coords:
                 continue
             newvars[key] = (self._variables[key].original_coords, np.array(func(self._variables[key]._data)))
-        return FastDataset(newvars, self.attrs)        
+        return FastDataset(newvars, attrs=self.attrs)
 
     def subset(self, names):
         newvars = {}
