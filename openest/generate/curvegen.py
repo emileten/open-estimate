@@ -59,6 +59,10 @@ class TransformCurveGenerator(CurveGenerator):
             raise NotImplementedError("Cannot produce deltamethod terms for transform %s" % self.description)
 
     def format_call(self, lang, *args):
+        if self.deltamethod_passthrough and len(self.curvegens):
+            # No calculation change
+            return self.curvegens[0].format_call(lang, *args)
+            
         try:
             result = {}
             curveargs = []

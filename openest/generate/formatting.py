@@ -28,10 +28,10 @@ def build_format(reppattern, *formatargs):
     alldeps = []
     allelts = {}
     for formatarg in formatargs:
-        assert not self.is_abstract
-        mainargs.append(formatargs['main'].repstr)
-        alldeps.extend(formatargs['main'].dependencies)
-        allelts.update(formatargs)
+        assert not formatarg['main'].is_abstract
+        mainargs.append(formatarg['main'].repstr)
+        alldeps.extend(formatarg['main'].dependencies)
+        allelts.update(formatarg)
 
     allelts['main'] = FormatElement(reppattern % tuple(mainargs), alldeps)
     return allelts
@@ -40,6 +40,10 @@ def build_recursive(reppatterns, lang, *formattableargs):
     assert lang in reppatterns
     formatargs = map(lambda arg: arg.format(lang), formattableargs)
     return build_format(reppatterns[lang], *formatargs)
+
+def build_adddepend(allelts, label, elt):
+    allelts['main'].dependences.append(label)
+    allelts[label] = elt
         
 def format_iterate(elements):
     main = elements['main']
@@ -186,6 +190,12 @@ def get_repstr(content):
         return content
 
     return content.repstr
+
+def call_argvar(arg):
+    if isinstance(arg, FormatElement):
+        return get_variable()
+    else:
+        return arg
 
 def get_parametername(extname, lang):
     if lang == 'julia':

@@ -274,14 +274,12 @@ class YearlySumDay(YearlyAverageDay):
     def format(self, lang):
         if lang == 'latex':
             result = self.curvegen.format_call(lang, "T_d")
-            result.update({'main': FormatElement(r"\sum_{d \in y(t)} %s" % result['main'].repstr,
-                                                 ['T_d'] + result['main'].dependencies),
-                           'T_d': FormatElement("Temperature", is_abstract=True)})
+            result = formatting.build_format(r"\sum_{d \in y(t)} %s", result)
+            formatting.build_adddepend(result, 'T_d', FormatElement("Temperature", is_abstract=True))
         elif lang == 'julia':
             result = self.curvegen.format_call(lang, "Tbyday")
-            result.update({'main': FormatElement(r"sum(%s)" % result['main'].repstr,
-                                                 ['Tbyday'] + result['main'].dependencies),
-                           'Tbyday': FormatElement("Daily temperature", is_abstract=True)})
+            result = formatting.build_format(r"sum(%s)", result)
+            formatting.build_adddepend(result, 'Tbyday', FormatElement("Daily temperature", is_abstract=True))
         return result
 
     def apply(self, region, *args):
