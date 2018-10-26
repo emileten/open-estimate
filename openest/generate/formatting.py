@@ -42,7 +42,7 @@ def build_recursive(reppatterns, lang, *formattableargs):
     return build_format(reppatterns[lang], *formatargs)
 
 def build_adddepend(allelts, label, elt):
-    allelts['main'].dependences.append(label)
+    allelts['main'].dependencies.append(label)
     allelts[label] = elt
         
 def format_iterate(elements):
