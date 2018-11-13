@@ -226,7 +226,10 @@ class SpanInstabase(Instabase):
             # Should we base everything off this year?
             if year == self.year2:
                 self.denomterms.append(result)
-                self.denom = np.mean(self.denomterms)
+                if not self.deltamethod:
+                    self.denom = np.mean(self.denomterms)
+                else:
+                    self.denom = np.mean(self.denomterms, 0)
 
                 # Print out all past results, re-based
                 for pastresult in self.pastresults:
@@ -334,7 +337,10 @@ class Sum(calculation.Calculation):
         
     def apply(self, region, *args, **kwargs):
         def generate(year, results):
-            return np.sum(map(lambda x: x[1] if x is not None else np.nan, results))
+            if not self.deltamethod:
+                return np.sum(map(lambda x: x[1] if x is not None else np.nan, results))
+            else:
+                return np.sum(map(lambda x: x[1] if x is not None else np.nan, results), 0)
 
         # Prepare the generator from our encapsulated operations
         subapps = [subcalc.apply(region, *args, **kwargs) for subcalc in self.subcalcs]
@@ -349,6 +355,11 @@ class Sum(calculation.Calculation):
         for infos in infoses:
             fullinfos.extend(infos)
         return [dict(name='sum', title=title, description=description)] + fullinfos
+
+    def enable_deltamethod(self):
+        self.deltamethod = True
+        for subcalc in self.subcalcs:
+            subcalc.enable_deltamethod()
 
     @staticmethod
     def describe():

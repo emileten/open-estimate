@@ -132,11 +132,16 @@ class YearlyApply(Calculation):
             assert year > checks['lastyear'], "Push of %d, but already did %d." % (year, checks['lastyear'])
             checks['lastyear'] = year
 
-            curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
-            
             temps2 = self.weather_change(region, temps)
             if isinstance(temps2, np.ndarray):
                 assert len(temps2) == 1, "More than one value in " + str(temps)
+
+            if self.deltamethod:
+                terms = self.curvegen.get_lincom_terms(region, year, temps2.sum())
+                yield (year, terms)
+                return
+                
+            curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
             result = curve(temps2)
 
             if not self.norecord and diagnostic.is_recording():

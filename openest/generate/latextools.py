@@ -18,7 +18,7 @@ def call(func, description=None, *args):
     if len(args) == 1:
         funcvar = formatting.get_function()
         
-        argvar = call_argvar(args[0])
+        argvar = formatting.call_argvar(args[0])
 
         if isinstance(argvar, FormatElement):
             return {'main': FormatElement("%s(%s)" % (funcvar, argvar.repstr),
@@ -36,8 +36,8 @@ def call(func, description=None, *args):
     elif len(args) == 2:
         funcvar = formatting.get_function()
 
-        argname0 = call_argvar(args[0])
-        argname1 = call_argvar(args[1])
+        argname0 = formatting.call_argvar(args[0])
+        argname1 = formatting.call_argvar(args[1])
             
         result = {'main': FormatElement("%s(%s, %s)" % (funcvar, argname0, argname1),
                                         [funcvar + r"(\cdot)"], is_primitive=True),
