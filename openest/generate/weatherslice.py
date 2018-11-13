@@ -9,7 +9,7 @@ class WeatherSlice(object):
         times should be a numpy array with a single dimension.  Let it have length T.
         weathers should be a numpy array of size T [x REGIONS] [x K]
           the regions dimension should be excluded iff this is for a single region
-          the last dimension is optional, if more than one value is returned for each time.
+          the last dimension is optional, if more than one variable is returned for each time.
     """
     def __init__(self, times, weathers, manyregion=True, ignore_regionnum=False):
         self.times = np.array(times)
