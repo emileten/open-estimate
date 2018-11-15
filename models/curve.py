@@ -182,6 +182,7 @@ class SelectiveInputCurve(UnivariateCurve):
 class PiecewiseCurve(UnivariateCurve):
     def __init__(self, curves, knots, xtrans=lambda x: x):
         super(PiecewiseCurve, self).__init__(knots)
+        assert len(curves) == len(knots) - 1
         self.curves = curves
         self.knots = knots
         self.xtrans = xtrans # for example, to select first column

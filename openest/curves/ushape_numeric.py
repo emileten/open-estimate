@@ -1,9 +1,14 @@
+import numpy as np
+from openest.curves.basic import UnivariateCurve
+
 class UShapedCurve(UnivariateCurve):
-    def __init__(self, curve, mintemp, gettas):
+    def __init__(self, curve, mintemp, gettas, ordered=False):
+        # Ordered only used for unit testing
         super(UShapedCurve, self).__init__(curve.xx)
         self.curve = curve
         self.mintemp = mintemp
         self.gettas = gettas
+        self.ordered = ordered
 
     def __call__(self, xs):
         values = self.curve(xs)
@@ -18,16 +23,20 @@ class UShapedCurve(UnivariateCurve):
         highvalues = orderedvalues[orderedtas >= self.mintemp]
         highvalues2 = np.maximum.accumulate(highvalues)
 
-        return np.concatenate((lowvalues2, highvalues2))
+        if self.ordered:
+            return np.concatenate((lowvalues2[::-1], highvalues2))
+        else:
+            return np.concatenate((lowvalues2, highvalues2))
 
 # Return tmarginal evaluated at the innermost edge of plateaus
 class UShapedClipping(UnivariateCurve):
-    def __init__(self, curve, tmarginal_curve, mintemp, gettas):
+    def __init__(self, curve, tmarginal_curve, mintemp, gettas, ordered=False):
         super(UShapedClipping, self).__init__(curve.xx)
         self.curve = curve
         self.tmarginal_curve = tmarginal_curve
         self.mintemp = mintemp
         self.gettas = gettas
+        self.ordered = ordered
 
     def __call__(self, xs):
         increasingvalues = self.curve(xs) # these are ordered as low..., high...
@@ -49,7 +58,13 @@ class UShapedClipping(UnivariateCurve):
             highindicesofordered[np.concatenate(([False], increasingplateaus[-len(highindicesofordered)+1:]))] = n_below
             highindicesofordered = np.maximum.accumulate(highindicesofordered)
 
-        increasingresults = np.concatenate((self.tmarginal_curve(xs[order[lowindicesofordered], :]), self.tmarginal_curve(xs[order[highindicesofordered], :]))) # ordered low..., high...
+        if len(xs.shape) == 2:
+            increasingresults = np.concatenate((self.tmarginal_curve(xs[order[lowindicesofordered], :]), self.tmarginal_curve(xs[order[highindicesofordered], :]))) # ordered low..., high...
+        else:
+            increasingresults = np.concatenate((self.tmarginal_curve(xs[order[lowindicesofordered]]), self.tmarginal_curve(xs[order[highindicesofordered]]))) # ordered low..., high...
         increasingresults[increasingvalues <= 0] = 0 # replace truly clipped with 0
 
-        return increasingresults
+        if self.ordered:
+            return np.concatenate((increasingresults[tas < self.mintemp][::-1], increasingresults[tas >= self.mintemp]))
+        else:
+            return increasingresults
