@@ -2,20 +2,30 @@ import numpy as np
 from openest.curves.basic import UnivariateCurve
 
 class UShapedCurve(UnivariateCurve):
-    def __init__(self, curve, mintemp, gettas, ordered=False):
+    def __init__(self, curve, mintemp, gettas, ordered=False, fillins=np.array([])):
         # Ordered only used for unit testing
         super(UShapedCurve, self).__init__(curve.xx)
         self.curve = curve
         self.mintemp = mintemp
         self.gettas = gettas
         self.ordered = ordered
+        self.fillins = fillins
 
     def __call__(self, xs):
+        if len(self.fillins) > 0:
+            xs_saved = xs
+            xs = np.concatenate((xs, self.fillins))
+        
         values = self.curve(xs)
         tas = self.gettas(xs)
         order = np.argsort(tas)
         orderedtas = tas[order]
         orderedvalues = values[order]
+
+        if len(self.fillins) > 0:
+            tokeeps = order < len(xs_saved)
+            lowkeeps = tokeeps[orderedtas < self.mintemp]
+            highkeeps = tokeeps[orderedtas >= self.mintemp]
 
         lowvalues = orderedvalues[orderedtas < self.mintemp]
         lowvalues2 = np.maximum.accumulate(lowvalues[::-1])
@@ -23,6 +33,11 @@ class UShapedCurve(UnivariateCurve):
         highvalues = orderedvalues[orderedtas >= self.mintemp]
         highvalues2 = np.maximum.accumulate(highvalues)
 
+        if len(self.fillins) > 0:
+            # Remove the fillins
+            lowvalues2 = lowvalues2[lowkeeps[::-1]]
+            highvalues2 = highvalues2[highkeeps]
+        
         if self.ordered:
             return np.concatenate((lowvalues2[::-1], highvalues2))
         else:

@@ -8,6 +8,7 @@ polymins = pd.read_csv("polymins.csv")
 allcalcs = pd.read_csv("allcalcs.csv")
 
 tas = np.arange(-40, 50, .01)
+fillins = np.arange(-40, 50, .1)
     
 for ii in range(polymins.shape[0]):
     print ii
@@ -17,7 +18,7 @@ for ii in range(polymins.shape[0]):
     orig = curve(tas)
 
     # Try without clipping
-    ucurve_numeric = ushape_numeric.UShapedCurve(curve, mintemp, lambda xs: tas, True)
+    ucurve_numeric = ushape_numeric.UShapedCurve(curve, mintemp, lambda xs: tas, True, fillins=fillins)
     unum = ucurve_numeric(tas)
 
     ucurve_analytic = ushape_analytic.UShapedCurve(curve.ccs, mintemp)
@@ -26,7 +27,7 @@ for ii in range(polymins.shape[0]):
     np.testing.assert_allclose(unum, uana, atol=.1)
     
     # Try with clipping
-    ucurve_numeric = ushape_numeric.UShapedCurve(ClippedCurve(ShiftedCurve(curve, -curve(mintemp))), mintemp, lambda xs: tas, True)
+    ucurve_numeric = ushape_numeric.UShapedCurve(ClippedCurve(ShiftedCurve(curve, -curve(mintemp))), mintemp, lambda xs: tas, True, fillins=fillins)
     unum = ucurve_numeric(tas)
 
     ucurve_analytic = ClippedCurve(ShiftedCurve(ushape_analytic.UShapedCurve(curve.ccs, mintemp), -curve(mintemp)))
@@ -39,7 +40,7 @@ for ii in range(polymins.shape[0]):
     curve2 = ZeroInterceptPolynomialCurve([-np.inf, np.inf], [allcalcs['tas'][jj], allcalcs['tas2'][jj], allcalcs['tas3'][jj], allcalcs['tas4'][jj]])
 
     # Try with good money and clipping
-    ucurve_numeric = ushape_numeric.UShapedCurve(ClippedCurve(MinimumCurve(ShiftedCurve(curve, -curve(mintemp)), ShiftedCurve(curve2, -curve2(mintemp)))), mintemp, lambda xs: tas, True)
+    ucurve_numeric = ushape_numeric.UShapedCurve(ClippedCurve(MinimumCurve(ShiftedCurve(curve, -curve(mintemp)), ShiftedCurve(curve2, -curve2(mintemp)))), mintemp, lambda xs: tas, True, fillins=fillins)
     unum = ucurve_numeric(tas)
     
     ucurve_analytic = ushape_analytic.UShapedMinimumCurve(curve, curve.ccs, curve2, curve2.ccs, mintemp)
