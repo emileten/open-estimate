@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 from openest.generate.base import Constant
 from openest.generate.daily import YearlyDayBins
 from openest.generate.functions import Scale, Instabase, SpanInstabase
