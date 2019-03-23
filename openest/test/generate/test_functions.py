@@ -7,7 +7,7 @@ from test_daily import test_model
 
 def make_year_ds(year, values):
     return xr.Dataset({'x': (['time'], values)},
-                      coords={'time': year * 1000 + np.arange(365)})
+                      coords={'time': map(lambda nn: datetime.date(year, 1, 1) + datetime.timedelta(nn), np.arange(365))})
 
 def test_Scale():
     application = Scale(Constant(33, 'widgets'), {'test': 1. / 11}, 'widgets', 'subwigs').test()
