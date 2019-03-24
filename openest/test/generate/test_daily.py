@@ -1,3 +1,4 @@
+import datetime
 import numpy as np
 import xarray as xr
 from openest.models.bin_model import BinModel
