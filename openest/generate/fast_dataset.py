@@ -35,7 +35,7 @@ class FastDataset(xr.Dataset):
     def __str__(self):
         result = "FastDataset: [%s] x [%s]" % (', '.join(self.original_data_vars.keys()), ', '.join(self.original_coords.keys()))
         for key in self.original_data_vars:
-            result += "\n\tVariable %s: %s" % (key, self.original_data_vars[key][0] if isinstance(self.original_data_vars[key], tuple) else self.original_data_vars[key].shape)
+            result += "\n\tVariable %s: %s" % (key, "%s %s" % (self.original_data_vars[key][0], self.original_data_vars[key][1].shape) if isinstance(self.original_data_vars[key], tuple) else self.original_data_vars[key].shape)
         for key in self.coords:
             result += "\n\tCoord %s: %s" % (key, self.original_coords[key].shape)
         for key in self.attrs:
@@ -205,7 +205,7 @@ class FastDataArray(xr.DataArray):
         for dim in kwargs:
             axis = self.original_coords.index(dim)
             indices[axis] = self.parentds[dim]._values == kwargs[dim]
-            
+
         return FastDataArray(self._data[tuple(indices)], newcoords, self.parentds)
 
     def isel(self, **kwargs):
