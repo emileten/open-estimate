@@ -137,7 +137,7 @@ class YearlyApply(Calculation):
                 assert len(temps2) == 1, "More than one value in " + str(temps)
 
             if self.deltamethod:
-                terms = self.curvegen.get_lincom_terms(region, year, temps2.sum())
+                terms = self.curvegen.get_lincom_terms(region, year, temps2.sum(), temps2)
                 yield (year, terms)
                 return
                 

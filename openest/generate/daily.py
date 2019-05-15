@@ -293,7 +293,7 @@ class YearlySumDay(YearlyAverageDay):
             temps2 = self.weather_change(region, temps)
 
             if self.deltamethod:
-                terms = self.curvegen.get_lincom_terms(region, year, temps.sum())
+                terms = self.curvegen.get_lincom_terms(region, year, temps2.sum(), temps2)
                 yield (year, terms)
                 return
             
