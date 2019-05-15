@@ -139,3 +139,13 @@ class DelayedCurveGenerator(CurveGenerator):
         #except Exception as ex:
         #    print self.curvegen
         #    raise ex
+
+class FunctionCurveGenerator(CurveGenerator):
+    def __init__(self, indepunits, depenunits, covargen, curvegenfunc):
+        super(FunctionCurveGenerator, self).__init__(indepunits, depenunits)
+        self.covargen = covargen
+        self.curvegenfunc = curvegenfunc
+
+    def get_curve(self, region, year, *args, **kwargs):
+        covars = self.covargen.offer_update(region, year, kwargs['weather'])
+        return self.curvegenfunc(covars)
