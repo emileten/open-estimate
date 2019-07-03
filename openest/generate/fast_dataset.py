@@ -226,6 +226,9 @@ class FastDataArray(xr.DataArray):
     def __getitem__(self, inds):
         return self._data[inds]
 
+    def index(self, value):
+        return np.nonzero(self._data == value)[0][0]
+    
 def region_groupby(ds, year, regions, region_indices):
     timevar = ds.time
     for ii in range(len(regions)):
