@@ -3,11 +3,14 @@ from collections import deque
 import numpy as np
 
 class FormatElement(object):
-    def __init__(self, repstr, dependencies=[], is_abstract=False, is_primitive=False):
+    def __init__(self, repstr, dependencies=None, is_abstract=False, is_primitive=False):
         self.repstr = repstr
         
-        assert isinstance(dependencies, list) or isinstance(dependencies, set) or isinstance(dependencies, tuple)
-        self.dependencies = dependencies
+        if dependencies is None:
+            self.dependencies = []
+        else:
+            assert isinstance(dependencies, list) or isinstance(dependencies, set) or isinstance(dependencies, tuple)
+            self.dependencies = dependencies
         
         self.is_abstract = is_abstract # Is this an English description?
         self.is_primitive = is_primitive # Can this be inserted straight into an equation?
@@ -19,7 +22,7 @@ class FormatElement(object):
         return "FormatElement(\"%s\"; %s)" % (self.repstr, self.dependencies)
 
 class ParameterFormatElement(FormatElement):
-    def __init__(self, extname, repstr, dependencies=[]):
+    def __init__(self, extname, repstr, dependencies=None):
         super(ParameterFormatElement, self).__init__(repstr, dependencies=dependencies)
         self.extname = extname
 
@@ -86,11 +89,11 @@ def format_julia(elements, parameters={}, include_comments=True):
                 value = parameters[element.extname]
                 if isinstance(value, np.ndarray):
                     if len(value.shape) == 2:
-                        valstr = '[' + '; '.join(map(lambda xxs: ' '.join(map(str, xxs)), value)) + ']'
+                        valstr = '[' + '; '.join(map(lambda xxs: ' '.join(map(juliarep, xxs)), value)) + ']'
                     else:
-                        valstr = '[' + ', '.join(map(str, value)) + ']'
+                        valstr = '[' + ', '.join(map(juliarep, value)) + ']'
                 else:
-                    valstr = str(value)
+                    valstr = juliarep(value)
                 if include_comments:
                     content.append("%s = %s # %s" % (element.repstr, valstr, key))
                 else:
@@ -107,6 +110,11 @@ def format_julia(elements, parameters={}, include_comments=True):
                 content.append("%s = %s" % (key, element.repstr))
 
     return "\n".join(reversed(content))
+
+def juliarep(num):
+    if isinstance(num, float) and np.isnan(num):
+        return "missing"
+    return str(num)
 
 def format_reset():
     global functions_count, variables_count, format_labels, functions_known, betaonly_count
@@ -128,7 +136,7 @@ format_labels = []
 
 def call_argvar(elt):
     if isinstance(elt, FormatElement):
-        formatting.get_variable(elt)
+        return get_variable(elt)
     else:
         return elt
 
@@ -138,7 +146,7 @@ def get_function(func=None):
     if func is not None:
         if func in functions_known:
             return functions_knowns[func]
-    
+
     funcvar = functions_vars[functions_count % len(functions_vars)]
     if functions_count / len(functions_vars) > 0:
         funcvar += str(functions_count / len(functions_vars) + 1)
@@ -153,7 +161,7 @@ def get_variable(element=None):
 
     if element and element.is_primitive:
         return element
-    
+
     varvar = variables_vars[variables_count % len(variables_vars)]
     if variables_count / len(variables_vars) > 0:
         varvar += str(variables_count / len(variables_vars) + 1)

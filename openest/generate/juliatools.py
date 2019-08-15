@@ -13,7 +13,11 @@ def call(func, description=None, *args):
 
     julia = julia_function(func, *tuple(map(formatting.get_repstr, args)))
     if julia:
-        return {'main': FormatElement(julia)}
+        elements = {'main': FormatElement(julia)}
+        for arg in args:
+            if isinstance(arg, FormatElement):
+                elements['main'].dependencies.extend(arg.dependencies)
+        return elements
     
     if len(args) == 1:
         funcvar = formatting.get_function()
