@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='openest',
       version='0.1',
@@ -7,5 +7,9 @@ setup(name='openest',
       author='James Rising',
       author_email='jarising@gmail.com',
       license='GNU v. 3',
-      packages=['openest'],
-      zip_safe=False)
+      packages=find_packages(),
+      install_requires=['numpy', 'scipy', 'emcee', 'statsmodels', 'xarray',
+                        'metacsv'],
+      tests_require=['pytest'],
+      zip_safe=False,
+      )
