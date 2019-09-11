@@ -115,8 +115,9 @@ class Instabase(calculation.CustomFunctionalCalculation):
     Tacks on the value to the front of the results
     """
 
-    def __init__(self, subcalc, baseyear, func=lambda x, y: x / y, units='portion', skip_on_missing=True):
-        super(Instabase, self).__init__(subcalc, subcalc.unitses[0], units, True, baseyear, func, skip_on_missing)
+    def __init__(self, subcalc, baseyear, func=lambda x, y: x / y, units='portion', skip_on_missing=True, unshift=True):
+        super(Instabase, self).__init__(subcalc, subcalc.unitses[0], units, unshift, baseyear, func, skip_on_missing)
+        self.unshift = unshift
         self.baseyear = baseyear
         self.denom = None # The value in the baseyear
         self.pastresults = [] # results before baseyear
@@ -187,8 +188,8 @@ class SpanInstabase(Instabase):
     skip_on_missing: If we never encounter the year and this is false,
       still print out the existing results.
     """
-    def __init__(self, subcalc, year1, year2, func=lambda x, y: x / y, units='portion', skip_on_missing=True):
-        super(SpanInstabase, self).__init__(subcalc, (year1 + year2) / 2, func, units, skip_on_missing)
+    def __init__(self, subcalc, year1, year2, func=lambda x, y: x / y, units='portion', skip_on_missing=True, unshift=True):
+        super(SpanInstabase, self).__init__(subcalc, (year1 + year2) / 2, func, units, skip_on_missing, unshift)
         self.year1 = year1
         self.year2 = year2
         self.denomterms = []
@@ -234,7 +235,10 @@ class SpanInstabase(Instabase):
                 # Print out all past results, re-based
                 for pastresult in self.pastresults:
                     diagnostic.record(self.region, pastresult[0], 'baseline', self.denom)
-                    yield [pastresult[0], func(pastresult[1], self.denom)] + list(pastresult[1:])
+                    if self.unshift:
+                        yield [pastresult[0], func(pastresult[1], self.denom)] + list(pastresult[1:])
+                    else:
+                        yield [pastresult[0], func(pastresult[1], self.denom)]
 
             if self.denom is None:
                 # Keep track of this until we have a base
@@ -244,7 +248,10 @@ class SpanInstabase(Instabase):
             else:
                 diagnostic.record(self.region, year, 'baseline', self.denom)
                 # calculate this and tack it on
-                yield [year, func(result, self.denom)] + list(yearresult[1:])
+                if self.unshift:
+                    yield [year, func(result, self.denom)] + list(yearresult[1:])
+                else:
+                    yield [year, func(result, self.denom)]
 
     @staticmethod
     def describe():
@@ -311,13 +318,17 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
 Sum two or more results
 """
 class Sum(calculation.Calculation):
-    def __init__(self, subcalcs):
+    def __init__(self, subcalcs, unshift=True):
         fullunitses = subcalcs[0].unitses[:]
         for ii in range(1, len(subcalcs)):
             assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
             fullunitses.extend(subcalcs[ii].unitses)
-        super(Sum, self).__init__([subcalcs[0].unitses[0]] + fullunitses)
+        if unshift:
+            super(Sum, self).__init__([subcalcs[0].unitses[0]] + fullunitses)
+        else:
+            super(Sum, self).__init__([subcalcs[0].unitses[0]])
 
+        self.unshift = unshift
         self.subcalcs = subcalcs
 
     def format(self, lang, *args, **kwargs):
@@ -344,7 +355,7 @@ class Sum(calculation.Calculation):
 
         # Prepare the generator from our encapsulated operations
         subapps = [subcalc.apply(region, *args, **kwargs) for subcalc in self.subcalcs]
-        return calculation.ApplicationPassCall(region, subapps, generate, unshift=True)
+        return calculation.ApplicationPassCall(region, subapps, generate, unshift=self.unshift)
 
     def column_info(self):
         infoses = [subcalc.column_info() for subcalc in self.subcalcs]
