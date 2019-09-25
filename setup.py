@@ -10,6 +10,6 @@ setup(name='openest',
       packages=find_packages(),
       install_requires=['numpy', 'scipy', 'emcee', 'statsmodels', 'xarray',
                         'metacsv'],
-      tests_require=['pytest'],
+      tests_require=['pytest', 'pytest-mock'],
       zip_safe=False,
       )
