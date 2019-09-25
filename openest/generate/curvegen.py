@@ -46,9 +46,9 @@ class TransformCurveGenerator(CurveGenerator):
             traceback.print_exc()
             raise ex
 
-    def get_lincom_terms(self, region, year, predictors):
+    def get_lincom_terms(self, region, year, predictors, origds):
         if self.deltamethod_passthrough:
-            return self.curvegens[0].get_lincom_terms(region, year, predictors)
+            return self.curvegens[0].get_lincom_terms(region, year, predictors, origds)
         else:
             raise NotImplementedError("Cannot produce deltamethod terms for transform %s" % self.description)
 
@@ -139,3 +139,13 @@ class DelayedCurveGenerator(CurveGenerator):
         #except Exception as ex:
         #    print self.curvegen
         #    raise ex
+
+class FunctionCurveGenerator(CurveGenerator):
+    def __init__(self, indepunits, depenunits, covargen, curvegenfunc):
+        super(FunctionCurveGenerator, self).__init__(indepunits, depenunits)
+        self.covargen = covargen
+        self.curvegenfunc = curvegenfunc
+
+    def get_curve(self, region, year, *args, **kwargs):
+        covars = self.covargen.offer_update(region, year, kwargs['weather'])
+        return self.curvegenfunc(covars)
