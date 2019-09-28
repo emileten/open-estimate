@@ -227,3 +227,17 @@ class ProductCurve(SmartCurve):
         return formatting.build_recursive({'latex': r"(%s) (%s)",
                                            'julia': r"(%s) .* (%s)"}, lang,
                                           self.curve1, self.curve2)
+
+class ShiftedCurve(SmartCurve):
+    def __init__(self, curve, offset):
+        super(ShiftedCurve, self).__init__()
+        self.curve = curve
+        self.offset = offset
+
+    def __call__(self, ds):
+        return self.curve1(ds) - self.offset
+
+    def format(self, lang):
+        return formatting.build_recursive({'latex': r"(%s - " + str(self.offset) + ")",
+                                           'julia': r"(%s - " + str(self.offset) + ")"},
+                                          lang, self.curve)

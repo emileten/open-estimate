@@ -53,6 +53,8 @@ debugging = ArgumentType('debugging', "A boolean to turn on a debugging system o
                          [bool], lambda context: True)
 skip_on_missing = ArgumentType('skip_on_missing', "A boolean to not report results if we never see the baseline year.",
                                [bool], lambda context: True)
+unshift = ArgumentType('unshift', "A boolean to turn off (if false) the recording of outputs.",
+                       [bool], lambda context: True)
 
 ## Description
 
