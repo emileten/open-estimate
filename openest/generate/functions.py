@@ -410,6 +410,10 @@ class ConstantScale(calculation.Calculation):
 
         return [dict(name='constscale', title=title, description=description)] + infos
 
+    def partial_derivative(self, covariate, covarunit):
+        return Sum(map(lambda subcalc: subcalc.partial_derivative(covariate, covarunit), self.subcalcs),
+                   unshift=self.unshift)
+
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',

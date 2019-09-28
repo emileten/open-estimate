@@ -13,7 +13,14 @@ class CurveGenerator(object):
         raise NotImplementedError()
 
     def format_call(self, lang, *args):
-        raise NotImplementedError()        
+        raise NotImplementedError()
+
+    def get_partial_derivative_curve(self, covariate):
+        """
+        Returns a Curve that calculates the partial
+        derivative with respect to a covariate.
+        """
+        raise NotImplementedError()
 
 class ConstantCurveGenerator(CurveGenerator):
     def __init__(self, indepunits, depenunit, curve):
