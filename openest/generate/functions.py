@@ -115,8 +115,9 @@ class Instabase(calculation.CustomFunctionalCalculation):
     Tacks on the value to the front of the results
     """
 
-    def __init__(self, subcalc, baseyear, func=lambda x, y: x / y, units='portion', skip_on_missing=True):
-        super(Instabase, self).__init__(subcalc, subcalc.unitses[0], units, True, baseyear, func, skip_on_missing)
+    def __init__(self, subcalc, baseyear, func=lambda x, y: x / y, units='portion', skip_on_missing=True, unshift=True):
+        super(Instabase, self).__init__(subcalc, subcalc.unitses[0], units, unshift, baseyear, func, skip_on_missing)
+        self.unshift = unshift
         self.baseyear = baseyear
         self.denom = None # The value in the baseyear
         self.pastresults = [] # results before baseyear
@@ -187,8 +188,8 @@ class SpanInstabase(Instabase):
     skip_on_missing: If we never encounter the year and this is false,
       still print out the existing results.
     """
-    def __init__(self, subcalc, year1, year2, func=lambda x, y: x / y, units='portion', skip_on_missing=True):
-        super(SpanInstabase, self).__init__(subcalc, (year1 + year2) / 2, func, units, skip_on_missing)
+    def __init__(self, subcalc, year1, year2, func=lambda x, y: x / y, units='portion', skip_on_missing=True, unshift=True):
+        super(SpanInstabase, self).__init__(subcalc, (year1 + year2) / 2, func, units, skip_on_missing, unshift)
         self.year1 = year1
         self.year2 = year2
         self.denomterms = []
@@ -226,12 +227,18 @@ class SpanInstabase(Instabase):
             # Should we base everything off this year?
             if year == self.year2:
                 self.denomterms.append(result)
-                self.denom = np.mean(self.denomterms)
+                if not self.deltamethod:
+                    self.denom = np.mean(self.denomterms)
+                else:
+                    self.denom = np.mean(self.denomterms, 0)
 
                 # Print out all past results, re-based
                 for pastresult in self.pastresults:
                     diagnostic.record(self.region, pastresult[0], 'baseline', self.denom)
-                    yield [pastresult[0], func(pastresult[1], self.denom)] + list(pastresult[1:])
+                    if self.unshift:
+                        yield [pastresult[0], func(pastresult[1], self.denom)] + list(pastresult[1:])
+                    else:
+                        yield [pastresult[0], func(pastresult[1], self.denom)]
 
             if self.denom is None:
                 # Keep track of this until we have a base
@@ -241,7 +248,10 @@ class SpanInstabase(Instabase):
             else:
                 diagnostic.record(self.region, year, 'baseline', self.denom)
                 # calculate this and tack it on
-                yield [year, func(result, self.denom)] + list(yearresult[1:])
+                if self.unshift:
+                    yield [year, func(result, self.denom)] + list(yearresult[1:])
+                else:
+                    yield [year, func(result, self.denom)]
 
     @staticmethod
     def describe():
@@ -305,16 +315,20 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
                     description="Translate all results to z-scores against results up to a given year.")
 
 """
-Sum two results
+Sum two or more results
 """
 class Sum(calculation.Calculation):
-    def __init__(self, subcalcs):
+    def __init__(self, subcalcs, unshift=True):
         fullunitses = subcalcs[0].unitses[:]
         for ii in range(1, len(subcalcs)):
             assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
             fullunitses.extend(subcalcs[ii].unitses)
-        super(Sum, self).__init__([subcalcs[0].unitses[0]] + fullunitses)
+        if unshift:
+            super(Sum, self).__init__([subcalcs[0].unitses[0]] + fullunitses)
+        else:
+            super(Sum, self).__init__([subcalcs[0].unitses[0]])
 
+        self.unshift = unshift
         self.subcalcs = subcalcs
 
     def format(self, lang, *args, **kwargs):
@@ -334,11 +348,14 @@ class Sum(calculation.Calculation):
         
     def apply(self, region, *args, **kwargs):
         def generate(year, results):
-            return np.sum(map(lambda x: x[1] if x is not None else np.nan, results))
+            if not self.deltamethod:
+                return np.sum(map(lambda x: x[1] if x is not None else np.nan, results))
+            else:
+                return np.sum(map(lambda x: x[1] if x is not None else np.nan, results), 0)
 
         # Prepare the generator from our encapsulated operations
         subapps = [subcalc.apply(region, *args, **kwargs) for subcalc in self.subcalcs]
-        return calculation.ApplicationPassCall(region, subapps, generate, unshift=True)
+        return calculation.ApplicationPassCall(region, subapps, generate, unshift=self.unshift)
 
     def column_info(self):
         infoses = [subcalc.column_info() for subcalc in self.subcalcs]
@@ -350,11 +367,54 @@ class Sum(calculation.Calculation):
             fullinfos.extend(infos)
         return [dict(name='sum', title=title, description=description)] + fullinfos
 
+    def enable_deltamethod(self):
+        self.deltamethod = True
+        for subcalc in self.subcalcs:
+            subcalc.enable_deltamethod()
+
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculationss],
+                    arguments=[arguments.unshift.optional(), arguments.calculationss],
                     description="Sum the results of multiple previous calculations.")
+
+"""
+ConstantScale
+"""
+class ConstantScale(calculation.Calculation):
+    def __init__(self, subcalc, coeff):
+        super(ConstantScale, self).__init__([subcalc.unitses[0]] + subcalc.unitses)
+        self.subcalc = subcalc
+        self.coeff = coeff
+
+    def format(self, lang, *args, **kwargs):
+        elements = self.subcalc.format(lang, *args, **kwargs)
+            
+        if lang in ['latex', 'julia']:
+            elements['main'] = FormatElement('%f * (%s)' % (self.coeff, elements['main'].repstr), elements['main'].dependencies)
+
+        return elements
+        
+    def apply(self, region, *args, **kwargs):
+        def generate(year, result):
+            return self.coeff * result
+
+        # Prepare the generator from our encapsulated operations
+        subapp = self.subcalc.apply(region, *args, **kwargs)
+        return calculation.ApplicationPassCall(region, subapp, generate, unshift=True)
+
+    def column_info(self):
+        infos = self.subcalc.column_info()
+        title = 'Previous result multiplied by %f' % self.coeff
+        description = 'Previous result multiplied by %f' % self.coeff
+
+        return [dict(name='constscale', title=title, description=description)] + infos
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.coefficient],
+                    description="Multiply the result by a constant factor.")
 
 class Positive(calculation.Calculation):
     """

@@ -45,6 +45,7 @@ monthvalues = ArgumentType('monthvalues', "The values for each month, in a list 
 regions = ArgumentType('regions', "The list of region names.", [list], lambda context: ['here'])
 parameter_getter = ArgumentType('parameter_getter', "A function that retrieves the underlying parameters from an object.",
                                 [type(lambda x: x)], lambda x: x.coeffs)
+coefficient = ArgumentType('coeff', "A given coefficient.", [float], lambda context: 3.)
 
 ## Configuration
 
@@ -52,6 +53,8 @@ debugging = ArgumentType('debugging', "A boolean to turn on a debugging system o
                          [bool], lambda context: True)
 skip_on_missing = ArgumentType('skip_on_missing', "A boolean to not report results if we never see the baseline year.",
                                [bool], lambda context: True)
+unshift = ArgumentType('unshift', "A boolean to turn off (if false) the recording of outputs.",
+                       [bool], lambda context: True)
 
 ## Description
 
@@ -65,3 +68,4 @@ curve_description = ArgumentType('curve_description', "A text description of the
                                  str, lambda context: "A basic curve.")
 description = ArgumentType('description', "An english description of what an operation does.",
                            str, lambda context: "Geworfenheit")
+label = ArgumentType('label', "A short name for this result", str, lambda context: 'token')

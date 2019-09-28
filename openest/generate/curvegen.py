@@ -31,9 +31,11 @@ class ConstantCurveGenerator(CurveGenerator):
 class TransformCurveGenerator(CurveGenerator):
     def __init__(self, transform, description, *curvegens):
         super(TransformCurveGenerator, self).__init__(curvegens[0].indepunits, curvegens[0].depenunit)
+        assert description is not None, "Please provide a description."
         self.curvegens = curvegens
         self.description = description
         self.transform = transform
+        self.deltamethod_passthrough = False
 
     def get_curve(self, region, year, *args, **kw):
         try:
@@ -44,7 +46,23 @@ class TransformCurveGenerator(CurveGenerator):
             traceback.print_exc()
             raise ex
 
+    def get_lincom_terms(self, region, year, predictors, origds):
+        if self.deltamethod_passthrough:
+            return self.curvegens[0].get_lincom_terms(region, year, predictors, origds)
+        else:
+            raise NotImplementedError("Cannot produce deltamethod terms for transform %s" % self.description)
+
+    def get_lincom_terms_simple(self, predictors, covariates={}):
+        if self.deltamethod_passthrough:
+            return self.curvegens[0].get_lincom_terms_simple(predictors, covariates)
+        else:
+            raise NotImplementedError("Cannot produce deltamethod terms for transform %s" % self.description)
+
     def format_call(self, lang, *args):
+        if self.deltamethod_passthrough and len(self.curvegens):
+            # No calculation change
+            return self.curvegens[0].format_call(lang, *args)
+            
         try:
             result = {}
             curveargs = []
@@ -121,3 +139,13 @@ class DelayedCurveGenerator(CurveGenerator):
         #except Exception as ex:
         #    print self.curvegen
         #    raise ex
+
+class FunctionCurveGenerator(CurveGenerator):
+    def __init__(self, indepunits, depenunits, covargen, curvegenfunc):
+        super(FunctionCurveGenerator, self).__init__(indepunits, depenunits)
+        self.covargen = covargen
+        self.curvegenfunc = curvegenfunc
+
+    def get_curve(self, region, year, *args, **kwargs):
+        covars = self.covargen.offer_update(region, year, kwargs['weather'])
+        return self.curvegenfunc(covars)

@@ -7,6 +7,7 @@ from statsmodels.distributions.empirical_distribution import StepFunction
 class SmartCurve(object):
     def __init__(self):
         self.xx = [-np.inf, np.inf] # Backwards compatibility to functions expecting curves
+        self.deltamethod = False
     
     def __call__(self, ds):
         raise NotImplementedError("call not implemented")
@@ -227,3 +228,31 @@ class SumCurve(SmartCurve):
     def format(self, lang):
         formatteds = [SmartCurve.format_call(self.curves[ii], lang, self.variable) for ii in range(len(self.curves))]
         return formattools.join(' + ', formatteds)
+
+class ProductCurve(SmartCurve):
+    def __init__(self, curve1, curve2):
+        super(ProductCurve, self).__init__()
+        self.curve1 = curve1
+        self.curve2 = curve2
+
+    def __call__(self, ds):
+        return self.curve1(ds) * self.curve2(ds)
+
+    def format(self, lang):
+        return formatting.build_recursive({'latex': r"(%s) (%s)",
+                                           'julia': r"(%s) .* (%s)"}, lang,
+                                          self.curve1, self.curve2)
+
+class ShiftedCurve(SmartCurve):
+    def __init__(self, curve, offset):
+        super(ShiftedCurve, self).__init__()
+        self.curve = curve
+        self.offset = offset
+
+    def __call__(self, ds):
+        return self.curve1(ds) - self.offset
+
+    def format(self, lang):
+        return formatting.build_recursive({'latex': r"(%s - " + str(self.offset) + ")",
+                                           'julia': r"(%s - " + str(self.offset) + ")"},
+                                          lang, self.curve)
