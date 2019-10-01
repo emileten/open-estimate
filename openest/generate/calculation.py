@@ -4,6 +4,13 @@ import numpy as np
 
 class Calculation(object):
     def __init__(self, unitses):
+        """
+
+        Parameters
+        ----------
+        unitses : sequence of str
+            Variable units.
+        """
         self.unitses = unitses
         self.deltamethod = False
 
@@ -48,6 +55,25 @@ class Calculation(object):
 class FunctionalCalculation(Calculation):
     """Calculation that calls a handler when it's applied."""
     def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
+        """
+
+        Parameters
+        ----------
+        subcalc : openest.generate.calculation.Calculation-like
+            Sub-calculation object. `subcalc.uniteses[0]` must equal
+            `from_units`.
+        from_units : str
+            Pre-calculation units.
+        to_units : str
+            Post-calculation units.
+        unshift : bool
+        handler_args :
+            Additional arguments passed on to `self.handler()` when applying
+            (via `self.apply()`) the calculation.
+        handler_kw :
+            Additional keyword arguments passed on to `self.handler()` when
+            applying (via `self.apply()`) the calculation.
+        """
         if unshift:
             super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses)
         else:
@@ -296,4 +322,3 @@ class ApplicationByIrregular(Application):
 
         for values in self.func(self.region, year, ds, *self.args, **self.kwargs):
             yield values
-                                    
