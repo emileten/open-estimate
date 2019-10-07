@@ -6,7 +6,6 @@ def get_repstr(obj, lang):
 
     return formatting.get_repstr(obj)
 
-
 def get_dependencies(obj, lang):
     if isinstance(obj, SelfDocumenting):
         return obj.format(lang)['main'].dependencies

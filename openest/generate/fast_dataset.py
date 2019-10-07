@@ -35,7 +35,7 @@ class FastDataset(xr.Dataset):
     def __str__(self):
         result = "FastDataset: [%s] x [%s]" % (', '.join(self.original_data_vars.keys()), ', '.join(self.original_coords.keys()))
         for key in self.original_data_vars:
-            result += "\n\tVariable %s: %s" % (key, self.original_data_vars[key][0] if isinstance(self.original_data_vars[key], tuple) else self.original_data_vars[key].shape)
+            result += "\n\tVariable %s: %s" % (key, "%s %s" % (self.original_data_vars[key][0], self.original_data_vars[key][1].shape) if isinstance(self.original_data_vars[key], tuple) else self.original_data_vars[key].shape)
         for key in self.coords:
             result += "\n\tCoord %s: %s" % (key, self.original_coords[key].shape)
         for key in self.attrs:
@@ -131,6 +131,15 @@ class FastDataset(xr.Dataset):
         return FastDataset(newdata_vars, newcoords, self.attrs)
 
     def __getitem__(self, name):
+        if name not in self._variables:
+            if name == 'time.year' and 'time' in self._variables:
+                if isinstance(self._variables['time'][0], np.datetime64) or isinstance(self._variables['time'][0], str):
+                    return np.array(map(lambda date: int(str(date)[:4]), self._variables['time']))
+                elif np.all(self._variables['time'] > 1000) and np.all(self._variables['time'] < 3000):
+                    return self._variables['time']
+                else:
+                    assert False, "Cannot interpret time.year in fast_dataset (expl: %s)." % (self._variables['time'][0])
+
         return self._variables[name]
     
     def __getattr__(self, name):
@@ -205,7 +214,7 @@ class FastDataArray(xr.DataArray):
         for dim in kwargs:
             axis = self.original_coords.index(dim)
             indices[axis] = self.parentds[dim]._values == kwargs[dim]
-            
+
         return FastDataArray(self._data[tuple(indices)], newcoords, self.parentds)
 
     def isel(self, **kwargs):
@@ -228,7 +237,7 @@ class FastDataArray(xr.DataArray):
 
     def index(self, value):
         return np.nonzero(self._data == value)[0][0]
-    
+
 def region_groupby(ds, year, regions, region_indices):
     timevar = ds.time
     for ii in range(len(regions)):
@@ -253,8 +262,10 @@ def region_groupby(ds, year, regions, region_indices):
                 newvars[var] = (['time'], dsdata[:, region_indices[region]])
             else:
                 coords = list(ds._variables[var].coords)
+                indices = [slice(None)] * len(coords)
+                indices[coords.index('region')] = region_indices[region]
                 coords.remove('region')
-                newvars[var] = (coords, dsdata[:, region_indices[region]])
+                newvars[var] = (coords, dsdata[tuple(indices)])
         subds = FastDataset(newvars, coords=newcoords, attrs={'year': year, 'region': region})
             
         yield region, subds
