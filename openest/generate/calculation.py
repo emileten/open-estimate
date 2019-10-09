@@ -1,8 +1,23 @@
+"""
+Abstract and concrete classes to delegate data and iterate calculations.
+"""
+
 import copy
-import weathertools
 import numpy as np
+import xarray as xr
+
 
 class Calculation(object):
+    """ABC for calculations used in an Application
+
+    Attributes
+    ----------
+    unitses : sequence of str
+        Post-calculation units.
+    deltamethod : bool
+        Does this calculation use The Deltamethod.
+    """
+
     def __init__(self, unitses):
         """
 
@@ -16,7 +31,8 @@ class Calculation(object):
 
     def format(self, lang, *args, **kwargs):
         """Returns a dictionary of FormatElements.
-        Only keys in the tree of dependencies will be output."""
+        Only keys in the tree of dependencies will be output.
+        """
         raise NotImplementedError()
 
     def test(self):
@@ -29,13 +45,13 @@ class Calculation(object):
         pass
 
     def column_info(self):
-        """
-        Returns an array of dictionaries, with 'name', 'title', and 'description'.
+        """Returns an array of {'name', 'title', 'description'}.
         """
         raise NotImplementedError()
 
     def enable_deltamethod(self):
-        """
+        """Enable deltamethod calculation?
+
         When applied, yield will contain arrays of coefficient multiplicands
         as a vector the length of the CSVV coefficients.
         """
@@ -43,17 +59,35 @@ class Calculation(object):
     
     @staticmethod
     def describe():
-        """
-        Returns dictionary containing:
-        - input_timerate: expected time rate of data, day, month, year, or any
-        - output_timerate: expected time rate of data, day, month, year, or same
-        - arguments: a list of subclasses of arguments.ArgumentType, describing each constructor argument
-        - description: text description
+        """Describe the calculation
+
+        Returns
+        -------
+        out : dict
+            This contains:
+
+            ``"input_timerate"``
+                Expected time rate of data, day, month, year, or any.
+
+            ``"output_timerate"``
+                Expected time rate of data, day, month, year, or same.
+
+            ``"arguments"``
+                A list of subclasses of arguments.ArgumentType, describing each
+                constructor argument.
+
+            ``"description"``
+                Text description.
+
         """
         raise NotImplementedError()
 
+
 class FunctionalCalculation(Calculation):
-    """Calculation that calls a handler when it's applied."""
+    """
+    Calculation that calls a handler when it's applied
+    """
+
     def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
         """
 
@@ -87,7 +121,7 @@ class FunctionalCalculation(Calculation):
     def format(self, lang, *args, **kwargs):
         elements = self.subcalc.format(lang, *args, **kwargs)
         handler_elements = self.format_handler(elements['main'], lang, *self.handler_args, **self.handler_kw)
-        elements = copy.copy(elements) # don't update possibly saved elements
+        elements = copy.copy(elements)  # don't update possibly saved elements
         elements.update(handler_elements)
 
         return elements
@@ -105,6 +139,8 @@ class FunctionalCalculation(Calculation):
         raise NotImplementedError()
 
     def cleanup(self):
+        """Pass cleanup signal to subcalculations
+        """
         # Pass on signal for end
         print "completing make"
         self.subcalc.cleanup()
@@ -112,28 +148,103 @@ class FunctionalCalculation(Calculation):
     def enable_deltamethod(self):
         self.deltamethod = True
         self.subcalc.enable_deltamethod()
-        
+
+
 class Application(object):
+    """
+    ABC for objects connecting region data to Calculation-likes
+
+    Attributes
+    ----------
+    region : str
+        Region to apply to.
+    """
     def __init__(self, region):
+        """
+
+        Parameters
+        ----------
+        region : str
+            Region to apply to.
+        """
         self.region = region
 
     def push(self, ds):
         """
-        Returns an interator of (yyyy, value, ...).
+        Yields values for years from a dataset (yyyy, value, ...)
+
+        Parameters
+        ----------
+        ds : xarray.Dataset
+            Input data values to apply calculations to for subset in target
+            region.
+
+        Yields
+        ------
+        year : int or float
+        value : int or float
+        ... :
+            Optional additional values.
         """
         raise NotImplementedError()
 
     def done(self):
         return []
 
+
 class CustomFunctionalCalculation(FunctionalCalculation, Application):
-    """Calculation that creates a copy of itself for an application."""
+    """Calculation that creates a copy of itself for an application
+    """
+
     def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
-        super(CustomFunctionalCalculation, self).__init__(subcalc, from_units, to_units, unshift, *handler_args, **handler_kw)
+        """
+
+        Parameters
+        ----------
+        subcalc : openest.generate.calculation.Calculation-like
+            Sub-calculation object. `subcalc.uniteses[0]` must equal
+            `from_units`.
+        from_units : str
+            Pre-calculation units.
+        to_units : str
+            Post-calculation units.
+        unshift : bool
+        handler_args :
+            Additional arguments passed on to `self.handler()` when applying
+            (via `self.apply()`) the calculation.
+        handler_kw :
+            Additional keyword arguments passed on to `self.handler()` when
+            applying (via `self.apply()`) the calculation.
+        """
+        super(CustomFunctionalCalculation, self).__init__(subcalc, from_units, to_units, unshift, *handler_args,
+                                                          **handler_kw)
         self.subapp = None
         self.region = None
 
     def apply(self, region, *args, **kwargs):
+        """
+        Get generator to apply all subcalculations
+
+        Parameters
+        ----------
+        region : str
+            Target region to apply calculations. Passed to
+            ``self.subcalc.apply()``.
+        args :
+            Passed to ``self.subcalc.apply()``.
+        kwargs :
+            Passed to ``self.subcalc.apply()``.
+
+        Returns
+        -------
+        app : CustomFunctionalCalculation
+            Generator (copy of self) with subcalculations primed with `region`,
+            `args`, and `kwargs`.
+
+        See Also
+        --------
+        CustomFunctionalCalculation.push : yield yearly results from ``self.pushhandler``.
+        """
         # Prepare the generator from our encapsulated operations
         subapp = self.subcalc.apply(region, *args, **kwargs)
         allargs = list(self.handler_args) + list(args)
@@ -151,23 +262,100 @@ class CustomFunctionalCalculation(FunctionalCalculation, Application):
         pass
 
     def push(self, ds):
+        """Push to yield yearly results from ``self.pushhandler``.
+
+        Push `ds`, ``self.handler_args``, ``self.handler_kw`` to
+        ``self.pushhandler``.
+
+        You'd likely want to run this after setting up the generators with
+        ``self.apply``.
+
+        Parameters
+        ----------
+        ds : xarray.Dataset
+            Variables which are later subset to a region and year.
+
+        Yields
+        -------
+        Yearly result from ``self.pushhandler``.
+
+        See Also
+        --------
+        CustomFunctionalCalculation.apply : Prime ``self.pushhandler`` generator with region and arguments.
+        """
         for yearresult in self.pushhandler(ds, *self.handler_args, **self.handler_kw):
             yield yearresult
 
     def pushhandler(self, ds, *allargs, **allkwargs):
+        """
+        Generator parsing `ds` to output yearly results.
+
+        Parameters
+        ----------
+        ds : xarray.Dataset
+            Variables to be subset to a region and parsed by year.
+        allargs
+        allkwargs
+
+        Yields
+        -------
+        yearresult
+        """
         raise NotImplementedError()
 
     def done(self):
+        """
+        Prime and return ``self.donehandler`` generator.
+
+        ``self.donehandler`` is primed with ``self.handler_args`` and
+        ``self.handler_kw``.
+
+        Returns
+        -------
+        generator
+        """
         return self.donehandler(*self.handler_args, **self.handler_kw)
 
     def donehandler(self, *allargs, **allkwargs):
         return []
 
+
 class ApplicationEach(Application):
     """
     Pass every set of values to the calculation for a value.
+
+    Attributes
+    ----------
+    func : callable
+        Callable taking a region, time, dataarray and optional positional
+        and keyword arguments whenever ``self.push`` is called.
+    finishfunc : generator
+        Iterated for yearly results without argument whenever
+        ``self.done`` is called.
+    args :
+        Passed to `func` whenever ``self.push`` is called.
+    kwargs :
+        Passed to `func` whenever ``self.push`` is called.
     """
+
     def __init__(self, region, func, finishfunc=lambda: [], *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        region : str
+            Target region for this application.
+        func : callable
+            Callable taking a region, time, dataarray and optional positional
+            and keyword arguments whenever ``self.push`` is called.
+        finishfunc : generator
+            Iterated for yearly results without argument whenever
+            ``self.done`` is called.
+        args :
+            Passed to `func` whenever ``self.push`` is called.
+        kwargs :
+            Passed to `func` whenever ``self.push`` is called.
+        """
         super(ApplicationEach, self).__init__(region)
         self.func = func
         self.finishfunc = finishfunc
@@ -175,21 +363,76 @@ class ApplicationEach(Application):
         self.kwargs = kwargs
 
     def push(self, ds):
+        """
+        Generates values from ``self.func`` using `ds`.
+
+        Passes ``self.region``, ``self.args``, ``self.kwargs``.
+
+        Parameters
+        ----------
+        ds : xarray.Dataset
+            Input data values to apply calculations to for subset in target
+            region. Must have "time" attribute.
+
+        Yields
+        ------
+        values :
+            Returned or yielded from calling ``self.func`` over ``ds.time``.
+        """
         for ii in range(len(ds.time)):
             for values in self.func(self.region, ds.time[ii], ds.isel(time=ii), *self.args, **self.kwargs):
                 yield values
 
     def done(self):
+        """
+        Prime and return ``self.donehandler`` generator.
+
+        ``self.donehandler`` is primed with ``self.handler_args`` and
+        ``self.handler_kw``.
+
+        Returns
+        -------
+        generator
+        """
         for yearresult in self.finishfunc():
             yield yearresult
 
+
 class ApplicationPassCall(Application):
     """Apply a non-enumerator to all elements of a function.
-    if unshift, tack on the result to the front of a sequence of results.
-    Calls func with each year and value; returns the newly computed value
+
+    If unshift, tack on the result to the front of a sequence of results.
+    Calls func with each year and value; returns the newly computed value.
+
+    Attributes
+    ----------
+    subapp : Application-like or sequence of Application-like
+    handler : callable
+    unshift : bool
+    handler_args :
+    handler_kw :
     """
 
     def __init__(self, region, subapp, handler, *handler_args, **handler_kw):
+        """
+
+        Parameters
+        ----------
+        region : str
+            Target region we apply our calculations to.
+        subapp : Application-like or sequence of Application-like
+            We use the element's `push` method whenever calling ``self.push``,
+            returning a (year, value) or an iterator giving (year, value).
+        handler :  callable
+            Returns (year, value) or value when passed a year, value,
+            `handler_args`, and `handler_kw`.
+        handler_args :
+            Passed to `handler` whenever ``self.push`` is called.
+        handler_kw :
+            Passed to `handler` whenever ``self.push`` is called. If contains
+            'unshift' key, the corresponding value is assigned to
+            ``self.unshift``. Otherwise ``self.unshift`` becomes False.
+        """
         super(ApplicationPassCall, self).__init__(region)
         self.subapp = subapp
         self.handler = handler
@@ -205,7 +448,15 @@ class ApplicationPassCall(Application):
 
     def push(self, ds):
         """
-        Returns an interator of (yyyy, value, ...).
+        Parameters
+        ----------
+        ds : xarray.Dataset
+            Input data values to apply calculations to. Only passed as arg
+            to `push` method of elements in ``self.subapp``.
+
+        Yields
+        ------
+        Iterable each with (year, value, ...).
         """
         if isinstance(self.subapp, list):
             iterators = [subapp.push(ds) for subapp in self.subapp]
@@ -230,7 +481,7 @@ class ApplicationPassCall(Application):
                             assert yearresult[0] == year, "%s <> %s" % (str(yearresult[0]), str(year))
                             anyresults = True
                     if not anyresults:
-                        return # No results
+                        return  # No results
 
                 newresult = self.handler(year, yearresults, *self.handler_args, **self.handler_kw)
                 if isinstance(newresult, tuple):
@@ -257,12 +508,21 @@ class ApplicationPassCall(Application):
                     else:
                         yield (year, newresult)
 
+
 class ApplicationByChunks(Application):
     def __init__(self, region):
+        """
+
+        Parameters
+        ----------
+        region : str
+            Target region to apply calculation to.
+        """
         super(ApplicationByChunks, self).__init__(region)
         self.saved_ds = None
 
     def push(self, ds):
+
         if self.saved_ds is None:
             return self.push_saved(ds)
 
@@ -275,6 +535,7 @@ class ApplicationByChunks(Application):
         Removes used daily values from saved.
         """
         raise NotImplementedError()
+
 
 class ApplicationByYear(ApplicationByChunks):
     def __init__(self, region, func, *args, **kwargs):
@@ -307,6 +568,7 @@ class ApplicationByYear(ApplicationByChunks):
                 yield values
 
         self.saved_ds = None
+
 
 class ApplicationByIrregular(Application):
     def __init__(self, region, func, *args, **kwargs):
