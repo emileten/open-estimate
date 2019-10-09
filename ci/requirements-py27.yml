@@ -12,5 +12,6 @@ dependencies:
   - pytest
   - pytest-mock
   - coverage
+  - pip
   - pip:
       - metacsv
