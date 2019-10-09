@@ -1,5 +1,6 @@
 import copy
 import numpy as np
+import xarray as xr
 
 
 class Calculation(object):
