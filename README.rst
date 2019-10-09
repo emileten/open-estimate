@@ -1,7 +1,8 @@
 open-estimate
 =============
 
-
+.. image:: https://travis-ci.org/ClimateImpactLab/open-estimate.svg?branch=master
+    :target: https://travis-ci.org/ClimateImpactLab/open-estimate
 
 Crowd-Sourcing Model Aggregation Library
 
