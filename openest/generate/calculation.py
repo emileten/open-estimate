@@ -1,8 +1,18 @@
 import copy
-import weathertools
 import numpy as np
 
+
 class Calculation(object):
+    """ABC for calculations used in an Application
+
+    Attributes
+    ----------
+    unitses : sequence of str
+        Post-calculation units.
+    deltamethod : bool
+        Does this calculation use The Deltamethod.
+    """
+
     def __init__(self, unitses):
         """
 
@@ -16,7 +26,8 @@ class Calculation(object):
 
     def format(self, lang, *args, **kwargs):
         """Returns a dictionary of FormatElements.
-        Only keys in the tree of dependencies will be output."""
+        Only keys in the tree of dependencies will be output.
+        """
         raise NotImplementedError()
 
     def test(self):
@@ -29,13 +40,13 @@ class Calculation(object):
         pass
 
     def column_info(self):
-        """
-        Returns an array of dictionaries, with 'name', 'title', and 'description'.
+        """Returns an array of {'name', 'title', 'description'}.
         """
         raise NotImplementedError()
 
     def enable_deltamethod(self):
-        """
+        """Enable deltamethod calculation?
+
         When applied, yield will contain arrays of coefficient multiplicands
         as a vector the length of the CSVV coefficients.
         """
@@ -43,14 +54,29 @@ class Calculation(object):
     
     @staticmethod
     def describe():
-        """
-        Returns dictionary containing:
-        - input_timerate: expected time rate of data, day, month, year, or any
-        - output_timerate: expected time rate of data, day, month, year, or same
-        - arguments: a list of subclasses of arguments.ArgumentType, describing each constructor argument
-        - description: text description
+        """Describe the calculation
+
+        Returns
+        -------
+        out : dict
+            This contains:
+
+            ``"input_timerate"``
+                Expected time rate of data, day, month, year, or any.
+
+            ``"output_timerate"``
+                Expected time rate of data, day, month, year, or same.
+
+            ``"arguments"``
+                A list of subclasses of arguments.ArgumentType, describing each
+                constructor argument.
+
+            ``"description"``
+                Text description.
+
         """
         raise NotImplementedError()
+
 
 class FunctionalCalculation(Calculation):
     """Calculation that calls a handler when it's applied."""
