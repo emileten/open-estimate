@@ -1,0 +1,17 @@
+name: test_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=2.7
+  - numpy
+  - scipy
+  - emcee
+  - statsmodels
+  - xarray
+  - pytest
+  - pytest-mock
+  - coverage
+  - pip
+  - pip:
+      - metacsv

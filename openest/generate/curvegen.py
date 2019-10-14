@@ -4,7 +4,17 @@ import latextools, juliatools, formatting
 
 ## Top-level class
 class CurveGenerator(object):
+    """Abstract Base Class for curve generators"""
     def __init__(self, indepunits, depenunit):
+        """
+
+        Parameters
+        ----------
+        indepunits : sequence of strs
+            Independent variable units.
+        depenunit : str
+            Dependent variable unit.
+        """
         self.indepunits = indepunits
         self.depenunit = depenunit
 
@@ -37,6 +47,16 @@ class ConstantCurveGenerator(CurveGenerator):
 
 class TransformCurveGenerator(CurveGenerator):
     def __init__(self, transform, description, *curvegens):
+        """
+
+        Parameters
+        ----------
+        transform : callable
+            Curve transformation function. Must take 'region' and *args
+            argument of CurveGenerator-like objects.
+        description : str
+        curvegens : Sequence of CurveGenerator-like objects
+        """
         super(TransformCurveGenerator, self).__init__(curvegens[0].indepunits, curvegens[0].depenunit)
         assert description is not None, "Please provide a description."
         self.curvegens = curvegens
@@ -45,6 +65,27 @@ class TransformCurveGenerator(CurveGenerator):
         self.deltamethod_passthrough = False
 
     def get_curve(self, region, year, *args, **kw):
+        """
+
+        Parameters
+        ----------
+        region : str
+            Passed to `self.transform() and `get_curve()` for each
+            CurveGenerator in `self.curvegens`.
+        year : int
+            Passed to `self.transform() and `get_curve()` for each
+            CurveGenerator in `self.curvegens`.
+        args :
+            Passed on to `get_curve()` for each CurveGenerator in
+            `self.curvegens`.
+        kw :
+            Passed on to `get_curve()`  for each CurveGenerator in
+            `self.curvegens`.
+
+        Returns
+        -------
+        Returned value from `self.transform()`.
+        """
         try:
             return self.transform(region, *tuple([curvegen.get_curve(region, year, *args, **kw) for curvegen in self.curvegens]))
         except Exception as ex:
@@ -93,12 +134,35 @@ class TransformCurveGenerator(CurveGenerator):
 
 class DelayedCurveGenerator(CurveGenerator):
     def __init__(self, curvegen):
+        """
+
+        Parameters
+        ----------
+        curvegen : CurveGenerator-like
+        """
         super(DelayedCurveGenerator, self).__init__(curvegen.indepunits, curvegen.depenunit)
         self.curvegen = curvegen
         self.last_curves = {}
         self.last_years = {}
         
     def get_curve(self, region, year, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        region : str
+        year : int
+        args:
+            Passed to `self.get_next_curve()`.
+        kwargs:
+            Passed to `self.get_next_curve()`. Should have an entry for key
+            'weather', which is poped before passing to
+            `self.get_next_curve()`.
+
+        Returns
+        -------
+        openest.generate.SmartCurve-like
+        """
         if self.last_years.get(region, None) == year:
             return self.last_curves[region]
         
@@ -116,6 +180,24 @@ class DelayedCurveGenerator(CurveGenerator):
         return curve
 
     def get_next_curve(self, region, year, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        region : str
+            Passed to `self.curvegen.get_curve()`.
+        year : int
+            Passed to `self.curvegen.get_curve()`.
+        args:
+            Passed to `self.curvegen.get_curve()`.
+        kwargs:
+            Passed to `self.curvegen.get_curve()`.
+
+        Returns
+        -------
+        openest.generate.SmartCurve-like
+
+        """
         return self.curvegen.get_curve(region, year, *args, **kwargs)
 
     def format_call(self, lang, *args):
