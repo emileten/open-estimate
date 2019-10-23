@@ -10,22 +10,18 @@ import xarray as xr
 class Calculation(object):
     """ABC for calculations used in an Application
 
-    Attributes
+    Parameters
     ----------
     unitses : sequence of str
         Post-calculation units.
+
+    Attributes
+    ----------
     deltamethod : bool
         Does this calculation use The Deltamethod.
     """
 
     def __init__(self, unitses):
-        """
-
-        Parameters
-        ----------
-        unitses : sequence of str
-            Variable units.
-        """
         self.unitses = unitses
         self.deltamethod = False
 
@@ -86,28 +82,26 @@ class Calculation(object):
 class FunctionalCalculation(Calculation):
     """
     Calculation that calls a handler when it's applied
+
+    Parameters
+    ----------
+    subcalc : openest.generate.calculation.Calculation-like
+        Sub-calculation object. `subcalc.uniteses[0]` must equal
+        `from_units`.
+    from_units : str
+        Pre-calculation units.
+    to_units : str
+        Post-calculation units.
+    unshift : bool
+    handler_args :
+        Additional arguments passed on to `self.handler()` when applying
+        (via `self.apply()`) the calculation.
+    handler_kw :
+        Additional keyword arguments passed on to `self.handler()` when
+        applying (via `self.apply()`) the calculation.
     """
 
     def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
-        """
-
-        Parameters
-        ----------
-        subcalc : openest.generate.calculation.Calculation-like
-            Sub-calculation object. `subcalc.uniteses[0]` must equal
-            `from_units`.
-        from_units : str
-            Pre-calculation units.
-        to_units : str
-            Post-calculation units.
-        unshift : bool
-        handler_args :
-            Additional arguments passed on to `self.handler()` when applying
-            (via `self.apply()`) the calculation.
-        handler_kw :
-            Additional keyword arguments passed on to `self.handler()` when
-            applying (via `self.apply()`) the calculation.
-        """
         if unshift:
             super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses)
         else:
@@ -154,19 +148,12 @@ class Application(object):
     """
     ABC for objects connecting region data to Calculation-likes
 
-    Attributes
+    Parameters
     ----------
     region : str
         Region to apply to.
     """
     def __init__(self, region):
-        """
-
-        Parameters
-        ----------
-        region : str
-            Region to apply to.
-        """
         self.region = region
 
     def push(self, ds):
@@ -194,28 +181,25 @@ class Application(object):
 
 class CustomFunctionalCalculation(FunctionalCalculation, Application):
     """Calculation that creates a copy of itself for an application
+
+    Parameters
+    ----------
+    subcalc : openest.generate.calculation.Calculation-like
+        Sub-calculation object. `subcalc.uniteses[0]` must equal
+        `from_units`.
+    from_units : str
+        Pre-calculation units.
+    to_units : str
+        Post-calculation units.
+    unshift : bool
+    handler_args :
+        Additional arguments passed on to `self.handler()` when applying
+        (via `self.apply()`) the calculation.
+    handler_kw :
+        Additional keyword arguments passed on to `self.handler()` when
+        applying (via `self.apply()`) the calculation.
     """
-
     def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
-        """
-
-        Parameters
-        ----------
-        subcalc : openest.generate.calculation.Calculation-like
-            Sub-calculation object. `subcalc.uniteses[0]` must equal
-            `from_units`.
-        from_units : str
-            Pre-calculation units.
-        to_units : str
-            Post-calculation units.
-        unshift : bool
-        handler_args :
-            Additional arguments passed on to `self.handler()` when applying
-            (via `self.apply()`) the calculation.
-        handler_kw :
-            Additional keyword arguments passed on to `self.handler()` when
-            applying (via `self.apply()`) the calculation.
-        """
         super(CustomFunctionalCalculation, self).__init__(subcalc, from_units, to_units, unshift, *handler_args,
                                                           **handler_kw)
         self.subapp = None
@@ -324,8 +308,10 @@ class ApplicationEach(Application):
     """
     Pass every set of values to the calculation for a value.
 
-    Attributes
+    Parameters
     ----------
+    region : str
+        Target region for this application.
     func : callable
         Callable taking a region, time, dataarray and optional positional
         and keyword arguments whenever ``self.push`` is called.
@@ -337,25 +323,7 @@ class ApplicationEach(Application):
     kwargs :
         Passed to `func` whenever ``self.push`` is called.
     """
-
     def __init__(self, region, func, finishfunc=lambda: [], *args, **kwargs):
-        """
-
-        Parameters
-        ----------
-        region : str
-            Target region for this application.
-        func : callable
-            Callable taking a region, time, dataarray and optional positional
-            and keyword arguments whenever ``self.push`` is called.
-        finishfunc : generator
-            Iterated for yearly results without argument whenever
-            ``self.done`` is called.
-        args :
-            Passed to `func` whenever ``self.push`` is called.
-        kwargs :
-            Passed to `func` whenever ``self.push`` is called.
-        """
         super(ApplicationEach, self).__init__(region)
         self.func = func
         self.finishfunc = finishfunc
@@ -404,35 +372,24 @@ class ApplicationPassCall(Application):
     If unshift, tack on the result to the front of a sequence of results.
     Calls func with each year and value; returns the newly computed value.
 
-    Attributes
+    Parameters
     ----------
+    region : str
+        Target region we apply our calculations to.
     subapp : Application-like or sequence of Application-like
-    handler : callable
-    unshift : bool
+        We use the element's `push` method whenever calling ``self.push``,
+        returning a (year, value) or an iterator giving (year, value).
+    handler :  callable
+        Returns (year, value) or value when passed a year, value,
+        `handler_args`, and `handler_kw`.
     handler_args :
+        Passed to `handler` whenever ``self.push`` is called.
     handler_kw :
+        Passed to `handler` whenever ``self.push`` is called. If contains
+        'unshift' key, the corresponding value is assigned to
+        ``self.unshift``. Otherwise ``self.unshift`` becomes False.
     """
-
     def __init__(self, region, subapp, handler, *handler_args, **handler_kw):
-        """
-
-        Parameters
-        ----------
-        region : str
-            Target region we apply our calculations to.
-        subapp : Application-like or sequence of Application-like
-            We use the element's `push` method whenever calling ``self.push``,
-            returning a (year, value) or an iterator giving (year, value).
-        handler :  callable
-            Returns (year, value) or value when passed a year, value,
-            `handler_args`, and `handler_kw`.
-        handler_args :
-            Passed to `handler` whenever ``self.push`` is called.
-        handler_kw :
-            Passed to `handler` whenever ``self.push`` is called. If contains
-            'unshift' key, the corresponding value is assigned to
-            ``self.unshift``. Otherwise ``self.unshift`` becomes False.
-        """
         super(ApplicationPassCall, self).__init__(region)
         self.subapp = subapp
         self.handler = handler
@@ -510,14 +467,14 @@ class ApplicationPassCall(Application):
 
 
 class ApplicationByChunks(Application):
-    def __init__(self, region):
-        """
+    """
 
-        Parameters
-        ----------
-        region : str
-            Target region to apply calculation to.
-        """
+    Parameters
+    ----------
+    region : str
+        Target region to apply calculation to.
+    """
+    def __init__(self, region):
         super(ApplicationByChunks, self).__init__(region)
         self.saved_ds = None
 

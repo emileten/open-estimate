@@ -1,20 +1,21 @@
 import traceback
-from calculation import Calculation
-import latextools, juliatools, formatting
 
-## Top-level class
+import formatting
+import juliatools
+import latextools
+
+
 class CurveGenerator(object):
-    """Abstract Base Class for curve generators"""
-    def __init__(self, indepunits, depenunit):
-        """
+    """Abstract Base Class for curve generators
 
-        Parameters
-        ----------
-        indepunits : sequence of strs
-            Independent variable units.
-        depenunit : str
-            Dependent variable unit.
-        """
+    Parameters
+    ----------
+    indepunits : sequence of strs
+        Independent variable units.
+    depenunit : str
+        Dependent variable unit.
+    """
+    def __init__(self, indepunits, depenunit):
         self.indepunits = indepunits
         self.depenunit = depenunit
 
@@ -24,6 +25,7 @@ class CurveGenerator(object):
 
     def format_call(self, lang, *args):
         raise NotImplementedError()        
+
 
 class ConstantCurveGenerator(CurveGenerator):
     def __init__(self, indepunits, depenunit, curve):
@@ -38,18 +40,19 @@ class ConstantCurveGenerator(CurveGenerator):
         result['main'].unit = self.depenunit
         return result
 
-class TransformCurveGenerator(CurveGenerator):
-    def __init__(self, transform, description, *curvegens):
-        """
 
-        Parameters
-        ----------
-        transform : callable
-            Curve transformation function. Must take 'region' and *args
-            argument of CurveGenerator-like objects.
-        description : str
-        curvegens : Sequence of CurveGenerator-like objects
-        """
+class TransformCurveGenerator(CurveGenerator):
+    """
+
+    Parameters
+    ----------
+    transform : callable
+        Curve transformation function. Must take 'region' and *args
+        argument of CurveGenerator-like objects.
+    description : str
+    curvegens : Sequence of CurveGenerator-like objects
+    """
+    def __init__(self, transform, description, *curvegens):
         super(TransformCurveGenerator, self).__init__(curvegens[0].indepunits, curvegens[0].depenunit)
         assert description is not None, "Please provide a description."
         self.curvegens = curvegens
@@ -80,7 +83,8 @@ class TransformCurveGenerator(CurveGenerator):
         Returned value from `self.transform()`.
         """
         try:
-            return self.transform(region, *tuple([curvegen.get_curve(region, year, *args, **kw) for curvegen in self.curvegens]))
+            return self.transform(region, *tuple(
+                [curvegen.get_curve(region, year, *args, **kw) for curvegen in self.curvegens]))
         except Exception as ex:
             print self.curvegens
             print args, kw
@@ -114,7 +118,7 @@ class TransformCurveGenerator(CurveGenerator):
 
             if self.description is None and len(curveargs) == 1:
                 # Pretend like nothing happened (used, e.g., for smart_curve transformation)
-                pass # already in main
+                pass  # already in main
             elif lang == 'latex':
                 result.update(latextools.call(self.transform, self.description, *tuple(curveargs)))
             elif lang == 'julia':
@@ -125,14 +129,15 @@ class TransformCurveGenerator(CurveGenerator):
             print self.curvegens
             raise
 
-class DelayedCurveGenerator(CurveGenerator):
-    def __init__(self, curvegen):
-        """
 
-        Parameters
-        ----------
-        curvegen : CurveGenerator-like
-        """
+class DelayedCurveGenerator(CurveGenerator):
+    """
+
+    Parameters
+    ----------
+    curvegen : CurveGenerator-like
+    """
+    def __init__(self, curvegen):
         super(DelayedCurveGenerator, self).__init__(curvegen.indepunits, curvegen.depenunit)
         self.curvegen = curvegen
         self.last_curves = {}
@@ -221,6 +226,7 @@ class DelayedCurveGenerator(CurveGenerator):
         #except Exception as ex:
         #    print self.curvegen
         #    raise ex
+
 
 class FunctionCurveGenerator(CurveGenerator):
     def __init__(self, indepunits, depenunits, covargen, curvegenfunc):
