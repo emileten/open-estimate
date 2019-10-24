@@ -3,4 +3,5 @@ scipy
 emcee
 statsmodels
 xarray
+pandas
 metacsv
