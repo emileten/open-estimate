@@ -1,31 +1,36 @@
 import os, csv, random
 import numpy as np
 import xarray as xr
-import formatting, arguments, diagnostic
+import formatting, arguments, diagnostic, checks
 from calculation import Calculation, Application, ApplicationByYear
 from formatting import FormatElement
-from ..models.model import Model
-from ..models.spline_model import SplineModel
 from ..models.bin_model import BinModel
 from ..models.memoizable import MemoizedUnivariate
 from ..models.curve import UnivariateCurve, StepCurve
-from curvegen import CurveGenerator
+from curvegen import CurveGenerator, ConstantCurveGenerator
 
+def get_bin_curve(curvegen, region, year, temps, *args):
+    if isinstance(curvegen, CurveGenerator):
+        return curvegen.get_curve(region, year, *args, weather=temps)
+    else:
+        return curvegen
+
+def model_get_curve(model, pval):
+    if isinstance(model, UnivariateCurve):
+        return model
+    elif isinstance(model, BinModel):
+        return StepCurve(model.get_xx(), [model.eval_pval(x, pval) for x in model.get_xx_centers()])
+    else:
+        model = MemoizedUnivariate(model)
+        model.set_x_cache_decimals(1)
+        spline = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
+        return CurveCurve(model.get_xx(), spline)
+    
 # Generate integral over daily temperature
 class MonthlyDayBins(Calculation):
-    def __init__(self, model, units, pval=.5, weather_change=lambda temps: temps):
+    def __init__(self, curvegen, units, weather_change=lambda temps: temps):
         super(MonthlyDayBins, self).__init__([units])
-        self.model = model
-        if isinstance(model, UnivariateCurve):
-            spline = model
-        elif isinstance(model, BinModel):
-            spline = StepCurve(model.get_xx(), [model.eval_pval(x, pval) for x in model.get_xx_centers()])
-        else:
-            model = MemoizedUnivariate(model)
-            model.set_x_cache_decimals(1)
-            spline = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
-
-        self.spline = spline
+        self.curvegen = curvegen
         self.weather_change = weather_change
 
     def format(self, lang):
@@ -34,18 +39,20 @@ class MonthlyDayBins(Calculation):
             return {'main': FormatElement(r"\frac{1}{12} \sum_{m \in y(t)} %s(T_m)",
                                           ['T_m', "%s(\cdot)" % (funcvar)]),
                     'T_m': FormatElement("Temperature", is_abstract=True),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model))}
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.curvegen))}
         elif lang == 'julia':
             return {'main': FormatElement(r"sum(%s(Tbymonth)) / 12",
                                           ['Tbymonth', "%s(T)" % (funcvar)]),
                     'Tbymonth': FormatElement("# Days of within each bin"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.model))}            
+                    "%s(T)" % (funcvar): FormatElement(str(self.curvegen))}            
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
-            temps = self.weather_change(temps)
-            results = self.spline(temps)
+            temps2 = self.weather_change(temps)
+            curve = get_bin_curve(self.curvegen, region, year, temps)
+            checks.assert_conformant_weather_input(curve, temps2)
 
+            results = curve(temps2)
             result = np.nansum(results) / 12
 
             if not np.isnan(result):
@@ -54,32 +61,21 @@ class MonthlyDayBins(Calculation):
         return ApplicationByYear(region, generate)
 
     def column_info(self):
-        description = "The combined result of daily temperatures, organized into bins according to %s, divided by 12 to describe monthly effects." % (str(self.model))
+        description = "The combined result of daily temperatures, organized into bins according to %s, divided by 12 to describe monthly effects." % (str(self.curvegen))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
     @staticmethod
     def describe():
         return dict(input_timerate='month', output_timerate='year',
-                    arguments=[arguments.model, arguments.output_unit, arguments.qval.optional(),
+                    arguments=[arguments.curve_or_curvegen, arguments.output_unit, arguments.qval.optional(),
                                arguments.input_change.optional()],
                     description="Evaluate a curve in each month, and take the yearly average.")
 
 class YearlyDayBins(Calculation):
-    def __init__(self, model, units, pval=.5):
+    def __init__(self, curvegen, units, weather_change=lambda temps: temps):
         super(YearlyDayBins, self).__init__([units])
-        self.model = model
-
-        if isinstance(model, UnivariateCurve):
-            self.xx = model.get_xx()
-            self.spline = model
-        elif isinstance(model, BinModel):
-            self.xx = model.get_xx_centers()
-            self.spline = StepCurve(model.get_xx(), [model.eval_pval(x, pval) for x in model.get_xx_centers()])
-        else:
-            self.xx = model.get_xx()
-            memomodel = MemoizedUnivariate(model)
-            memomodel.set_x_cache_decimals(1)
-            self.spline = memomodel.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
+        self.curvegen = curvegen
+        self.weather_change = weather_change
 
     def format(self, lang):
         funcvar = formatting.get_function()
@@ -87,30 +83,30 @@ class YearlyDayBins(Calculation):
             return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
                                           ['T_d', "%s(\cdot)" % (funcvar)]),
                     'T_d': FormatElement("Temperature", is_abstract=True),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model))}
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.curvegen))}
         elif lang == 'julia':
             return {'main': FormatElement(r"sum(%s(Tbins))",
                                           ['Tbins', "%s(T)" % (funcvar)]),
                     'Tbins': FormatElement("# Temperature in bins"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.model))}
+                    "%s(T)" % (funcvar): FormatElement(str(self.curvegen))}
 
 
     def apply(self, region, *args):
         def generate(region, year, temps, **kw):
-            if isinstance(self.spline, CurveGenerator):
-                spline = self.spline.get_spline.get_curve(region, year, *args, weather=temps)
-            else:
-                spline = self.spline
-
-            if len(temps.shape) == 2:
-                if temps.shape[0] == 12 and temps.shape[1] == len(self.xx):
-                    yy = spline(self.xx)
+            temps2 = self.weather_change(temps)
+            curve = get_bin_curve(self.curvegen, region, year, temps)
+            checks.assert_conformant_weather_input(curve, temps2)
+            
+            if hasattr(temps2, 'shape') and len(temps2.shape) == 2:
+                xx = curve.get_xx()
+                if temps2.shape[0] == 12 and temps2.shape[1] == len(xx):
+                    yy = curve(xx)
                     yy[np.isnan(yy)] = 0
-                    result = np.sum(temps.dot(yy))
+                    result = np.sum(temps2.dot(yy))
                 else:
-                    raise RuntimeError("Unknown format for temps: " + str(temps.shape[0]) + " x " + str(temps.shape[1]) + " <> len " + str(self.xx))
+                    raise RuntimeError("Unknown format for temps: " + str(temps2.shape[0]) + " x " + str(temps2.shape[1]) + " <> len " + str(xx))
             else:
-                result = np.nansum(spline(temps))
+                result = np.nansum(curve(temps2))
 
             if not np.isnan(result):
                 yield (year, result)
@@ -118,27 +114,22 @@ class YearlyDayBins(Calculation):
         return ApplicationByYear(region, generate)
 
     def column_info(self):
-        description = "The combined result of daily temperatures, organized into bins according to %s." % (str(self.model))
+        description = "The combined result of daily temperatures, organized into bins according to %s." % (str(self.curvegen))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='year',
-                    arguments=[arguments.model, arguments.output_unit, arguments.qval.optional()],
+                    arguments=[arguments.curve_or_curvegen, arguments.output_unit, arguments.qval.optional()],
                     description="Evaluate a binned curve, and sum over the year.")
     
 class AverageByMonth(Calculation):
-    def __init__(self, model, units, func=lambda x: x, pval=.5):
+    def __init__(self, curvegen, units, weather_change=lambda temps: temps, func=lambda x: x):
         super(AverageMonthToYear, self).__init__([units])
         self.days_bymonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         self.transitions = np.cumsum(self.days_bymonth)
-
-        if isinstance(model, UnivariateCurve):
-            self.spline = model
-        else:
-            model = MemoizedUnivariate(model)
-            model.set_x_cache_decimals(1)
-            self.spline = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
+        self.curvegen = curvegen
+        self.weather_change = weather_change
 
     def format(self, lang):
         funcvar = formatting.get_function()
@@ -146,20 +137,26 @@ class AverageByMonth(Calculation):
             return {'main': FormatElement(r"mean(\{mean_{d \in m(t)} %s(T_d)\})" % (funcvar),
                                           ['T_d', "%s(\cdot)" % (funcvar)]),
                     'T_d': FormatElement("Temperature", is_abstract=True),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.spline))}
+                    "%s(\cdot)" % (funcvar): FormatElement(str(self.curvegen))}
         elif lang == 'julia':
             return {'main': FormatElement("mean([mean(%s(Tbyday[monthday[ii]:monthday[ii+1]-1])) for ii in 1:12])" % (funcvar),
                                           ['Tbyday', "monthday", "%s(T)" % (funcvar)]),
                     'Tbyday': FormatElement("# Temperature by day"),
                     'monthday': FormatElement("cumsum([1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.spline))}
+                    "%s(T)" % (funcvar): FormatElement(str(self.curvegen))}
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
+            temps2 = self.weather_change(temps)
+            curve = get_bin_curve(self.curvegen, region, year, temps)
+            checks.assert_conformant_weather_input(curve, temps2)
+            
+            assert hasattr(temps2, 'shape'), "AverageByMonth does not support smart_curves."
+            
             bymonth = []
             for mm in range(12):
                 avgmonth = np.mean(temps[self.transitions[mm]-self.days_bymonth[mm]:self.transitions[mm]])
-                bymonth.append(self.spline(avgmonth))
+                bymonth.append(curve(avgmonth))
 
             result = np.mean(bymonth)
             if not np.isnan(result):
@@ -168,13 +165,13 @@ class AverageByMonth(Calculation):
         return ApplicationByYear(region, generate)
 
     def column_info(self):
-        description = "The effects of monthly average temperatures, organized into bins according to %s, averaged over months." % (str(self.spline))
+        description = "The effects of monthly average temperatures, organized into bins according to %s, averaged over months." % (str(self.curvegen))
         return [dict(name='response', title='Direct marginal response', description=description)]
 
     @staticmethod
     def describe():
         return dict(input_timerate='day', output_timerate='year',
-                    arguments=[arguments.model, arguments.output_unit, arguments.input_change.optional(),
+                    arguments=[arguments.curve_or_curvegen, arguments.output_unit, arguments.input_change.optional(),
                                arguments.qval.optional()],
                     description="Apply a curve to the average of each month, and average over the year.")
 
