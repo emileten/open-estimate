@@ -372,6 +372,13 @@ class Sum(calculation.Calculation):
         for subcalc in self.subcalcs:
             subcalc.enable_deltamethod()
 
+    def partial_derivative(self, covariate, covarunit):
+        """
+        Returns a new calculation object that calculates the partial
+        derivative with respect to a given variable; currently only covariates are supported.
+        """
+        return Sum(map(lambda subcalc: subcalc.partial_derivative(covariate, covarunit), self.subcalcs))
+
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
@@ -512,7 +519,7 @@ class AuxillaryResult(calculation.Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculation, arguments.calculation.describe("An auxillary calculation, placed behind the main calculation.")],
+                    arguments=[arguments.calculation, arguments.calculation.describe("An auxillary calculation, placed behind the main calculation."), arguments.label],
                     description="Add an additional result to the columns.")
 
 class AuxillaryResultApplication(calculation.Application):

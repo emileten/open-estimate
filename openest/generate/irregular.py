@@ -59,8 +59,8 @@ class YearlySumIrregular(Calculation):
         return [dict(name='response', title='Direct marginal response', description=description)]
 
     def partial_derivative(self, covariate, covarunit):
-        return YearlySumIrregular(self.units + '/' + covarunit,
-                                  curvegen.get_partial_derivative_curve(covariate),
+        return YearlySumIrregular(self.unitses[0] + '/' + covarunit,
+                                  self.curvegen.get_partial_derivative_curvegen(covariate, covarunit),
                                   "Partial derivative of " + self.curve_description + " w.r.t. " + covariate)
 
     @staticmethod

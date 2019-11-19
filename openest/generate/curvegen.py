@@ -25,11 +25,12 @@ class CurveGenerator(object):
     def format_call(self, lang, *args):
         raise NotImplementedError()
 
-    def get_partial_derivative_curve(self, covariate):
+    def get_partial_derivative_curvegen(self, covariate, covarunit):
         """
-        Returns a Curve that calculates the partial
+        Returns a CurveGenerator that calculates the partial
         derivative with respect to a covariate.
         """
+        print self.__class__
         raise NotImplementedError()
 
 class ConstantCurveGenerator(CurveGenerator):
@@ -131,6 +132,16 @@ class TransformCurveGenerator(CurveGenerator):
         except Exception as ex:
             print self.curvegens
             raise
+
+    def get_partial_derivative_curvegen(self, covariate, covarunit):
+        """
+        Returns a CurveGenerator that calculates the partial
+        derivative with respect to a covariate.
+        """
+        if self.deltamethod_passthrough:
+            return self.curvegens[0].get_partial_derivative_curvegen(covariate, covarunit)
+        else:
+            raise NotImplementedError("Cannot produce partial derivative for transform %s" % self.description)
 
 class DelayedCurveGenerator(CurveGenerator):
     def __init__(self, curvegen):
