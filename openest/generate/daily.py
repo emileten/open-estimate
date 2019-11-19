@@ -67,7 +67,7 @@ class MonthlyDayBins(Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='month', output_timerate='year',
-                    arguments=[arguments.curve_or_curvegen, arguments.output_unit, arguments.qval.optional(),
+                    arguments=[arguments.curve_or_curvegen, arguments.output_unit,
                                arguments.input_change.optional()],
                     description="Evaluate a curve in each month, and take the yearly average.")
 
@@ -120,7 +120,7 @@ class YearlyDayBins(Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='year',
-                    arguments=[arguments.curve_or_curvegen, arguments.output_unit, arguments.qval.optional()],
+                    arguments=[arguments.curve_or_curvegen, arguments.output_unit, arguments.input_change.optional()],
                     description="Evaluate a binned curve, and sum over the year.")
     
 class AverageByMonth(Calculation):
@@ -171,8 +171,7 @@ class AverageByMonth(Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='day', output_timerate='year',
-                    arguments=[arguments.curve_or_curvegen, arguments.output_unit, arguments.input_change.optional(),
-                               arguments.qval.optional()],
+                    arguments=[arguments.curve_or_curvegen, arguments.output_unit, arguments.input_change.optional()],
                     description="Apply a curve to the average of each month, and average over the year.")
 
 class PercentWithin(Calculation):
