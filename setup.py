@@ -9,7 +9,7 @@ setup(name='openest',
       license='GNU v. 3',
       packages=find_packages(),
       install_requires=['numpy', 'scipy', 'emcee', 'statsmodels', 'xarray',
-                        'metacsv'],
+                        'pandas', 'metacsv'],
       tests_require=['pytest', 'pytest-mock'],
       zip_safe=False,
       )

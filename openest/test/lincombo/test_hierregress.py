@@ -46,7 +46,7 @@ def setup_trend(N):
     yy = 3 + 2*tt + np.random.normal(0, 1, N)
     sigma = 10 * np.ones(N)
 
-    XX = np.hstack((np.ones((N, 1)), np.transpose(np.matrix(tt))))
+    XX = np.hstack((np.ones((N, 1)), np.transpose(np.atleast_2d(tt))))
 
     return yy, sigma, XX
 
