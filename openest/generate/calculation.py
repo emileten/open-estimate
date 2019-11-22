@@ -62,6 +62,7 @@ class Calculation(object):
         Returns a new calculation object that calculates the partial
         derivative with respect to a given variable; currently only covariates are supported.
         """
+        print self.__class__
         raise NotImplementedError()
 
     @staticmethod

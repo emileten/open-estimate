@@ -509,6 +509,14 @@ class AuxillaryResult(calculation.Calculation):
         subapp_aux = self.subcalc_aux.apply(region, *args, **kwargs)
         return AuxillaryResultApplication(region, subapp_main, subapp_aux)
 
+    def partial_derivative(self, covariate, covarunit):
+        """
+        Returns a new calculation object that calculates the partial
+        derivative with respect to a given variable; currently only covariates are supported.
+        """
+        return AuxillaryResult(self.subcalc_main.partial_derivative(covariate, covarunit),
+                               self.subcalc_aux.partial_derivative(covariate, covarunit), self.auxname)
+        
     def column_info(self):
         infos_main = self.subcalc_main.column_info()
         infos_aux = self.subcalc_aux.column_info()
