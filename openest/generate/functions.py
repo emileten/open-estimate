@@ -382,7 +382,7 @@ class Sum(calculation.Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.unshift.optional(), arguments.calculationss],
+                    arguments=[arguments.calculationss, arguments.unshift.optional()],
                     description="Sum the results of multiple previous calculations.")
 
 """
