@@ -31,7 +31,7 @@ def probability_tau(mus, tau, yy, stdvars, XX, probability_prior_tau):
     mv_betahat_given_tau = betahat_given_tau(yy, stdvars, XX, tau)
     mv_mu_given_tau = mu_given_tau(yy, stdvars, XX, tau)
 
-    betahats = np.dot(XX, np.transpose(np.matrix(mus)))
+    betahats = np.dot(XX, np.transpose(np.atleast_2d(mus)))
 
     return np.exp(probability_prior_tau.logpdf(tau) + mv_betahat_given_tau.logpdf(np.transpose(betahats)) - mv_mu_given_tau.logpdf(mus))
 
