@@ -372,10 +372,17 @@ class Sum(calculation.Calculation):
         for subcalc in self.subcalcs:
             subcalc.enable_deltamethod()
 
+    def partial_derivative(self, covariate, covarunit):
+        """
+        Returns a new calculation object that calculates the partial
+        derivative with respect to a given variable; currently only covariates are supported.
+        """
+        return Sum(map(lambda subcalc: subcalc.partial_derivative(covariate, covarunit), self.subcalcs))
+
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculationss],
+                    arguments=[arguments.calculationss, arguments.unshift.optional()],
                     description="Sum the results of multiple previous calculations.")
 
 """
@@ -409,6 +416,10 @@ class ConstantScale(calculation.Calculation):
         description = 'Previous result multiplied by %f' % self.coeff
 
         return [dict(name='constscale', title=title, description=description)] + infos
+
+    def partial_derivative(self, covariate, covarunit):
+        return Sum(map(lambda subcalc: subcalc.partial_derivative(covariate, covarunit), self.subcalcs),
+                   unshift=self.unshift)
 
     @staticmethod
     def describe():
@@ -491,6 +502,10 @@ class AuxillaryResult(calculation.Calculation):
         self.auxname = auxname
 
     def format(self, lang, *args, **kwargs):
+        beforeauxlen = len(formatting.format_labels)
+        auxres = self.subcalc_aux.format(lang, *args, **kwargs)
+        formatting.format_labels = formatting.format_labels[:beforeauxlen] # drop any new ones added
+        formatting.add_label(self.auxname, auxres)
         return self.subcalc_main.format(lang, *args, **kwargs)
 
     def apply(self, region, *args, **kwargs):
@@ -498,6 +513,14 @@ class AuxillaryResult(calculation.Calculation):
         subapp_aux = self.subcalc_aux.apply(region, *args, **kwargs)
         return AuxillaryResultApplication(region, subapp_main, subapp_aux)
 
+    def partial_derivative(self, covariate, covarunit):
+        """
+        Returns a new calculation object that calculates the partial
+        derivative with respect to a given variable; currently only covariates are supported.
+        """
+        return AuxillaryResult(self.subcalc_main.partial_derivative(covariate, covarunit),
+                               self.subcalc_aux.partial_derivative(covariate, covarunit), self.auxname)
+        
     def column_info(self):
         infos_main = self.subcalc_main.column_info()
         infos_aux = self.subcalc_aux.column_info()
@@ -508,7 +531,7 @@ class AuxillaryResult(calculation.Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculation, arguments.calculation.describe("An auxillary calculation, placed behind the main calculation.")],
+                    arguments=[arguments.calculation, arguments.calculation.describe("An auxillary calculation, placed behind the main calculation."), arguments.label],
                     description="Add an additional result to the columns.")
 
 class AuxillaryResultApplication(calculation.Application):

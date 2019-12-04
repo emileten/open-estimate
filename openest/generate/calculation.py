@@ -52,7 +52,15 @@ class Calculation(object):
         as a vector the length of the CSVV coefficients.
         """
         self.deltamethod = True
-    
+
+    def partial_derivative(self, covariate, covarunit):
+        """
+        Returns a new calculation object that calculates the partial
+        derivative with respect to a given variable; currently only covariates are supported.
+        """
+        print self.__class__
+        raise NotImplementedError()
+
     @staticmethod
     def describe():
         """Describe the calculation

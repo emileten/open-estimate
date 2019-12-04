@@ -58,6 +58,11 @@ class YearlySumIrregular(Calculation):
         description = "The total result across a year of weather applied to " + self.curve_description
         return [dict(name='response', title='Direct marginal response', description=description)]
 
+    def partial_derivative(self, covariate, covarunit):
+        return YearlySumIrregular(self.unitses[0] + '/' + covarunit,
+                                  self.curvegen.get_partial_derivative_curvegen(covariate, covarunit),
+                                  "Partial derivative of " + self.curve_description + " w.r.t. " + covariate)
+
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='year',
