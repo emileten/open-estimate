@@ -502,6 +502,10 @@ class AuxillaryResult(calculation.Calculation):
         self.auxname = auxname
 
     def format(self, lang, *args, **kwargs):
+        beforeauxlen = len(formatting.format_labels)
+        auxres = self.subcalc_aux.format(lang, *args, **kwargs)
+        formatting.format_labels = formatting.format_labels[:beforeauxlen] # drop any new ones added
+        formatting.add_label(self.auxname, auxres)
         return self.subcalc_main.format(lang, *args, **kwargs)
 
     def apply(self, region, *args, **kwargs):
