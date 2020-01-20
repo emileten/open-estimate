@@ -4,6 +4,8 @@ import formatting
 import juliatools
 import latextools
 
+from openest.models.curve import FlatCurve
+
 
 class CurveGenerator(object):
     """Abstract Base Class for curve generators
@@ -48,7 +50,13 @@ class ConstantCurveGenerator(CurveGenerator):
         result['main'].unit = self.depenunit
         return result
 
-
+    def get_partial_derivative_curvegen(self, covariate, covarunit):
+        """
+        Returns a CurveGenerator that calculates the partial
+        derivative with respect to a covariate.
+        """
+        return ConstantCurveGenerator(self.indepunits, self.depenunit + '/' + covarunit, FlatCurve(0))
+    
 class TransformCurveGenerator(CurveGenerator):
     """
 
@@ -244,6 +252,12 @@ class DelayedCurveGenerator(CurveGenerator):
         #    print self.curvegen
         #    raise ex
 
+    def get_partial_derivative_curvegen(self, covariate, covarunit):
+        """
+        Returns a CurveGenerator that calculates the partial
+        derivative with respect to a covariate.
+        """
+        return DelayedCurveGenerator(self.curvegen.get_partial_derivative_curvegen(covariate, covarunit))
 
 class FunctionCurveGenerator(CurveGenerator):
     def __init__(self, indepunits, depenunits, covargen, curvegenfunc):
