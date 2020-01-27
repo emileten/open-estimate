@@ -526,7 +526,7 @@ class AuxillaryResult(calculation.Calculation):
         infos_aux = self.subcalc_aux.column_info()
         infos_aux[0]['name'] = self.auxname
 
-        return [infos_main[0]] + infos_aux + infos_main[1:]
+        return [infos_main[0], infos_aux[0]] + infos_main[1:]
 
     @staticmethod
     def describe():
@@ -550,5 +550,47 @@ class AuxillaryResultApplication(calculation.Application):
             yield list(yearresult[0:2]) + [yearresult_aux[1]] + list(yearresult[2:])
 
     def done(self):
-        self.subapp_main.done()
         self.subapp_aux.done()
+        return self.subapp_main.done()
+
+class KeepOnly(calculation.Calculation):
+    """
+    Keep only a subset of the calculation results, with given names.
+    """
+    def __init__(self, subcalc, names):
+        self.subcalc = subcalc
+        self.iskept = [info['name'] in names for info in subcalc.column_info()]
+        super(KeepOnly, self).__init__(self.keeplist(subcalc.unitses))
+
+    def keeplist(self, lst):
+        assert len(lst) == len(self.iskept), "Given %d <> %d when choosing which to keep." % (len(lst), len(self.iskept))
+        return [lst[ii] for ii in range(len(lst)) if self.iskept[ii]]
+        
+    def format(self, lang, *args, **kwargs):
+        return self.subcalc.format(lang, *args, **kwargs)
+            
+    def apply(self, region, *args, **kwargs):
+        subapp = self.subcalc.apply(region, *args, **kwargs)
+        return KeepOnlyApplication(region, subapp, self.keeplist)
+
+    def column_info(self):
+        return self.keeplist(self.subcalc.column_info())
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.column_names],
+                    description="Only keep a subset of the preliminary calculations.")
+
+class KeepOnlyApplication(calculation.Application):
+    def __init__(self, region, subapp, keeplist):
+        super(KeepOnlyApplication, self).__init__(region)
+        self.subapp = subapp
+        self.keeplist = keeplist
+
+    def push(self, ds):
+        for yearresult in self.subapp.push(ds):
+            yield [yearresult[0]] + self.keeplist(yearresult[1:])
+
+    def done(self):
+        return self.subapp.done()
