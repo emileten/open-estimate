@@ -1,9 +1,18 @@
+"""Curve classes that apply to xarray Datasets.
+
+Curves are mathematical functions on one or more independent
+variables. The basic form of the curves classes is in
+`models/curve.py`. The curve classes defined here, derived from
+`SmartCurve`, take Datasets as arguments.
+
+Smart Curves fall back on Curve logic, but take xarray DataSets and
+know which variables they want.
+"""
+
 import numpy as np
 import juliatools, latextools, formatting, diagnostic, formattools
 from statsmodels.distributions.empirical_distribution import StepFunction
     
-## Smart Curves fall back on Curve logic, but take xarray DataSets and know which variables they want
-
 class SmartCurve(object):
     def __init__(self):
         self.xx = [-np.inf, np.inf] # Backwards compatibility to functions expecting curves

@@ -1,3 +1,13 @@
+"""Speed-improving wrappers on the xarray core classes.
+
+The `FastDataset` and `FastDataArray` classes provide efficient
+wrappers on the standard Dataset and DataArray classes. Despite
+careful resolution of lazy operations with the standard classes, it
+appeared that accessing and operating on simple Numpy arrays was
+multiple times faster than the same operations applied to the standard
+classes. Thus, FastDataset was born.
+"""
+
 import copy, functools
 import xarray as xr
 import numpy as np

@@ -1,3 +1,9 @@
+"""Collection of argument types, based on the ArgumentType system.
+
+This file instantiates a variety of example ArgumentType objects, in
+common use across the Calculation objects.
+"""
+
 import numpy as np
 from openest.models.curve import UnivariateCurve, LinearCurve
 from openest.models.univariate_model import UnivariateModel
