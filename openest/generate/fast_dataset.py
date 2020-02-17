@@ -56,6 +56,9 @@ class FastDataset(xr.Dataset):
 
         return result
 
+    def __repr__(self):
+        return self.__str__()
+    
     @property
     def coords(self):
         return self.original_coords

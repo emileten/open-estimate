@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import xarray as xr
 from .calculation import Calculation, ApplicationEach
 from .curvegen import CurveGenerator
@@ -129,6 +130,9 @@ class YearlyApply(Calculation):
 
         def generate(region, year, temps, **kw):
             # Ensure that we aren't called with a year twice
+            if isinstance(year, np.datetime64):
+                year = pd.to_datetime([year]).year[0] # Convert to int (because passed using ApplicationEach)
+            
             assert year > checks['lastyear'], "Push of %d, but already did %d." % (year, checks['lastyear'])
             checks['lastyear'] = year
 
