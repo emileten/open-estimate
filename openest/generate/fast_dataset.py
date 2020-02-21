@@ -26,9 +26,9 @@ class FastDataset(xr.Dataset):
         self.original_coords = coords
 
         for key in data_vars:
-            assert isinstance(data_vars[key], tuple) or isinstance(data_vars[key], xr.DataArray) or isinstance(data_vars[key], FastDataArray), "Unexpected variable type: %s" % data_vars[key]
+            assert isinstance(data_vars[key], tuple) or isinstance(data_vars[key], xr.DataArray) or isinstance(data_vars[key], xr.Variable) or isinstance(data_vars[key], FastDataArray), "Unexpected variable type: %s" % data_vars[key]
         for key in coords:
-            assert isinstance(coords[key], np.ndarray) or isinstance(coords[key], xr.DataArray) or isinstance(coords[key], xr.IndexVariable), "Unexpected coordinate type: %s" % coords[key]
+            assert isinstance(coords[key], np.ndarray) or isinstance(coords[key], xr.DataArray) or isinstance(coords[key], xr.IndexVariable) or isinstance(coords[key], int), "Unexpected coordinate type: %s" % coords[key]
 
         self._variables = {}
         for name in data_vars:
@@ -37,7 +37,7 @@ class FastDataset(xr.Dataset):
             elif isinstance(data_vars[name], FastDataArray):
                 self._variables[name] = data_vars[name]
             elif name not in coords:
-                self._variables[name] = FastDataArray(data_vars[name]._data, data_vars[name].dims, self)
+                self._variables[name] = FastDataArray(data_vars[name]._data if hasattr(data_vars[name], '_data') else data_vars[name].data, data_vars[name].dims, self)
         self._variables.update({name: FastDataArray(coords[name], (name,), self) for name in coords})
         self._dims = {key: getattr(self._variables[key]._data, 'shape', ()) for key in self._variables}
         if attrs is None:
@@ -325,7 +325,15 @@ def concat(objs, dim=None):
     coords = {}
     dimcoords = {}
     attrs = {}
-    
+
+    isnewdim = True
+    if isinstance(objs[0], FastDataset):
+        if dim in objs[0].original_coords:
+            isnewdim = False
+    elif dim in objs[0].coords:
+        isnewdim = False
+    toconcat = set()
+        
     for ds in objs:
         if isinstance(ds, FastDataset):
             for key in ds.original_coords:
@@ -364,14 +372,25 @@ def concat(objs, dim=None):
                         else:
                             dimdata_vars[key].append(ds.original_data_vars[key])
                 else:
-                    data_vars[key] = ds.original_data_vars[key]
+                    if isnewdim:
+                        if key not in data_vars:
+                            data_vars[key] = []
+                        data_vars[key].append(ds.original_data_vars[key])
+                        toconcat.add(key)
+                    else:
+                        data_vars[key] = ds.original_data_vars[key]
         else:
             for key in ds._dims:
-                if key == dim or dim in ds._dims[key].dims:
+                if key == dim or (hasattr(ds._dims[key], 'dims') and dim in ds._dims[key].dims):
                     if key not in dimcoords:
                         dimcoords[key] = [ds._dims[key]._data]
                     else:
                         dimcoords[key].append(ds._dims[key]._data)
+                elif key in ds.coords:
+                    if key in coords:
+                        coords[key] = assert_index_equal(coords[key], ds.coords[key])
+                    else:
+                        coords[key] = ds.coords[key]
                 else:
                     if key in coords:
                         coords[key] = assert_index_equal(coords[key], ds._dims[key])
@@ -387,17 +406,26 @@ def concat(objs, dim=None):
                     else:
                         dimdata_vars[key].append(ds._variables[key]._data)
                 else:
-                    data_vars[key] = ds._variables[key]
+                    if isnewdim:
+                        if key not in data_vars:
+                            data_vars[key] = []
+                        data_vars[key].append(ds[key])
+                        toconcat.add(key)
+                    else:
+                        data_vars[key] = ds[key]
 
         if ds.attrs is not None:
             for key in ds.attrs:
                 attrs[key] = ds.attrs[key]
 
+    for key in toconcat:
+        data_vars[key] = xr.concat(data_vars[key], 'time')
+                
     for key in dimdata_vars:
         data_vars[key] = (dimdata_coords[key], np.concatenate(dimdata_vars[key], dimdata_coords[key].index(dim)))
     for key in dimcoords:
         coords[key] = np.concatenate(dimcoords[key])
-        
+
     return FastDataset(data_vars, coords, attrs)
 
 def assert_index_equal(one, two):

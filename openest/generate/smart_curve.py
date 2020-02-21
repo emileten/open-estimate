@@ -170,6 +170,19 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
 
         return result
 
+class CubicSplineCurve(CoefficientsCurve):
+    def __init__(self, coeffs, variables, allow_raising=False):
+        super(CubicSplineCurve, self).__init__(coeffs, variables)
+        self.allow_raising = allow_raising
+    
+    def __call__(self, ds):
+        result = np.zeros(ds[self.variables[0]].shape)
+
+        for ii in range(len(self.variables)):
+            result += self.coeffs[ii] * ds._variables[variables[ii]]._data
+
+        return result
+
 class TransformCoefficientsCurve(SmartCurve):
     """Use a transformation of ds to produce each predictor."""
     
