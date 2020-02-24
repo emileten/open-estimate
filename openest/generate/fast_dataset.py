@@ -13,7 +13,7 @@ import xarray as xr
 import numpy as np
 
 def as_name(coord):
-    assert isinstance(coord, str), "Not a string: %s" % coord
+    assert isinstance(coord, str), "Not a string: %s (%s)" % (coord, coord.__class__)
     return coord
 
 class FastDataset(xr.Dataset):
@@ -419,7 +419,10 @@ def concat(objs, dim=None):
                 attrs[key] = ds.attrs[key]
 
     for key in toconcat:
-        data_vars[key] = xr.concat(data_vars[key], 'time')
+        if isinstance(data_vars[key][0], tuple):
+            data_vars[key] = (tuple([dim] + list(data_vars[key][0][0])), np.stack([data_var[1] for data_var in data_vars[key]]))
+        else:
+            data_vars[key] = xr.concat(data_vars[key], dim)
                 
     for key in dimdata_vars:
         data_vars[key] = (dimdata_coords[key], np.concatenate(dimdata_vars[key], dimdata_coords[key].index(dim)))
