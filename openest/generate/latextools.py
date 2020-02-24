@@ -1,5 +1,5 @@
-import formatting
-from formatting import FormatElement
+from . import formatting
+from .formatting import FormatElement
 
 def call(func, description=None, *args):
     """Return a representation of this call.  Any elements in args can

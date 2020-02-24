@@ -15,7 +15,7 @@ model_pr = retrieve.ddp_from_url(crime_violent_pr_url)
 make_generator = daily.make_daily_bymonthdaybins(model_tasmax, lambda x: 1 + x / 100.0, .5)
 
 for values in effect_bundle.yield_given('crime-violent', yyyyddd, tasmax, make_generator):
-    print ','.join(map(str, values))
+    print(','.join(map(str, values)))
 
 # Run a generator that computes the effect of temp. and precip. on crime
 make_generator = generators.make_instabase(generators.make_product(['tasmax', 'pr'], [
@@ -24,4 +24,4 @@ make_generator = generators.make_instabase(generators.make_product(['tasmax', 'p
                                2012)
 
 for values in effect_bundle.yield_given('crime-violent', yyyyddd, {'tasmax': tasmax, 'pr': pr}, make_generator):
-    print ','.join(map(str, values))
+    print(','.join(map(str, values)))

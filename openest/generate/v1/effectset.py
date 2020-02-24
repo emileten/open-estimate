@@ -113,14 +113,14 @@ def send_fips_complete(make_generator):
     """Call after the last county of a loop of counties, to clean up any memory.
     """
 
-    print "Complete the FIPS"
+    print("Complete the FIPS")
     try:
-        iterator = make_generator(FIPS_COMPLETE, None, None).next()
-        print "Success"
-    except StopIteration, e:
+        iterator = next(make_generator(FIPS_COMPLETE, None, None))
+        print("Success")
+    except StopIteration as e:
         pass
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         pass
 
 def get_target_path(targetdir, name):
@@ -176,12 +176,12 @@ def make_tar_dummy(name, acradir, make_generator, targetdir=None, collabel="frac
     # Generate a effect file for each county in regionsA
     with open(os.path.join(acradir, 'regions/regionsANSI.csv')) as countyfp:
         reader = csv.reader(countyfp)
-        reader.next() # ignore header
+        next(reader) # ignore header
 
         # Each row is a county
         for row in reader:
             fips = canonical_fips(row[0])
-            print fips
+            print(fips)
 
             # Call generator (with no data)
             generator = make_generator(fips, None, None)
@@ -218,7 +218,7 @@ def make_tar_duplicate(name, filepath, make_generator, targetdir=None, collabel=
     with tarfile.open(filepath) as tar:
         for item in tar.getnames()[1:]:
             fips = item.split('/')[1][0:-4]
-            print fips
+            print(fips)
 
             # Call make_generator with no data
             generator = make_generator(fips, None, None)
@@ -360,7 +360,7 @@ def call_with_generator(name, weather_ncdf, var, make_generator, targetfunc):
     # Loop through counties, calling make_generator with each
     for ii in range(len(counties)):
         fips = canonical_fips(counties[ii])
-        print fips
+        print(fips)
 
         # Extract the weather just for this county
         if not isinstance(weather, dict):
@@ -413,7 +413,7 @@ def make_tar_ncdf_profile(weather_ncdf, var, make_generator):
     for ii in range(100):
         # Always using 5 digit fips
         fips = canonical_fips(counties[ii])
-        print fips
+        print(fips)
 
         # Construct the input array for this county
         if not isinstance(weather, dict):
@@ -429,10 +429,10 @@ def make_tar_ncdf_profile(weather_ncdf, var, make_generator):
             continue
 
         # Just print out the results
-        print "year", "fraction"
+        print("year", "fraction")
 
         for (year, effect) in generator:
-            print year, effect
+            print(year, effect)
 
 ### Effect calculation functions
 
@@ -452,7 +452,7 @@ def load_tar_make_generator(targetdir, name, column=None):
     def generate(fips, yyyyddd, temps, *args, **kw):
         # When all of the counties are done, kill the local dir
         if fips == FIPS_COMPLETE:
-            print "Remove", tempdir
+            print("Remove", tempdir)
             # We might be in another tempdir-- check
             if os.path.exists(tempdir):
                 kill_local_tempdir(tempdir)
@@ -466,18 +466,18 @@ def load_tar_make_generator(targetdir, name, column=None):
             fipspath = os.path.join('..', fipspath)
             if not os.path.exists(fipspath):
                 # If we can't find this, just return a single year with 0 effect
-                print fipspath + " doesn't exist"
+                print(fipspath + " doesn't exist")
                 yield (yyyyddd[0] / 1000, 0)
                 raise StopIteration()
 
         with open(fipspath) as fp:
             reader = csv.reader(fp)
-            reader.next() # ignore header
+            next(reader) # ignore header
 
             # yield the same values that generated this effect file
             for row in reader:
                 if column is None:
-                    yield [int(row[0])] + map(float, row[1:])
+                    yield [int(row[0])] + list(map(float, row[1:]))
                 else:
                     yield (int(row[0]), float(row[column]))
 
@@ -550,7 +550,7 @@ def aggregate_tar(name, scale_dict=None, targetdir=None, collabel="fraction", ge
             # Go through every year in this effect file
             with open(os.path.join(name, filename)) as csvfp:
                 reader = csv.reader(csvfp, delimiter=',')
-                reader.next()
+                next(reader)
 
                 if report_all: # Report entire sequence of results
                     for row in reader:
@@ -562,10 +562,10 @@ def aggregate_tar(name, scale_dict=None, targetdir=None, collabel="fraction", ge
 
                         # Add on one more value to the weighted sum
                         try:
-                            numer = numer + np.array(map(float, row[1:])) * (scale_dict[code] if scale_dict is not None else 1)
+                            numer = numer + np.array(list(map(float, row[1:]))) * (scale_dict[code] if scale_dict is not None else 1)
                             denom = denom + (scale_dict[code] if scale_dict is not None else 1)
-                        except Exception, e:
-                            print e
+                        except Exception as e:
+                            print(e)
 
                         # Put the weighted sum calculation back in for this year
                         years[row[0]] = (numer, denom)
@@ -604,7 +604,7 @@ def aggregate_tar(name, scale_dict=None, targetdir=None, collabel="fraction", ge
                 writer.writerow(["year"] + collabel)
 
             # Construct a sorted list of years from the keys of this region's dictionary
-            years = map(str, sorted(map(int, regions[region].keys())))
+            years = list(map(str, sorted(map(int, list(regions[region].keys())))))
 
             # For each year, output the weighted average
             for year in years:

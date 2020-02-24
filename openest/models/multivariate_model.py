@@ -1,4 +1,4 @@
-from model import Model
+from .model import Model
 import numpy as np
 
 # Supports both multiple independent variables and models not specified only at points

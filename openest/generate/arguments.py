@@ -10,7 +10,7 @@ from openest.models.univariate_model import UnivariateModel
 from openest.generate.calculation import Calculation
 from openest.generate.base import Constant
 from openest.generate.curvegen import CurveGenerator, ConstantCurveGenerator
-from arguments_base import *
+from .arguments_base import *
 
 ## Meta-calculation
 

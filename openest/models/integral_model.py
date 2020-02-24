@@ -23,9 +23,9 @@ __version__ = "$Revision$"
 import csv, string
 import numpy as np
 
-from model import Model
-from univariate_model import UnivariateModel
-from bin_model import BinModel
+from .model import Model
+from .univariate_model import UnivariateModel
+from .bin_model import BinModel
 
 class IntegralModel(UnivariateModel):
     def __init__(self, model=None):

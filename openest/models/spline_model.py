@@ -22,9 +22,9 @@ from scipy.interpolate import UnivariateSpline
 from scipy.stats import norm
 from scipy.special import erf
 
-from model import Model
-from univariate_model import UnivariateModel
-from memoizable import MemoizableUnivariate
+from .model import Model
+from .univariate_model import UnivariateModel
+from .memoizable import MemoizableUnivariate
 
 class SplineModel(UnivariateModel, MemoizableUnivariate):
     '''
@@ -151,7 +151,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         """Construct a new model with categorical x values 'newxx', using the conditionals currently assigned to categorical x values 'oldxx'."""
         conditionals = []
         for ii in range(len(oldxx)):
-            if oldxx[ii] == -1 or (not isinstance(oldxx[ii], str) and not isinstance(oldxx[ii], unicode) and np.isnan(oldxx[ii])): # Not available
+            if oldxx[ii] == -1 or (not isinstance(oldxx[ii], str) and not isinstance(oldxx[ii], str) and np.isnan(oldxx[ii])): # Not available
                 conditionals.append(SplineModelConditional.make_gaussian(-np.inf, np.inf, np.nan, np.nan))
             else:
                 conditionals.append(self.get_conditional(oldxx[ii]))
@@ -236,7 +236,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         return len(conditional.y0s) == 1 and len(conditional.coeffs[0]) == 3
 
     def get_mean(self, x=None):
-        if not isinstance(x, str) and not isinstance(x, unicode) and np.isnan(x):
+        if not isinstance(x, str) and not isinstance(x, str) and np.isnan(x):
             return np.nan
 
         conditional = self.get_conditional(x)
@@ -289,7 +289,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
                 conditional = SplineModelConditional()
                 self.add_conditional(x, conditional)
 
-            conditional.add_segment(float(row[1]), float(row[2]), map(float, row[3:]))
+            conditional.add_segment(float(row[1]), float(row[2]), list(map(float, row[3:])))
 
             if status_callback:
                 status_callback("Parsing...", reader.line_num / (reader.line_num + 3.0))
@@ -359,8 +359,8 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
                 conditionals.append(SplineModelConditional.make_conditional_from_spline(spline, limits).rescale())
                 xx.append(ddp_model.get_xx()[ii])
             except Exception as e:
-                print e
-                print traceback.print_exc()
+                print(e)
+                print(traceback.print_exc())
 
         return SplineModel(ddp_model.xx_is_categorical, xx, conditionals, True)
 
@@ -448,7 +448,7 @@ class SplineModelConditional():
     # Does not maintain scaling
     def scale_p(self, a):
         for ii in range(self.size()):
-            self.coeffs[ii] = map(lambda c: a*c, self.coeffs[ii])
+            self.coeffs[ii] = [a*c for c in self.coeffs[ii]]
 
     # Does not check for overlapping segments
     def add_segment(self, y0, y1, coeffs):
@@ -834,7 +834,7 @@ class SplineModelConditional():
 
     @staticmethod
     def find_nearest(array, value, within):
-        if isinstance(value, str) or isinstance(value, unicode):
+        if isinstance(value, str) or isinstance(value, str):
             try:
                 value = int(value)
             except:
@@ -869,16 +869,16 @@ class SplineModelConditional():
             conditional_rough_limits = conditional.rough_limits()
             rough_limits = (min(rough_limits[0], conditional_rough_limits[0]), max(rough_limits[1], conditional_rough_limits[1]))
 
-            max_segments = max(max_segments, sum(map(lambda cc: len(cc), conditional.coeffs)))
+            max_segments = max(max_segments, sum([len(cc) for cc in conditional.coeffs]))
 
         num_points = 100 * max_segments / (1 + np.log(len(conditionals)))
 
         ys = np.linspace(rough_limits[0], rough_limits[1], num_points)
         return (limits, ys)
 
-from ddp_model import DDPModel
+from .ddp_model import DDPModel
 
 Model.mergers["spline_model"] = SplineModel.merge
-Model.mergers["spline_model+ddp_model"] = lambda models: DDPModel.merge(map(lambda m: m.to_ddp(), models))
+Model.mergers["spline_model+ddp_model"] = lambda models: DDPModel.merge([m.to_ddp() for m in models])
 Model.combiners['spline_model+spline_model'] = SplineModel.combine
 Model.combiners["spline_model+ddp_model"] = lambda one, two: DDPModel.combine(one.to_ddp(), two)

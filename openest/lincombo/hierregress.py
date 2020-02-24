@@ -1,11 +1,11 @@
 import numpy as np
 from scipy.stats import uniform
-from multi_normal import MultivariateNormal
-from multi_uniform import MultivariateUniform
-from continuous_sampled import ContinuousSampled
-from multi_delta import MultivariateDelta
-import pooling
-import helpers
+from .multi_normal import MultivariateNormal
+from .multi_uniform import MultivariateUniform
+from .continuous_sampled import ContinuousSampled
+from .multi_delta import MultivariateDelta
+from . import pooling
+from . import helpers
 
 mytaudist = None
 
@@ -60,11 +60,11 @@ def lincombo_hierregress_taubymu(yy, stderrs, XX, maxtau=None, guess_range=False
     yy, stdvars, XX = helpers.check_arguments(yy, stderrs, XX)
     nummus = XX.shape[1]
 
-    print "Sampling tau..."
+    print("Sampling tau...")
 
     if maxtau is None:
         maxtau = pooling.estimated_maxtau(yy, stderrs, XX)
-        print "Using maximum tau =", maxtau
+        print("Using maximum tau =", maxtau)
 
     if maxtau > 0:
         probability_prior_tau = uniform(0, maxtau)
@@ -86,7 +86,7 @@ def lincombo_hierregress_taubymu(yy, stderrs, XX, maxtau=None, guess_range=False
         # maxtau == 0
         dist = MultivariateDelta(np.zeros(nummus))
 
-    print "Sampling mus..."
+    print("Sampling mus...")
 
     return sample_posterior(yy, stderrs, XX, dist, draws)
 
@@ -94,11 +94,11 @@ def lincombo_hierregress_taubybeta(yy, stderrs, XX, maxtau=None, guess_range=Fal
     yy, stdvars, XX = helpers.check_arguments(yy, stderrs, XX)
     nummus = XX.shape[1]
 
-    print "Sampling tau..."
+    print("Sampling tau...")
 
     if maxtau is None:
         maxtau = pooling.estimated_maxlintau(yy, stderrs, XX)
-        print "Using maximum tau =", maxtau
+        print("Using maximum tau =", maxtau)
 
     if maxtau[0] > 0:
         probability_prior_tau = uniform(0, maxtau)
@@ -120,7 +120,7 @@ def lincombo_hierregress_taubybeta(yy, stderrs, XX, maxtau=None, guess_range=Fal
         # maxtau == 0
         dist = MultivariateDelta(np.zeros(2))
 
-    print "Sampling mus..."
+    print("Sampling mus...")
 
     return sample_posterior(yy, stderrs, XX, dist, draws)
 

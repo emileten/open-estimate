@@ -27,6 +27,6 @@ def assert_conformant_weather_input(curve, values):
     assert False, "Unknown curve type: %s" % curve.__class__
 
 if __name__ == '__main__':
-    print loosematch("1,000 ", "1000")
-    print loosematch("1 frog", "1 toad")
+    print(loosematch("1,000 ", "1000"))
+    print(loosematch("1 frog", "1 toad"))
     

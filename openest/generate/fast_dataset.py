@@ -43,7 +43,7 @@ class FastDataset(xr.Dataset):
             self.attrs = attrs
             
     def __str__(self):
-        result = "FastDataset: [%s] x [%s]" % (', '.join(self.original_data_vars.keys()), ', '.join(self.original_coords.keys()))
+        result = "FastDataset: [%s] x [%s]" % (', '.join(list(self.original_data_vars.keys())), ', '.join(list(self.original_coords.keys())))
         for key in self.original_data_vars:
             result += "\n\tVariable %s: %s" % (key, "%s %s" % (self.original_data_vars[key][0], self.original_data_vars[key][1].shape) if isinstance(self.original_data_vars[key], tuple) else self.original_data_vars[key].shape)
         for key in self.coords:
@@ -144,7 +144,7 @@ class FastDataset(xr.Dataset):
         if name not in self._variables:
             if name == 'time.year' and 'time' in self._variables:
                 if isinstance(self._variables['time'][0], np.datetime64) or isinstance(self._variables['time'][0], str):
-                    return np.array(map(lambda date: int(str(date)[:4]), self._variables['time']))
+                    return np.array([int(str(date)[:4]) for date in self._variables['time']])
                 elif np.all(self._variables['time'] > 1000) and np.all(self._variables['time'] < 3000):
                     return self._variables['time']
                 else:
@@ -429,6 +429,6 @@ xr.core.ops.inject_binary_ops(FastDataArray)
     
 if __name__ == '__main__':
     ds = FastDataset({'x': ('time', np.ones(3))}, {'time': np.arange(3)})
-    print ds
-    print ds.x
-    print ds.x * 3
+    print(ds)
+    print(ds.x)
+    print(ds.x * 3)

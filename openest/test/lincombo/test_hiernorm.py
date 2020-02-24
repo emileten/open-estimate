@@ -55,22 +55,22 @@ def test_8schools():
     alltaus, allalphas, allbetahats = lincombo_hiernorm(betas, stderrs, portions, draws=draws)
 
     for ii in range(portions.shape[1]):
-        print np.mean(get_sampled_column(allalphas, ii))
+        print(np.mean(get_sampled_column(allalphas, ii)))
 
 if __name__ == '__main__':
-    import cProfile, pstats, StringIO
+    import cProfile, pstats, io
     pr = cProfile.Profile()
     pr.enable()
 
     alltaus, allalphas, allbetahats = test_other(draws=1000)
 
     pr.disable()
-    s = StringIO.StringIO()
+    s = io.StringIO()
     sortby = 'cumulative'
     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
     ps.print_stats()
-    print s.getvalue()
+    print(s.getvalue())
 
-    print np.mean(allalphas, axis=0)
-    print np.mean(alltaus, axis=0)
-    print np.mean(allbetahats, axis=0)
+    print(np.mean(allalphas, axis=0))
+    print(np.mean(alltaus, axis=0))
+    print(np.mean(allbetahats, axis=0))

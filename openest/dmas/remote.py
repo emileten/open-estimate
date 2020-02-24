@@ -1,7 +1,7 @@
 def view_model(objtype, id):
   if objtype == 'url':
     while True:
-      print "Accessing url..."
+      print("Accessing url...")
       try:
         return StoredModel.create_from_url(id, (float('-inf'), float('inf')))
       except:

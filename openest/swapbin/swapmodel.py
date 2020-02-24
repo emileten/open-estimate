@@ -1,5 +1,5 @@
 import numpy as np
-import transform
+from . import transform
 from ..models.spline_model import SplineModel
 from ..models.bin_model import BinModel
 

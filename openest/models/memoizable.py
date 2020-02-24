@@ -1,5 +1,5 @@
 import numpy as np
-from univariate_model import UnivariateModel
+from .univariate_model import UnivariateModel
 from scipy.interpolate import UnivariateSpline
 
 class MemoizableUnivariate(object):
@@ -150,7 +150,7 @@ class MemoizedUnivariate(UnivariateModel):
         if len(self.get_xx()) == 1:
             xx = self.model.get_xx()
             yy = np.array(self.eval_pvals(xx, p, threshold))
-            xx = np.array(map(float, xx))
+            xx = np.array(list(map(float, xx)))
         else:
             xx = np.array(self.model.get_xx())
             yy = np.array(self.eval_pvals(xx, p, threshold))

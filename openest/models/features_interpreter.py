@@ -50,13 +50,13 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.stats import norm, expon
 from scipy.optimize import brentq, minimize
 
-from spline_model import SplineModel, SplineModelConditional
+from .spline_model import SplineModel, SplineModelConditional
 
 class FeaturesInterpreter:
     @staticmethod
     def init_from_feature_file(spline, file, delimiter, limits, status_callback=None):
         reader = csv.reader(file, delimiter=delimiter)
-        header = reader.next()
+        header = next(reader)
         if header[0] != "dpc1":
             raise ValueError("Unknown format for %s" % (header[0]))
 
@@ -144,12 +144,12 @@ class FeaturesInterpreter:
                 return None
 
             # Check that the two other values are evenly spaced p-values
-            row = map(float, row[0:2])
+            row = list(map(float, row[0:2]))
             if np.all(np.isnan(row)):
                 return SplineModelConditional.make_single(mean, mean, [])
 
             if header[1] == 1 - header[0] and abs(row[1] - mean - (mean - row[0])) < abs(row[1] - row[0]) / 100.0:
-                print "HERE"
+                print("HERE")
                 lowp = min(header)
                 lowv = np.array(row)[np.array(header) == lowp][0]
 
@@ -200,8 +200,8 @@ class FeaturesInterpreter:
                 #bounds = [norm.logpdf(mean, mean, low_sdev), norm.logpdf(mean, mean, high_sdev)]
 
                 result = minimize(lambda lpmean: FeaturesInterpreter.skew_gaussian_evaluate(ys, np.append(np.append(lps0, [lpmean]), lps1), low_segment, high_segment, mean, lowp, highp), .5, method='Nelder-Mead')
-                print "Skew Gaussian"
-                print np.append(np.append(lps0, result.x), lps1)
+                print("Skew Gaussian")
+                print(np.append(np.append(lps0, result.x), lps1))
                 return FeaturesInterpreter.skew_gaussian_construct(ys, np.append(np.append(lps0, result.x), lps1), low_segment, high_segment)
 
     @staticmethod
@@ -332,7 +332,7 @@ class FeaturesInterpreter:
 
     @staticmethod
     def best_spline(header, row, limits):
-        print "Best Spline"
+        print("Best Spline")
         # Do general solution
         best_ys = []
         best_lps = []
@@ -370,7 +370,7 @@ class FeaturesInterpreter:
         best_error = FeaturesInterpreter.evaluate_spline(header, row, best_spline, limits)
 
         # Search space for spline that fits criteria
-        print "Searching..."
+        print("Searching...")
         for attempt in range(100):
             ys = best_ys + np.random.normal(0, max(best_ys) - min(best_ys), len(best_ys))
             lps = best_lps + np.random.normal(0, max(best_lps) - min(best_lps) + 1, len(best_lps))

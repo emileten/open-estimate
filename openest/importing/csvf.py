@@ -9,14 +9,14 @@ class Reader:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         for row in self.reader:
             match = re.match(r"\[(\d+)\]\s+", row[0])
             if match is not None:
                 line = self.delimiter.join(row)
                 self.footnotes[match.group(1)] = line[len(match.group(0)):]
             else:
-                return map(Entry, row)
+                return list(map(Entry, row))
 
 class Entry:
     def __init__(self, text):

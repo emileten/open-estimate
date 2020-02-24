@@ -21,9 +21,9 @@ import csv, random
 from numpy import *
 from scipy.interpolate import interp1d
 
-from model import Model
-from univariate_model import UnivariateModel
-from memoizable import MemoizableUnivariate
+from .model import Model
+from .univariate_model import UnivariateModel
+from .memoizable import MemoizableUnivariate
 
 class DDPModel(UnivariateModel, MemoizableUnivariate):
     '''
@@ -103,11 +103,11 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
         self.yy_is_categorical = yy_is_categorical
         if yy_is_categorical:
-            self.yy = range(len(yy))
+            self.yy = list(range(len(yy)))
             self.yy_text = yy
         elif yy is not None:
             self.yy = yy
-            self.yy_text = map(str, yy)
+            self.yy_text = list(map(str, yy))
 
         self.pp = pp
         self.unaccounted = unaccounted
@@ -474,7 +474,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         '''
 
         reader = csv.reader(file, delimiter=delimiter)
-        header = reader.next()
+        header = next(reader)
         fmt = header[0]
         if fmt not in ['ddp1', 'ddp2', 'ddv1', 'ddv2']:
             raise ValueError("Unknown format: %s" % (fmt))
@@ -507,9 +507,9 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.xx_is_categorical = False
         for row in reader:
             if pp is None:
-                pp = array([map(float, row[1:])])
+                pp = array([list(map(float, row[1:]))])
             else:
-                pp = vstack((pp, map(float, row[1:])))
+                pp = vstack((pp, list(map(float, row[1:]))))
 
             xx_text.append(row[0])
             try:
@@ -528,7 +528,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.pp = pp
 
         if self.scaled == True:
-            print pp
+            print(pp)
             if self.p_format == 'ddp1':
                 sums = sum(pp, axis=1)
             else:

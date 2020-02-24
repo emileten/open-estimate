@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from numpy import linalg
-from spline_model import SplineModel, SplineModelConditional
+from .spline_model import SplineModel, SplineModelConditional
 
 def uniform_doseless(start, end, height=None):
     scaled = False

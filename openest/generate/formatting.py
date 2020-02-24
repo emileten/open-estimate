@@ -41,7 +41,7 @@ def build_format(reppattern, *formatargs):
 
 def build_recursive(reppatterns, lang, *formattableargs):
     assert lang in reppatterns
-    formatargs = map(lambda arg: arg.format(lang), formattableargs)
+    formatargs = [arg.format(lang) for arg in formattableargs]
     return build_format(reppatterns[lang], *formatargs)
 
 def build_adddepend(allelts, label, elt):
@@ -69,7 +69,7 @@ def format_iterate(elements):
 
 def format_latex(elements, parameters={}):
     iter = format_iterate(elements)
-    main = iter.next()
+    main = next(iter)
     content = "Main calculation\n\\[\n  %s\n\\]\n\n" % (main.repstr)
 
     content += "\\begin{description}"
@@ -96,7 +96,7 @@ def format_latex(elements, parameters={}):
 
 def format_julia(elements, parameters={}, include_comments=True):
     iter = format_iterate(elements)
-    main = iter.next()
+    main = next(iter)
     if include_comments:
         content = ["\n# Main calculation\n%s" % (main.repstr)]
     else:
@@ -111,7 +111,7 @@ def format_julia(elements, parameters={}, include_comments=True):
                 value = parameters[element.extname]
                 if isinstance(value, np.ndarray):
                     if len(value.shape) == 2:
-                        valstr = '[' + '; '.join(map(lambda xxs: ' '.join(map(juliarep, xxs)), value)) + ']'
+                        valstr = '[' + '; '.join([' '.join(map(juliarep, xxs)) for xxs in value]) + ']'
                     else:
                         valstr = '[' + ', '.join(map(juliarep, value)) + ']'
                 else:

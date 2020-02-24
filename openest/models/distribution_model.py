@@ -1,5 +1,5 @@
-from ddp_model import DDPModel
-from spline_model import SplineModel, SplineModelConditional
+from .ddp_model import DDPModel
+from .spline_model import SplineModel, SplineModelConditional
 
 class DistributionModel(DDPModel):
     # For distribution to be non-ddp, nice continuous form but requires continuous x

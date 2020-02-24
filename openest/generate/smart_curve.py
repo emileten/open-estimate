@@ -10,7 +10,7 @@ know which variables they want.
 """
 
 import numpy as np
-import juliatools, latextools, formatting, diagnostic, formattools
+from . import juliatools, latextools, formatting, diagnostic, formattools
 from statsmodels.distributions.empirical_distribution import StepFunction
     
 class SmartCurve(object):
@@ -102,10 +102,10 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
     def __call__(self, ds):
         if isinstance(self.variables[0], str):
             result = np.zeros(ds[self.variables[0]].shape)
-            iis = range(len(self.variables))
+            iis = list(range(len(self.variables)))
         else:
             result = self.coeffs[0] * self.variables[0](ds)._data
-            iis = range(1, len(self.variables))
+            iis = list(range(1, len(self.variables)))
             
         for ii in iis:
             if not self.allow_raising:

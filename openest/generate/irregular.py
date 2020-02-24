@@ -1,9 +1,9 @@
 import numpy as np
 import xarray as xr
-from calculation import Calculation, ApplicationByIrregular
-import formatting, arguments, diagnostic
-from formatting import FormatElement
-from curvegen import CurveGenerator
+from .calculation import Calculation, ApplicationByIrregular
+from . import formatting, arguments, diagnostic
+from .formatting import FormatElement
+from .curvegen import CurveGenerator
 
 class YearlySumIrregular(Calculation):
     def __init__(self, units, curvegen, curve_description):

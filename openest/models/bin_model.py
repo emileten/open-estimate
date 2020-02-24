@@ -18,9 +18,9 @@ __version__ = "$Revision$"
 import csv, string
 import numpy as np
 
-from model import Model
-from univariate_model import UnivariateModel
-from memoizable import MemoizableUnivariate
+from .model import Model
+from .univariate_model import UnivariateModel
+from .memoizable import MemoizableUnivariate
 
 class BinModel(UnivariateModel, MemoizableUnivariate):
     '''
@@ -236,9 +236,9 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
             raise ValueError("Unknown format: %s" % (line))
 
         reader = csv.reader(file, delimiter=delimiter)
-        row = reader.next()
+        row = next(reader)
         self.xx_text = row
-        self.xx = map(float, row)
+        self.xx = list(map(float, row))
         self.xx_is_categorical = False
 
         self.model = init_submodel(file) # Need to set this!
@@ -257,10 +257,10 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
             newxx.extend([self.xx[ii] - diff, self.xx[ii] + diff])
         newxx[-1] = self.xx[-1]
 
-        dupmodel = self.model.recategorize_x(newcats, range(1, len(newcats)+1))
+        dupmodel = self.model.recategorize_x(newcats, list(range(1, len(newcats)+1)))
         dupmodel = dupmodel.to_ddp(ys)
         dupmodel.xx = newxx
-        dupmodel.xx_text = map(str, newxx)
+        dupmodel.xx_text = list(map(str, newxx))
         dupmodel.xx_is_categorical = False
 
         return dupmodel
@@ -302,7 +302,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         for model in models:
             allbins = [model.get_bin_at(x) for x in midpts]
             allxxs = [model.model.get_xx()[bin] if bin >= 0 else np.nan for bin in allbins]
-            newmodel = model.model.recategorize_x(allxxs, range(0, len(allxx)-1))
+            newmodel = model.model.recategorize_x(allxxs, list(range(0, len(allxx)-1)))
             newmodels.append(BinModel(allxx, newmodel))
 
         return newmodels
@@ -315,7 +315,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
 
         newmodels = BinModel.consistent_bins(models)
 
-        allmodel = Model.merge(map(lambda m: m.model, newmodels))
+        allmodel = Model.merge([m.model for m in newmodels])
 
         model = BinModel(newmodels[0].get_xx(), allmodel)
 
@@ -335,18 +335,18 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
         allxx = set(one.xx) | set(two.xx)
         allxx = np.array(allxx)
         midpts = (allxx[1:] + allxx[:-1]) / 2
-        onemodel = one.model.recategorize_x(map(model.get_bin_at, midpts), range(1, len(allxx)))
-        twomodel = two.model.recategorize_x(map(model.get_bin_at, midpts), range(1, len(allxx)))
+        onemodel = one.model.recategorize_x(list(map(model.get_bin_at, midpts)), list(range(1, len(allxx))))
+        twomodel = two.model.recategorize_x(list(map(model.get_bin_at, midpts)), list(range(1, len(allxx))))
 
         model = Model.combine([onemodel, twomodel], [1, 1])
 
         return BinModel(allxx, model, True)
 
-from ddp_model import DDPModel
+from .ddp_model import DDPModel
 
 Model.mergers["bin_model"] = BinModel.merge
-Model.mergers["bin_model+ddp_model"] = lambda models: DDPModel.merge(map(lambda m: m.to_ddp(), models))
-Model.mergers["bin_model+spline_model"] = lambda models: DDPModel.merge(map(lambda m: m.to_ddp(), models))
+Model.mergers["bin_model+ddp_model"] = lambda models: DDPModel.merge([m.to_ddp() for m in models])
+Model.mergers["bin_model+spline_model"] = lambda models: DDPModel.merge([m.to_ddp() for m in models])
 Model.combiners['bin_model+bin_model'] = BinModel.combine
 Model.combiners["bin_model+ddp_model"] = lambda one, two: DDPModel.combine(one.to_ddp(), two)
 Model.combiners["bin_model+spline_model"] = lambda one, two: DDPModel.combine(one.to_ddp(), two)

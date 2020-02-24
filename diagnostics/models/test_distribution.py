@@ -1,4 +1,4 @@
-import sys, StringIO
+import sys, io
 sys.path.append("../lib/models")
 
 from ddp_model import DDPModel
@@ -15,10 +15,10 @@ def test_tc(modelfile, distfile):
         dist = DistributionModel()
         dist.init_from(distfp, ',')
 
-    output = StringIO.StringIO()
+    output = io.StringIO()
 
     dist.apply_as_distribution(model).write(output, ',')
-    print output.getvalue()
+    print(output.getvalue())
 
     output.close()
 
@@ -31,10 +31,10 @@ def test_gtc(modelfile, distfile):
         dist = DistributionModel()
         dist.init_from(distfp, ',')
 
-    output = StringIO.StringIO()
+    output = io.StringIO()
 
     dist.apply_as_distribution(model).write(output, ',')
-    print output.getvalue()
+    print(output.getvalue())
 
     output.close()
     

@@ -39,7 +39,7 @@ def make_print_bymonthdaybins(model, func=lambda x: x, weather_change=lambda tem
     spline_orig = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)
 
     xx = model.get_xx()
-    yy = range(len(xx))
+    yy = list(range(len(xx)))
 
     xxlm = np.concatenate(([limits[0]], xx, [limits[1]]))
     yylm = np.concatenate(([yy[0]], yy, [yy[-1]]))
@@ -61,8 +61,8 @@ def make_print_bymonthdaybins(model, func=lambda x: x, weather_change=lambda tem
                 bybin.append(sum(which))
                 avgval.append(np.mean(results_orig[which]))
 
-            print bybin
-            print avgval
+            print(bybin)
+            print(avgval)
 
             yield (year, func(np.sum(results_orig) / 12))
 

@@ -12,7 +12,7 @@ def test_continuous_sampled():
 
     dist = ContinuousSampled(pdf)
     mini, maxi = dist.guess_ranges(-100, 100)
-    print np.vstack((mean, sigma, mini, maxi))
+    print(np.vstack((mean, sigma, mini, maxi)))
 
     # Check that got 3 stddevs
     assert np.all(mini < mean - sigma * 3)

@@ -23,7 +23,7 @@ def sliding_normal(xx, yy):
 def as_logs(table):
     table[0][0] = 'ddp2'
     for ii in range(len(table) - 1):
-        table[ii+1][1:] = map(lambda x: math.log(x) if x > 0 else '-inf', table[ii+1][1:])
+        table[ii+1][1:] = [math.log(x) if x > 0 else '-inf' for x in table[ii+1][1:]]
 
     return table
 

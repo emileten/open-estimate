@@ -40,7 +40,7 @@ def make_constant_365years(year0, const, num):
     yyyyddd = []
     values = []
     for year in range(year0, year0 + num):
-        yyyyddd = yyyyddd + range(year * 1000 + 1, year * 1000 + 366)
+        yyyyddd = yyyyddd + list(range(year * 1000 + 1, year * 1000 + 366))
         values = values + [const] * 365
 
     return yyyyddd, values
@@ -50,7 +50,7 @@ def make_sampling_365years(year0, value0, value1, num):
     values = []
     byyear = []
     for year in range(year0, year0 + num):
-        yyyyddd = yyyyddd + range(year * 1000 + 1, year * 1000 + 366)
+        yyyyddd = yyyyddd + list(range(year * 1000 + 1, year * 1000 + 366))
         values = values + [value0 + (value1 - value0) * float(year - year0) / num] * 365
         byyear.append(value0 + (value1 - value0) * float(year - year0) / num)
 

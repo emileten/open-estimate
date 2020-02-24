@@ -1,9 +1,9 @@
 import numpy as np
 import xarray as xr
-from calculation import Calculation, ApplicationEach
-from curvegen import CurveGenerator
-import formatting, arguments, diagnostic, latextools, juliatools
-from formatting import FormatElement
+from .calculation import Calculation, ApplicationEach
+from .curvegen import CurveGenerator
+from . import formatting, arguments, diagnostic, latextools, juliatools
+from .formatting import FormatElement
 
 class YearlyBins(Calculation):
     def __init__(self, units, curvegen, curve_description, weather_change=lambda x: x, norecord=False):
