@@ -17,8 +17,11 @@ def as_name(coord):
     return coord
 
 class FastDataset(xr.Dataset):
-    def __init__(self, data_vars, coords={}, attrs=None):
+    def __init__(self, data_vars, coords=None, attrs=None):
         # Do not call __init__ on Dataset, to avoid time cost
+        if coords is None:
+            coords = {}
+            
         self.original_data_vars = data_vars
         self.original_coords = coords
 
