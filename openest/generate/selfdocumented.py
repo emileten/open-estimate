@@ -1,4 +1,4 @@
-import formatting, juliatools, latextools
+from . import formatting, juliatools, latextools
 
 def get_repstr(obj, lang):
     if isinstance(obj, SelfDocumenting):

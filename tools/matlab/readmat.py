@@ -9,12 +9,12 @@ data = loadmat(filename)
 for key in data:
     if not re.match(r"^__(.+)__$", key):
         if isinstance(data[key], np.ndarray):
-            print key, data[key].dtype, data[key].shape
+            print(key, data[key].dtype, data[key].shape)
             if data[key].dtype.names is not None and len(data[key].dtype.names) > 0:
                 for name in data[key].dtype.names:
-                    print name, data[key][name][0, 0].dtype, data[key][name][0, 0].shape
+                    print(name, data[key][name][0, 0].dtype, data[key][name][0, 0].shape)
         else:
-            print key, data[key].__class__.__name__
+            print(key, data[key].__class__.__name__)
 
 def extract_labeled_map(struct, ii, name_key, data_key, xs_key, ys_key):
     name = struct[name_key][0, 0][ii][0][0]

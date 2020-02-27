@@ -5,7 +5,7 @@ import xarray as xr
 from openest.generate.base import Constant
 from openest.generate.daily import YearlyDayBins
 from openest.generate.functions import Scale, Instabase, SpanInstabase
-from test_daily import test_curve
+from .test_daily import test_curve
 
 
 def make_year_ds(year, values):
@@ -56,13 +56,13 @@ def test_spaninstabase():
     for _ in app2.push(make_year_ds(1800, [10] * 365)):
         raise AssertionError  # Should get nothing here
     for yearresult in app1.push(make_year_ds(2000, [-10] * 65 + [10] * 300)):
-        print app1.denomterms
+        print(app1.denomterms)
         if yearresult[0] == 1:
             np.testing.assert_equal(yearresult[1], 65. / 300.)
         if yearresult[0] == 2:
             np.testing.assert_equal(yearresult[1], 1.)
     for yearresult in app2.push(make_year_ds(2000, [10] * 365)):
-        print app2.denomterms
+        print(app2.denomterms)
         if yearresult[0] == 1:
             np.testing.assert_equal(yearresult[1], 1.)
         if yearresult[0] == 2:

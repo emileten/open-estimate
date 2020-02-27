@@ -1,8 +1,8 @@
 import traceback
 
-import formatting
-import juliatools
-import latextools
+from . import formatting
+from . import juliatools
+from . import latextools
 
 from openest.models.curve import FlatCurve
 
@@ -33,7 +33,7 @@ class CurveGenerator(object):
         Returns a CurveGenerator that calculates the partial
         derivative with respect to a covariate.
         """
-        print self.__class__
+        print(self.__class__)
         raise NotImplementedError()
 
 
@@ -102,8 +102,8 @@ class TransformCurveGenerator(CurveGenerator):
             return self.transform(region, *tuple(
                 [curvegen.get_curve(region, year, *args, **kw) for curvegen in self.curvegens]))
         except Exception as ex:
-            print self.curvegens
-            print args, kw
+            print(self.curvegens)
+            print(args, kw)
             traceback.print_exc()
             raise ex
 
@@ -142,7 +142,7 @@ class TransformCurveGenerator(CurveGenerator):
             
             return result
         except Exception as ex:
-            print self.curvegens
+            print(self.curvegens)
             raise
 
     def get_partial_derivative_curvegen(self, covariate, covarunit):
@@ -242,9 +242,9 @@ class DelayedCurveGenerator(CurveGenerator):
 
         #try:
         if lang == 'latex':
-            elements.update(self.curvegen.format_call(lang, *tuple(map(lambda x: x.replace('t', '{t-1}'), argstrs))))
+            elements.update(self.curvegen.format_call(lang, *tuple([x.replace('t', '{t-1}') for x in argstrs])))
         elif lang == 'julia':
-            elements.update(self.curvegen.format_call(lang, *tuple(map(lambda x: x.replace('t', 't-1'), argstrs))))
+            elements.update(self.curvegen.format_call(lang, *tuple([x.replace('t', 't-1') for x in argstrs])))
         elements['main'].unit = self.depenunit
         elements['main'].dependencies.extend(extradeps)
         return elements

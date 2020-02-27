@@ -31,7 +31,7 @@ class MultivariateSampled(multi_rv_frozen):
 
         # Propose dimensions such that 'count' is partitioned across dimensions, so that slope_i / sum(slope_i) \propto log(count_i)
         propconstant = np.log(count)
-        lens = map(int, np.exp(propconstant * slopes / sum(slopes)))
+        lens = list(map(int, np.exp(propconstant * slopes / sum(slopes))))
 
         return mins, maxs, lens
 

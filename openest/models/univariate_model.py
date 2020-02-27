@@ -1,4 +1,4 @@
-from model import Model
+from .model import Model
 import numpy as np
 
 class UnivariateModel(Model):
@@ -11,11 +11,11 @@ class UnivariateModel(Model):
             self.xx = []
             self.xx_text = []
         elif xx_is_categorical:
-            self.xx = range(len(xx))
-            self.xx_text = map(str, xx)
+            self.xx = list(range(len(xx)))
+            self.xx_text = list(map(str, xx))
         else:
             self.xx = xx
-            self.xx_text = map(str, xx)
+            self.xx_text = list(map(str, xx))
 
     def get_xx(self):
         """Listing conditional values

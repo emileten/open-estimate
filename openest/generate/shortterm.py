@@ -1,7 +1,7 @@
 import copy
 import numpy as np
-from calculation import Calculation, Application, ApplicationEach
-from curvegen import CurveGenerator
+from .calculation import Calculation, Application, ApplicationEach
+from .curvegen import CurveGenerator
 
 class SingleWeatherApply(Calculation):
     def __init__(self, units, curve, curve_description, weather_change=lambda x: x):
@@ -114,8 +114,8 @@ class InstaZScoreApply(Calculation, Application):
 
         # Have we collected all the data?
         if time == self.lasttime or (self.lasttime is None and self.mean is None):
-            self.mean = np.mean(map(lambda x: x[1], self.pastweathers))
-            self.sdev = np.std(map(lambda x: x[1], self.pastweathers))
+            self.mean = np.mean([x[1] for x in self.pastweathers])
+            self.sdev = np.std([x[1] for x in self.pastweathers])
 
             # Print out all past weathers, now that we have them
             for pastweather in self.pastweathers:

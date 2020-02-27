@@ -19,8 +19,8 @@ __version__ = "$Revision$"
 # $Source$
 
 import numpy as np
-from multi_normal import MultivariateNormal
-import helpers
+from .multi_normal import MultivariateNormal
+from . import helpers
 
 def sum_multiply(sparsecol, densevec):
     indices = sparsecol.nonzero()[0] # just take rows
@@ -48,7 +48,7 @@ def lincombo_pooled(betas, stderrs, portions):
     overvars = 1.0 / stdvars
     invsigma = np.zeros((numalphas, numalphas))
     for jj in range(numalphas):
-        print "Row", jj
+        print("Row", jj)
         for kk in range(numalphas):
             if helpers.issparse(portions):
                 invsigma[jj, kk] = sum_multiply2(portions, jj, kk, overvars)
@@ -60,7 +60,7 @@ def lincombo_pooled(betas, stderrs, portions):
     else:
         bb = [sum(betas * portions[:, jj] / stdvars) for jj in range(numalphas)]
 
-    print "Begin inversion...", invsigma.shape
+    print("Begin inversion...", invsigma.shape)
     sigma = np.linalg.inv(invsigma)
     alphas = np.dot(sigma, np.transpose(bb))
 

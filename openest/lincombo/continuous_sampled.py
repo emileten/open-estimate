@@ -75,5 +75,5 @@ class ContinuousSampled(rv_continuous):
         return samples[indexes]
 
     def pdf(self, xxs):
-        return map(self.func, xxs)
+        return list(map(self.func, xxs))
 

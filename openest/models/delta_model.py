@@ -1,8 +1,8 @@
 from scipy.interpolate import interp1d
 import numpy as np
 
-from model import Model
-from univariate_model import UnivariateModel
+from .model import Model
+from .univariate_model import UnivariateModel
 
 class DeltaModel(UnivariateModel):
     def __init__(self, xx_is_categorical=False, xx=None, locations=None, scale=1):
@@ -18,7 +18,7 @@ class DeltaModel(UnivariateModel):
         return DeltaModel(self.xx_is_categorical, list(self.get_xx()), self.locations[:], scale=self.scale)
 
     def scale_y(self, a):
-        self.location = map(lambda loc: loc * a, self.locations)
+        self.location = [loc * a for loc in self.locations]
         return self
 
     def scale_p(self, a):
@@ -26,7 +26,7 @@ class DeltaModel(UnivariateModel):
         return self
 
     def filter_x(self, xx):
-        return DeltaModel(self.xx_is_categorical, xx, map(lambda x: self.locations[xx.index(x)], xx), scale=self.scale)
+        return DeltaModel(self.xx_is_categorical, xx, [self.locations[xx.index(x)] for x in xx], scale=self.scale)
 
     def interpolate_x(self, newxx, kind='quadratic'):
         fx = interp1d(self.xx, self.locations, kind)
@@ -44,7 +44,7 @@ class DeltaModel(UnivariateModel):
             file.write(str(self.xx[ii]) + delimiter + str(self.locations[ii]) + "\n")
 
     def to_points_at(self, x, ys):
-        return map(lambda y: self.scale if y == self.locations[self.xx.index(x)] else 0, ys)
+        return [self.scale if y == self.locations[self.xx.index(x)] else 0 for y in ys]
 
     def draw_sample(self, x=None):
         return self.locations[self.xx.index(x)]
@@ -58,7 +58,7 @@ class DeltaModel(UnivariateModel):
 
     def init_from_delta_file(self, file, delimiter, status_callback=None):
         reader = csv.reader(file, delimiter=delimiter)
-        header = reader.next()
+        header = next(reader)
         if header[0] != "del1":
             raise ValueError("Unknown format: %s" % (fields[0]))
 
@@ -114,7 +114,7 @@ class DeltaModel(UnivariateModel):
         
         (one, two, xx) = UnivariateModel.intersect_x(one, two)
 
-        return DeltaModel(one.xx_is_categorical, xx, map(lambda ii: one.locations[ii] + two.locations[ii], range(len(xx))), 1)
+        return DeltaModel(one.xx_is_categorical, xx, [one.locations[ii] + two.locations[ii] for ii in range(len(xx))], 1)
 
     @staticmethod
     def zero_delta(model):

@@ -1,5 +1,5 @@
 import sys, re
-from nlptools import NLPTools
+from .nlptools import NLPTools
 
 class Reference:
     def __init__(authors, title, additional, publisher, date):
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     with open(sys.argv[1], "r") as fp:
         for line in fp:
             #print line
-            print "  " + ', '.join(APAFormat.get_authors(line))
+            print("  " + ', '.join(APAFormat.get_authors(line)))
             #print "  " + APAFormat.get_title(line)
             #print "  " + APAFormat.get_journal(line)
             #print "  " + str(APAFormat.get_year(line))

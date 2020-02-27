@@ -1,13 +1,13 @@
 import os, csv, random
 import numpy as np
 import xarray as xr
-import formatting, arguments, diagnostic, checks
-from calculation import Calculation, Application, ApplicationByYear
-from formatting import FormatElement
+from . import formatting, arguments, diagnostic, checks
+from .calculation import Calculation, Application, ApplicationByYear
+from .formatting import FormatElement
 from ..models.bin_model import BinModel
 from ..models.memoizable import MemoizedUnivariate
 from ..models.curve import UnivariateCurve, StepCurve
-from curvegen import CurveGenerator, ConstantCurveGenerator
+from .curvegen import CurveGenerator, ConstantCurveGenerator
 
 def get_bin_curve(curvegen, region, year, temps, *args):
     if isinstance(curvegen, CurveGenerator):

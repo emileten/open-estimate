@@ -31,8 +31,8 @@ import math, csv
 from scipy.interpolate import interp1d
 import numpy as np
 
-from model import Model, Attribute
-from univariate_model import UnivariateModel
+from .model import Model, Attribute
+from .univariate_model import UnivariateModel
 
 class MeanSizeModel(UnivariateModel):
     def __init__(self, xx_is_categorical=False, xx=None, means=None, sizes=None):
@@ -48,11 +48,11 @@ class MeanSizeModel(UnivariateModel):
         return MeanSizeModel(self.xx_is_categorical, list(self.get_xx()), list(self.means), list(self.sizes))
 
     def scale_y(self, a):
-        self.means = map(lambda m: m * a, self.means)
+        self.means = [m * a for m in self.means]
         return self
 
     def scale_p(self, a):
-        self.sizes = map(lambda s: s * a, self.sizes)
+        self.sizes = [s * a for s in self.sizes]
         return self
 
     def get_mean(self, x=None):
@@ -63,7 +63,7 @@ class MeanSizeModel(UnivariateModel):
         return abs(self.means[index]) / math.sqrt(self.sizes[index])
     
     def filter_x(self, xx):
-        return MeanSizeModel(self.xx_is_categorical, xx, map(lambda x: self.means[xx.index(x)], xx), map(lambda x: self.sizes[xx.index(x)], xx))
+        return MeanSizeModel(self.xx_is_categorical, xx, [self.means[xx.index(x)] for x in xx], [self.sizes[xx.index(x)] for x in xx])
 
     def interpolate_x(self, newxx, kind='quadratic'):
         fx = interp1d(self.xx, self.means, kind)
@@ -96,7 +96,7 @@ class MeanSizeModel(UnivariateModel):
 
     def init_from_mean_size_file(self, file, delimiter, status_callback=None):
         reader = csv.reader(file, delimiter=delimiter)
-        header = reader.next()
+        header = next(reader)
         if header[0] != "msx1":
             raise ValueError("Unknown format: %s" % (fields[0]))
 
@@ -139,7 +139,7 @@ class MeanSizeModel(UnivariateModel):
             means = []
             sizes = []
             for ii in range(len(masterxx)):
-                print masterxx[ii]
+                print(masterxx[ii])
                 numersum = 0
                 denomsum = 0
                 for model in models:
@@ -151,7 +151,7 @@ class MeanSizeModel(UnivariateModel):
                     except:
                         pass
 
-                print numersum, denomsum
+                print(numersum, denomsum)
                 means.append(numersum / float(denomsum))
                 sizes.append(denomsum)
 

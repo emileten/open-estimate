@@ -1,10 +1,10 @@
 import numpy as np
-from multi_normal import MultivariateNormal
-from multi_uniform import MultivariateUniform
-from multi_sampled import MultivariateSampled
-from multi_delta import MultivariateDelta
-import pooling
-import helpers
+from .multi_normal import MultivariateNormal
+from .multi_uniform import MultivariateUniform
+from .multi_sampled import MultivariateSampled
+from .multi_delta import MultivariateDelta
+from . import pooling
+from . import helpers
 
 def alpha_given_taus(betas, stdvars, portions, obstaus):
     numalphas = portions.shape[1]
@@ -59,7 +59,7 @@ def lincombo_hiernorm_taubyalpha(betas, stderrs, portions, maxtau=None, guess_ra
     betas, stdvars, portions = helpers.check_arguments(betas, stderrs, portions)
     numalphas = portions.shape[1]
 
-    print "Sampling taus..."
+    print("Sampling taus...")
 
     observed_tau = 2 * np.sqrt(np.var(betas) + max(stderrs)**2)
     if observed_tau == 0:
@@ -67,7 +67,7 @@ def lincombo_hiernorm_taubyalpha(betas, stderrs, portions, maxtau=None, guess_ra
 
     if maxtau is None:
         maxtau = pooling.estimated_maxtau(betas, stderrs, portions)
-        print "Using maximum tau =", maxtau, "vs.", observed_tau
+        print("Using maximum tau =", maxtau, "vs.", observed_tau)
 
     if maxtau > 0:
         probability_prior_taus = MultivariateUniform([0] * numalphas, [maxtau] * numalphas)
@@ -98,7 +98,7 @@ def lincombo_hiernorm_taubyalpha(betas, stderrs, portions, maxtau=None, guess_ra
         # maxtau == 0
         dist = MultivariateDelta(np.zeros(numalphas))
 
-    print "Sampling alphas..."
+    print("Sampling alphas...")
 
     taus2obstaus = lambda taus: np.array([sum(portions[ii, :] * taus) for ii in range(portions.shape[0])])
     return sample_posterior(betas, stderrs, portions, dist, taus2obstaus, draws)
@@ -107,7 +107,7 @@ def lincombo_hiernorm_taubybeta(betas, stderrs, portions, maxtaus=None, guess_ra
     betas, stdvars, portions = helpers.check_arguments(betas, stderrs, portions)
     numalphas = portions.shape[1]
 
-    print "Sampling taus..."
+    print("Sampling taus...")
 
     observed_tau = 2 * np.sqrt(np.var(betas) + max(stderrs)**2)
     if observed_tau == 0:
@@ -115,7 +115,7 @@ def lincombo_hiernorm_taubybeta(betas, stderrs, portions, maxtaus=None, guess_ra
 
     if maxtaus is None:
         maxtaus = pooling.estimated_maxlintaus(betas, stderrs, portions)
-        print "Using maximum tau =", maxtaus, "vs.", observed_tau
+        print("Using maximum tau =", maxtaus, "vs.", observed_tau)
 
     if maxtaus[0] > 0:
         probability_prior_taus = MultivariateUniform([0, 0], maxtaus)
@@ -141,13 +141,13 @@ def lincombo_hiernorm_taubybeta(betas, stderrs, portions, maxtaus=None, guess_ra
         else:
             mins = [0, 0]
             maxs = maxtaus
-        print mins, maxs
+        print(mins, maxs)
         dist.prepare_draws(mins, maxs, count=draws)
     else:
         # maxtau == 0
         dist = MultivariateDelta(np.zeros(2))
 
-    print "Sampling alphas..."
+    print("Sampling alphas...")
 
     taus2obstaus = lambda taus: taus[0] + taus[1] * np.abs(np.array(betas))
     return sample_posterior(betas, stderrs, portions, dist, taus2obstaus, draws)

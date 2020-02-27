@@ -12,7 +12,7 @@ def make_tar(name, write_file):
 
     with open("geography/fips_codes.csv", 'rU') as fipsfp:
         reader = csv.reader(fipsfp, dialect=csv.excel_tab, delimiter=',')
-        reader.next()
+        next(reader)
         for row in reader:
             if row[-1] != "County":
                 continue
@@ -25,14 +25,14 @@ def make_tar(name, write_file):
 
 # Fraction of expected yields
 def write_yields_grain(writer, row):
-    print row
+    print(row)
     writer.writerow(["year", "fraction"])
     for year in range(2010, 2100+1):
         writer.writerow([year, random.uniform(.5, 1.5) * (1 - (year - 2010) / 200.0)])
 
 # Robberies per 1e6 people, for incomes up to $100,000
 def write_robberies(writer, row):
-    print row
+    print(row)
     writer.writerow(["year", "income0", "income1", "coeff0", "coeff1", "coeff2"])
     incomes = np.linspace(0, 1e6, 20)
     for year in range(2010, 2100+1):

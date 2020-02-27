@@ -7,7 +7,7 @@ from openest.generate.daily import YearlyDayBins, model_get_curve
 from openest.models.bin_model import BinModel
 from openest.models.spline_model import SplineModel
 
-test_model = BinModel([-40, 0, 80], SplineModel.create_gaussian({0: (0, 1), 1: (1, 1)}, order=range(2)))
+test_model = BinModel([-40, 0, 80], SplineModel.create_gaussian({0: (0, 1), 1: (1, 1)}, order=list(range(2))))
 test_curve = model_get_curve(test_model, .5)
 
 def test_yearlydaybins():

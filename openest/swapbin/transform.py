@@ -35,22 +35,22 @@ def swap_beta(beta, T):
 if __name__ == '__main__':
     ## An example with 3 bins summed over days within weeks
     X = np.array([[1, 2, 3, .5], [1, 2, 2, .4]])
-    print "X ="
-    print X
+    print("X =")
+    print(X)
     T = transform(4, [1, 2], 1, 7)
-    print "T ="
-    print T
-    print "Y ="
-    print X.dot(T)
+    print("T =")
+    print(T)
+    print("Y =")
+    print(X.dot(T))
 
     V = np.diag([1, .2, .2, .5])
-    print "V ="
-    print V
-    print "W ="
-    print swap_vcv(V, T)
+    print("V =")
+    print(V)
+    print("W =")
+    print(swap_vcv(V, T))
 
     beta = [1, 2, 3, 4]
-    print "beta ="
-    print beta
-    print "gamma = "
-    print swap_beta(beta, T)
+    print("beta =")
+    print(beta)
+    print("gamma = ")
+    print(swap_beta(beta, T))

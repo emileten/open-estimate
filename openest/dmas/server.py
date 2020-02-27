@@ -1,4 +1,4 @@
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 # The domain we include in emails and such
 public_domain = "dmas.berkeley.edu"
@@ -21,7 +21,7 @@ def open_url(url):
            'Accept-Encoding': 'none',
            'Accept-Language': 'en-US,en;q=0.8'}
 
-    req = urllib2.Request(url, headers=hdr)
-    return urllib2.urlopen(req)
+    req = urllib.request.Request(url, headers=hdr)
+    return urllib.request.urlopen(req)
 
 

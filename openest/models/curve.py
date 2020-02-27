@@ -1,5 +1,5 @@
 import numpy as np
-from univariate_model import UnivariateModel
+from .univariate_model import UnivariateModel
 from scipy.interpolate import UnivariateSpline
 from statsmodels.distributions.empirical_distribution import StepFunction
 
@@ -146,8 +146,8 @@ class OtherClippedCurve(ClippedCurve):
     def __call__(self, xs):
         ys = self.curve(xs)
         clipping = self.clipping_curve(xs)
-        ys = map(lambda y: y if y is not None else 0, ys)
-        clipping = map(lambda y: y if not np.isnan(y) else 0, clipping)
+        ys = [y if y is not None else 0 for y in ys]
+        clipping = [y if not np.isnan(y) else 0 for y in clipping]
         return ys * (clipping > self.clipy)
 
 class MinimumCurve(UnivariateCurve):

@@ -1,5 +1,5 @@
 import pytest
-from mock import MagicMock
+from unittest.mock import MagicMock
 from openest.generate.curvegen import (CurveGenerator,
                                        DelayedCurveGenerator,
                                        TransformCurveGenerator)

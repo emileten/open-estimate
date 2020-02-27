@@ -13,7 +13,7 @@ def test_multi_sampled():
 
     dist = MultivariateSampled(pdf, dims)
     mins, maxs = dist.guess_ranges([-100] * dims, [100] * dims)
-    print np.vstack((means, sigmas, mins, maxs))
+    print(np.vstack((means, sigmas, mins, maxs)))
 
     # Check that got 3 stddevs
     assert np.all(mins < means - sigmas * 3)

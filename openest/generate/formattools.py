@@ -1,4 +1,4 @@
-from formatting import FormatElement
+from .formatting import FormatElement
 
 def join(glue, subelementsets):
     dependencies = []

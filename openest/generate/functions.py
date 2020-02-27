@@ -1,6 +1,6 @@
 import numpy as np
-import juliatools, latextools, calculation, diagnostic, arguments, formatting
-from formatting import FormatElement
+from . import juliatools, latextools, calculation, diagnostic, arguments, formatting
+from .formatting import FormatElement
 
 """Scale the results by the value in scale_dict, or the mean value (if it is set).
 make_generator: we encapsulate this function, passing in data and opporting on outputs
@@ -287,8 +287,8 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
 
             # Have we collected all the data?
             if year == lastyear or (lastyear is None and self.mean is None):
-                self.mean = np.mean(map(lambda mx: mx[1], self.pastresults))
-                self.sdev = np.std(map(lambda mx: mx[1], self.pastresults))
+                self.mean = np.mean([mx[1] for mx in self.pastresults])
+                self.sdev = np.std([mx[1] for mx in self.pastresults])
 
                 # Print out all past results, now that we have them
                 for pastresult in self.pastresults:
@@ -349,9 +349,9 @@ class Sum(calculation.Calculation):
     def apply(self, region, *args, **kwargs):
         def generate(year, results):
             if not self.deltamethod:
-                return np.sum(map(lambda x: x[1] if x is not None else np.nan, results))
+                return np.sum([x[1] if x is not None else np.nan for x in results])
             else:
-                return np.sum(map(lambda x: x[1] if x is not None else np.nan, results), 0)
+                return np.sum([x[1] if x is not None else np.nan for x in results], 0)
 
         # Prepare the generator from our encapsulated operations
         subapps = [subcalc.apply(region, *args, **kwargs) for subcalc in self.subcalcs]
@@ -377,7 +377,7 @@ class Sum(calculation.Calculation):
         Returns a new calculation object that calculates the partial
         derivative with respect to a given variable; currently only covariates are supported.
         """
-        return Sum(map(lambda subcalc: subcalc.partial_derivative(covariate, covarunit), self.subcalcs))
+        return Sum([subcalc.partial_derivative(covariate, covarunit) for subcalc in self.subcalcs])
 
     @staticmethod
     def describe():
@@ -418,7 +418,7 @@ class ConstantScale(calculation.Calculation):
         return [dict(name='constscale', title=title, description=description)] + infos
 
     def partial_derivative(self, covariate, covarunit):
-        return Sum(map(lambda subcalc: subcalc.partial_derivative(covariate, covarunit), self.subcalcs),
+        return Sum([subcalc.partial_derivative(covariate, covarunit) for subcalc in self.subcalcs],
                    unshift=self.unshift)
 
     @staticmethod

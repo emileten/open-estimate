@@ -1,5 +1,5 @@
-from calculation import Calculation, ApplicationByYear
-from formatting import FormatElement
+from .calculation import Calculation, ApplicationByYear
+from .formatting import FormatElement
 
 class Constant(Calculation):
     def __init__(self, value, units):

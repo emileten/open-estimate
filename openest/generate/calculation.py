@@ -58,7 +58,7 @@ class Calculation(object):
         Returns a new calculation object that calculates the partial
         derivative with respect to a given variable; currently only covariates are supported.
         """
-        print self.__class__
+        print(self.__class__)
         raise NotImplementedError()
 
     @staticmethod
@@ -144,7 +144,7 @@ class FunctionalCalculation(Calculation):
         """Pass cleanup signal to subcalculations
         """
         # Pass on signal for end
-        print "completing make"
+        print("completing make")
         self.subcalc.cleanup()
 
     def enable_deltamethod(self):
@@ -430,7 +430,7 @@ class ApplicationPassCall(Application):
                 # Call next on every iterator
                 for iterator in iterators:
                     try:
-                        yearresult = iterator.next()
+                        yearresult = next(iterator)
                     except StopIteration:
                         yearresult = None
                     yearresults.append(yearresult)
@@ -523,7 +523,7 @@ class ApplicationByYear(ApplicationByChunks):
                 yield values
             return
 
-        print "Seeing an unexpected %d values." % len(ds.time)
+        print("Seeing an unexpected %d values." % len(ds.time))
         for year, yeards in ds.groupby('time.year'):
             if len(yeards.time) < 365:
                 self.saved_ds = yeards

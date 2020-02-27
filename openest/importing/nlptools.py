@@ -33,7 +33,7 @@ class NLPTools(object):
             if ', ' not in alist[ii] and ' ' in alist[ii]:
                 alist[ii] = alist[ii].split(' ')[-1] + ", " + ' '.join(alist[ii].split(' ')[0:-1])
 
-        alist = map(lambda a: a[0:-1] if a[-1] == ',' else a, alist)
+        alist = [a[0:-1] if a[-1] == ',' else a for a in alist]
 
         return alist
 
@@ -43,10 +43,10 @@ class NLPTools(object):
             return authors
 
         alist = NLPTools.get_authors(authors)
-        print alist
+        print(alist)
         if len(alist) > 2:
             return alist[0].split(', ')[0] + ' et al.'
         elif len(alist) > 1:
-            return ', '.join(map(lambda name: name.split(', ')[0], alist[0:-1])) + ' and ' + alist[-1].split(', ')[0]
+            return ', '.join([name.split(', ')[0] for name in alist[0:-1]]) + ' and ' + alist[-1].split(', ')[0]
         else:
             return alist[0].split(', ')[0]

@@ -24,7 +24,7 @@ def get_crop_calendar(cropfile):
 #   allows negative plantday
 def growing_seasons_mean_reader(reader, plantday, harvestday):
     prevtemps = None
-    row = reader.next()
+    row = next(reader)
     more_rows = True
     while more_rows:
         year = row[0][0:4]
@@ -52,13 +52,13 @@ def growing_seasons_mean_reader(reader, plantday, harvestday):
 def growing_seasons_mean_ncdf(yyyyddd, weather, plantday, harvestday):
     if plantday < 0:
         year0 = yyyyddd[0] // 1000
-        seasons = np.array_split(weather, range(plantday - 1, len(yyyyddd), 365))
+        seasons = np.array_split(weather, list(range(plantday - 1, len(yyyyddd), 365)))
     else:
         year0 = yyyyddd[0] // 1000 + 1
-        seasons = np.array_split(weather, range(plantday - 1 + 365, len(yyyyddd), 365))
+        seasons = np.array_split(weather, list(range(plantday - 1 + 365, len(yyyyddd), 365)))
     year1 = yyyyddd[-1] // 1000
 
-    for chunk in zip(range(year0, year1 + 1), seasons):
+    for chunk in zip(list(range(year0, year1 + 1)), seasons):
         yield (chunk[0], np.mean(chunk[1][0:harvestday-plantday+1]))
 
     # Version 1
@@ -83,13 +83,13 @@ def growing_seasons_daily_ncdf(yyyyddd, weather, plantday, harvestday):
     year1 = yyyyddd[-1] // 1000
 
     if isinstance(weather, list):
-        seasons = np.array_split(weather, range(plantday - 1, len(yyyyddd), 365))
-        for chunk in zip(range(year0, year1 + 1), seasons):
+        seasons = np.array_split(weather, list(range(plantday - 1, len(yyyyddd), 365)))
+        for chunk in zip(list(range(year0, year1 + 1)), seasons):
             yield (chunk[0], chunk[1][0:harvestday-plantday+1])
     else:
         seasons = {}
         for variable in weather:
-            seasons[variable] = np.array_split(weather[variable], range(plantday - 1, len(yyyyddd), 365))
+            seasons[variable] = np.array_split(weather[variable], list(range(plantday - 1, len(yyyyddd), 365)))
 
         for year in range(year0, year1 + 1):
             yield (year, {variable: seasons[variable][year - year0][0:harvestday-plantday+1] for variable in seasons})
@@ -114,7 +114,7 @@ def growing_seasons_daily_ncdf(yyyyddd, weather, plantday, harvestday):
 def yearly_daily_ncdf(yyyyddd, weather):
     year0 = int(yyyyddd[0]) // 1000
     year1 = int(yyyyddd[-1]) // 1000
-    chunks = zip(range(year0, year1+1), np.array_split(weather, range(365, len(yyyyddd), 365)))
+    chunks = list(zip(list(range(year0, year1+1)), np.array_split(weather, list(range(365, len(yyyyddd), 365)))))
     for chunk in chunks:
         yield chunk
 
@@ -138,7 +138,7 @@ def xmap_apply_model(xmap, model, pval):
     for (key, val) in xmap:
         total += 1
         if total % 100 == 0:
-            print total
+            print(total)
         result = model.eval_pval(val, pval, 1e-2)
         if not np.isnan(result):
             yield (key, result)
