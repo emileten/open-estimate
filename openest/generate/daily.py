@@ -222,6 +222,9 @@ class YearlyAverageDay(Calculation):
             result.update({'main': FormatElement(r"sum(%s) / 365" % result['main'].repstr,
                                                  ['Tbyday'] + result['main'].dependencies),
                            'Tbyday': FormatElement("Daily temperature", is_abstract=True)})
+
+        formatting.add_label('response', result)
+
         return result
 
     def apply(self, region, *args):
