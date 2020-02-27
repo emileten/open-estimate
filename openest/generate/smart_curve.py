@@ -190,9 +190,9 @@ class TransformCoefficientsCurve(SmartCurve):
             if self.diagnames:
                 diagnostic.record(ds.region, ds.year, self.diagnames[ii], np.sum(predictor._data))
             if result is None:
-                result = (self.coeffs[ii] * predictor)._data
+                result = self.coeffs[ii] * predictor._data
             else:
-                result += self.coeffs[ii] * predictor
+                result += self.coeffs[ii] * predictor._data
 
         return result
 
