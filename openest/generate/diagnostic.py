@@ -46,6 +46,7 @@ diagnostic.close()
 """
 
 import os, csv
+import numpy as np
 import metacsv
 
 """
@@ -135,6 +136,11 @@ class DiagnosticManager(object):
 
     def record(self, region, year, column, value):
         """Record a single value for a region-year combination."""
+        if isinstance(region, np.ndarray):
+            region = region.tolist()
+        if isinstance(year, np.ndarray):
+            year = year.tolist()
+
         if column not in self.header:
             self.header.append(column)
 
@@ -155,6 +161,10 @@ class DiagnosticManager(object):
 
     def finish(self, region, year, group=None):
         """Finish a given region-year combination, and write out its data."""
+        if isinstance(region, np.ndarray):
+            region = region.tolist()
+        if isinstance(year, np.ndarray):
+            year = year.tolist()
 
         if group is not None:
             if (region, year) not in self.partfinish:
