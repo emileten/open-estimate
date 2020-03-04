@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='openest',
-      version='0.1',
+      version='3.0.0',
       description='Library of empirical model application.',
       url='http://github.com/jrising/open-estimate',
       author='James Rising',
