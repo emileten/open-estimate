@@ -19,15 +19,15 @@ class YearlyBins(Calculation):
     def format(self, lang):
         funcvar = formatting.get_function()
         if lang == 'latex':
-            return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
-                                          ['T_d', "%s(\cdot)" % (funcvar)]),
+            return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % funcvar,
+                                          ['T_d', "%s(\cdot)" % funcvar]),
                     'T_d': FormatElement("Temperature"),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.model))}
+                    "%s(\cdot)" % funcvar: FormatElement(str(self.model))}
         elif lang == 'julia':
-            return {'main': FormatElement(r"sum(%s(Tbins))" % (funcvar),
-                                          ['Tbins', "%s(T)" % (funcvar)]),
+            return {'main': FormatElement(r"sum(%s(Tbins))" % funcvar,
+                                          ['Tbins', "%s(T)" % funcvar]),
                     'Tbins': FormatElement("# Temperature in bins"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.model))}
+                    "%s(T)" % funcvar: FormatElement(str(self.model))}
 
     def apply(self, region, *args):
         def generate(region, year, weather, **kw):
@@ -42,7 +42,7 @@ class YearlyBins(Calculation):
                 raise RuntimeError("Unknown format for weather: " + str(weather2.shape) + " <> len " + str(curve.xx))
 
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
         return ApplicationEach(region, generate)
 
@@ -81,7 +81,7 @@ class YearlyCoefficients(Calculation):
                     diagnostic.record(region, year, 'var-' + str(ii), temps[ii])
 
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
         return ApplicationEach(region, generate)
 
@@ -142,7 +142,7 @@ class YearlyApply(Calculation):
 
             if self.deltamethod:
                 terms = self.curvegen.get_lincom_terms(region, year, temps2.sum(), temps2)
-                yield (year, terms)
+                yield year, terms
                 return
                 
             curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
@@ -157,7 +157,7 @@ class YearlyApply(Calculation):
                     diagnostic.record(region, year, 'avgv', temps2)
 
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
         return ApplicationEach(region, generate)
 

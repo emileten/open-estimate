@@ -4,7 +4,8 @@ def view_model(objtype, id):
       print("Accessing url...")
       try:
         return StoredModel.create_from_url(id, (float('-inf'), float('inf')))
-      except:
+    except Exception as ex:  # CATBELL
+        import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
         time.sleep(1)
         pass
 

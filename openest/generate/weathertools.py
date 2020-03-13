@@ -41,12 +41,12 @@ def growing_seasons_mean_reader(reader, plantday, harvestday):
         if plantday < 0:
             if prevtemps is not None:
                 temp = np.mean(prevtemps[plantday:] + temps[0:harvestday])
-                yield (int(year), temp)
+                yield int(year), temp
 
             prevtemps = temps
         else:
             temp = np.mean(temps[plantday:harvestday])
-            yield (int(year), temp)
+            yield int(year), temp
 
 # allows negative plantday
 def growing_seasons_mean_ncdf(yyyyddd, weather, plantday, harvestday):
@@ -59,7 +59,7 @@ def growing_seasons_mean_ncdf(yyyyddd, weather, plantday, harvestday):
     year1 = yyyyddd[-1] // 1000
 
     for chunk in zip(list(range(year0, year1 + 1)), seasons):
-        yield (chunk[0], np.mean(chunk[1][0:harvestday-plantday+1]))
+        yield chunk[0], np.mean(chunk[1][0:harvestday - plantday + 1])
 
     # Version 1
     #ii = 0
@@ -85,14 +85,14 @@ def growing_seasons_daily_ncdf(yyyyddd, weather, plantday, harvestday):
     if isinstance(weather, list):
         seasons = np.array_split(weather, list(range(plantday - 1, len(yyyyddd), 365)))
         for chunk in zip(list(range(year0, year1 + 1)), seasons):
-            yield (chunk[0], chunk[1][0:harvestday-plantday+1])
+            yield chunk[0], chunk[1][0:harvestday - plantday + 1]
     else:
         seasons = {}
         for variable in weather:
             seasons[variable] = np.array_split(weather[variable], list(range(plantday - 1, len(yyyyddd), 365)))
 
         for year in range(year0, year1 + 1):
-            yield (year, {variable: seasons[variable][year - year0][0:harvestday-plantday+1] for variable in seasons})
+            yield year, {variable: seasons[variable][year - year0][0:harvestday - plantday + 1] for variable in seasons}
 
     # Version 1
     #ii = 0
@@ -141,7 +141,7 @@ def xmap_apply_model(xmap, model, pval):
             print(total)
         result = model.eval_pval(val, pval, 1e-2)
         if not np.isnan(result):
-            yield (key, result)
+            yield key, result
 
 # effects and scales need to be lists of same length, containing iterators (key, val) with same keys
 def combo_effects(effect_dicts, scale_gens):
@@ -171,4 +171,4 @@ def read_scale_file(filepath, factor):
             fips = row[0]
             if len(fips) == 4:
                 fips = '0' + fips
-            yield (fips, float(row[1]) * factor)
+            yield fips, float(row[1]) * factor

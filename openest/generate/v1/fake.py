@@ -12,7 +12,7 @@ def make_generator_linear(zero, baseline, minslope, maxslope):
         for (year, daily) in yearly:
             result = baseline + np.sum((np.array(daily) - zero) * slope)
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
     return generate_linear
 
@@ -29,7 +29,7 @@ def make_generator_bilinear(zero, baseline, minslope_neg, maxslope_neg, minslope
             relative[relative < 0] = relative[relative < 0] * slope_neg
             result = baseline + np.sum(relative)
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
     return generate_bilinear
 
@@ -66,6 +66,6 @@ def make_print_bymonthdaybins(model, func=lambda x: x, weather_change=lambda tem
             print(bybin)
             print(avgval)
 
-            yield (year, func(np.sum(results_orig) / 12))
+            yield year, func(np.sum(results_orig) / 12)
 
     return generate

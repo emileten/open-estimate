@@ -64,7 +64,7 @@ import numpy as np
 try:
     # this is required for nc4's, but we can wait to fail
     from netCDF4 import Dataset
-except:
+except ImportError:
     pass
 
 FIPS_COMPLETE = '__complete__' # special FIPS code for the last county
@@ -467,7 +467,7 @@ def load_tar_make_generator(targetdir, name, column=None):
             if not os.path.exists(fipspath):
                 # If we can't find this, just return a single year with 0 effect
                 print(fipspath + " doesn't exist")
-                yield (yyyyddd[0] / 1000, 0)
+                yield yyyyddd[0] / 1000, 0
                 raise StopIteration()
 
         with open(fipspath) as fp:
@@ -479,7 +479,7 @@ def load_tar_make_generator(targetdir, name, column=None):
                 if column is None:
                     yield [int(row[0])] + list(map(float, row[1:]))
                 else:
-                    yield (int(row[0]), float(row[column]))
+                    yield int(row[0]), float(row[column])
 
     return generate
 
@@ -512,7 +512,8 @@ def aggregate_tar(name, scale_dict=None, targetdir=None, collabel="fraction", ge
             title = get_region('_title_')
             if title is not None:
                 region_name = title
-        except:
+        except Exception as ex:  # CATBELL
+            import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
             pass
 
     regions = {} # {region code: {year: (numer, denom)}}

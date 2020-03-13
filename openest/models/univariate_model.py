@@ -94,7 +94,7 @@ class UnivariateModel(Model):
         one = UnivariateModel.intersect_get_model(one, xx)
         two = UnivariateModel.intersect_get_model(two, xx)
 
-        return (one, two, xx)
+        return one, two, xx
 
     @staticmethod
     def intersect_x_all(models):
@@ -120,4 +120,4 @@ class UnivariateModel(Model):
         for model in models:
             newmodels.append(UnivariateModel.intersect_get_model(model, xx))
 
-        return (newmodels, xx)
+        return newmodels, xx
