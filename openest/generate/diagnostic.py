@@ -54,10 +54,12 @@ The DiagnosticManager used by `begin`, `close`, and `record` below.
 """
 default_manager = None
 
-def begin(filepath, finishset=set()):
+def begin(filepath, finishset=None):
     """Open up a new default DiagnosticManager, if none is currently in
     use.
     """
+    if finishset is None:
+        finishset = set()
     global default_manager
 
     if default_manager is not None:
@@ -109,9 +111,11 @@ class DiagnosticManager(object):
         incomplete: The data not yet written to the file.
     """
 
-    def __init__(self, filepath, finishset=set()):
+    def __init__(self, filepath, finishset=None):
         """Create a new diagnostic manager.  Does not write any data yet."""
 
+        if finishset is None:
+            finishset = set()
         self.filepath = filepath
         self.initialized = False
         self.header = []

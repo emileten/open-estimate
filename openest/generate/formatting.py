@@ -67,7 +67,9 @@ def format_iterate(elements):
         yield key, elements[key]
         queue.extend(elements[key].dependencies)
 
-def format_latex(elements, parameters={}):
+def format_latex(elements, parameters=None):
+    if parameters is None:
+        parameters = {}
     iter = format_iterate(elements)
     main = next(iter)
     content = "Main calculation\n\\[\n  %s\n\\]\n\n" % (main.repstr)
@@ -94,7 +96,9 @@ def format_latex(elements, parameters={}):
 
     return content
 
-def format_julia(elements, parameters={}, include_comments=True):
+def format_julia(elements, parameters=None, include_comments=True):
+    if parameters is None:
+        parameters = {}
     iter = format_iterate(elements)
     main = next(iter)
     if include_comments:

@@ -33,7 +33,9 @@ def make_generator_bilinear(zero, baseline, minslope_neg, maxslope_neg, minslope
 
     return generate_bilinear
 
-def make_print_bymonthdaybins(model, func=lambda x: x, weather_change=lambda temps: temps - 273.15, limits=[-40, 100], pval=.5):
+def make_print_bymonthdaybins(model, func=lambda x: x, weather_change=lambda temps: temps - 273.15, limits=None, pval=.5):
+    if limits is None:
+        limits = [-40, 100]
     model = MemoizedUnivariate(model)
     model.set_x_cache_decimals(1)
     spline_orig = model.get_eval_pval_spline(pval, (-40, 80), threshold=1e-2)

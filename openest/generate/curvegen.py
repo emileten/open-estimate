@@ -113,7 +113,9 @@ class TransformCurveGenerator(CurveGenerator):
         else:
             raise NotImplementedError("Cannot produce deltamethod terms for transform %s" % self.description)
 
-    def get_lincom_terms_simple(self, predictors, covariates={}):
+    def get_lincom_terms_simple(self, predictors, covariates=None):
+        if covariates is None:
+            covariates = {}
         if self.deltamethod_passthrough:
             return self.curvegens[0].get_lincom_terms_simple(predictors, covariates)
         else:
