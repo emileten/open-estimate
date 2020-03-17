@@ -36,7 +36,8 @@ class OuterMultiModel(MultivariateModel):
             for ii in range(len(coords)):
                 try:
                     xx = float(coords[ii])
-                except:
+                except Exception as ex:  # CATBELL
+                    import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
                     xx = coords[ii]
                     self.xx_is_categoricals[ii] = True
 

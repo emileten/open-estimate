@@ -50,7 +50,7 @@ class YearlySumIrregular(Calculation):
                 diagnostic.record(region, year, 'avgv', float(np.nansum(weather)))
                         
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
         return ApplicationByIrregular(region, generate)
 

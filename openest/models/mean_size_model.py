@@ -148,7 +148,8 @@ class MeanSizeModel(UnivariateModel):
                         jj = xx.index(masterxx[ii])
                         numersum += model.means[jj] * model.sizes[jj]
                         denomsum += model.sizes[jj]
-                    except:
+                    except Exception as ex:  # CATBELL
+                        import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
                         pass
 
                 print(numersum, denomsum)

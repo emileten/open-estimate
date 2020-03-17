@@ -28,7 +28,7 @@ class PercentSizeModel(LevelSizeModel):
     def __init__(self, xx_is_categorical=False, xx=None, means=None, sizes=None):
         super(PercentSizeModel, self).__init(xx_is_categorical, xx, means, sizes)
 
-    def valid_ranges(x=None):
+    def valid_ranges(self, x=None):
         """Returns a dictionary of {var: (lo, hi)} for knowns and unknowns."""
         ranges = super(PercentSizeModel, self).valid_ranges(x)
         ranges['obs_dlevel[]'] = (-np.inf, np.inf) # Need to predict this
@@ -37,7 +37,7 @@ class PercentSizeModel(LevelSizeModel):
 
         return ranges
 
-    def eval_lp(env, x=None):
+    def eval_lp(self, env, x=None):
         lp = super(PercentSizeModel, self).eval_lp(env, x)
         
         index = self.get_xx().index(x)

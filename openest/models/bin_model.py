@@ -233,7 +233,7 @@ class BinModel(UnivariateModel, MemoizableUnivariate):
     def init_from_bin_file(self, file, delimiter, status_callback=None, init_submodel=lambda fp: None):
         line = string.strip(file.readline())
         if line != "bin1":
-            raise ValueError("Unknown format: %s" % (line))
+            raise ValueError("Unknown format: %s" % line)
 
         reader = csv.reader(file, delimiter=delimiter)
         row = next(reader)

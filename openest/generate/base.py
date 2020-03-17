@@ -11,7 +11,7 @@ class Constant(Calculation):
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
-            yield (year, self.value)
+            yield year, self.value
 
         return ApplicationByYear(region, generate)
 

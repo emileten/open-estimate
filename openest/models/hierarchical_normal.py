@@ -9,7 +9,7 @@ def helper_params(means, varis, tau):
     v_mu = 1.0 / sum(terms)
     mu_hat = sum(terms * means) / sum(terms)
 
-    return (vari_tau_sqrs, v_mu, mu_hat)
+    return vari_tau_sqrs, v_mu, mu_hat
 
 def p_tau_given_y(tau, means, varis):
     (vari_tau_sqrs, v_mu, mu_hat) = helper_params(means, varis, tau)

@@ -2,7 +2,7 @@ import sys, re
 from .nlptools import NLPTools
 
 class Reference:
-    def __init__(authors, title, additional, publisher, date):
+    def __init__(self, authors, title, additional, publisher, date):
         self.authors = authors
         self.title = title
         self.additional = additional

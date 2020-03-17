@@ -178,7 +178,8 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
 
         try:
             return self.conditionals[self.xx_text.index(str(x))]
-        except Exception as e:
+        except Exception as ex:  # CATBELL
+            import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
             return SplineModelConditional.find_nearest(self.xx, x, self.conditionals)
 
     def write_file(self, filename, delimiter):
@@ -273,7 +274,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
         elif line == 'spv1':
             self.scaled = False
         else:
-            raise ValueError("Unknown format: %s" % (line))
+            raise ValueError("Unknown format: %s" % line)
 
         self.xx = []
         self.xx_text = []
@@ -417,7 +418,7 @@ class SplineModel(UnivariateModel, MemoizableUnivariate):
 
         return SplineModel(one.xx_is_categorical, xx, conditionals, True)
 
-class SplineModelConditional():
+class SplineModelConditional:
     # coeffs is ordered low-order to high-order
     def __init__(self, y0s=None, y1s=None, coeffs=None):
         if y0s is None:
@@ -676,14 +677,14 @@ class SplineModelConditional():
         na05 = ((-a)**.5)
         na25 = ((-a)**2.5)
         na35 = ((-a)**3.5)
-        return (2*na25*b*math.exp(a*x0**2 + b*x0 + c) - 2*na25*b*math.exp(a*x1**2 + b*x1 + c) + 4*na35*x0*math.exp(a*x0**2 + b*x0 + c) - 4*na35*x1*math.exp(a*x1**2 + b*x1 + c) - 2*(sqrtpi)*a**3*math.exp((- b**2 + 4*a*c)/(4*a))*erf((b + 2*a*x0)/(2*na05)) + 2*(sqrtpi)*a**3*math.exp((- b**2 + 4*a*c)/(4*a))*erf((b + 2*a*x1)/(2*na05)) + (sqrtpi)*a**2*b**2*math.exp((- b**2 + 4*a*c)/(4*a))*erf((b + 2*a*x0)/(2*na05)) - (sqrtpi)*a**2*b**2*math.exp((- b**2 + 4*a*c)/(4*a))*erf((b + 2*a*x1)/(2*na05)))/(8*((-a)**4.5))
+        return (2 * na25 * b * math.exp(a*x0**2 + b*x0 + c) - 2 * na25 * b * math.exp(a*x1**2 + b*x1 + c) + 4 * na35 * x0 * math.exp(a*x0**2 + b*x0 + c) - 4 * na35 * x1 * math.exp(a*x1**2 + b*x1 + c) - 2 * sqrtpi * a ** 3 * math.exp((- b ** 2 + 4 * a * c) / (4 * a)) * erf((b + 2 * a * x0) / (2 * na05)) + 2 * sqrtpi * a ** 3 * math.exp((- b ** 2 + 4 * a * c) / (4 * a)) * erf((b + 2 * a * x1) / (2 * na05)) + sqrtpi * a ** 2 * b ** 2 * math.exp((- b ** 2 + 4 * a * c) / (4 * a)) * erf((b + 2 * a * x0) / (2 * na05)) - sqrtpi * a ** 2 * b ** 2 * math.exp((- b ** 2 + 4 * a * c) / (4 * a)) * erf((b + 2 * a * x1) / (2 * na05))) / (8 * ((-a) ** 4.5))
 
     # Duplicated in models.js
     def segment_max(self, jj):
         maxyy = self.y0s[jj]
         maxval = self.evaluate(jj, self.y0s[jj])
         val = self.evaluate(jj, self.y1s[jj])
-        if (val > maxval):
+        if val > maxval:
             maxval = val
             maxyy = self.y1s[jj]
 
@@ -696,7 +697,7 @@ class SplineModelConditional():
                     maxval = val
                     maxyy = yy
 
-        return (maxyy, maxval)
+        return maxyy, maxval
 
     # Duplicated in models.js
     # returns (yy, val)
@@ -740,7 +741,7 @@ class SplineModelConditional():
             if limits1 == SplineModel.posinf:
                 limits1 = maxmax[0] + span
 
-        return (limits0, limits1)
+        return limits0, limits1
 
     def convolve(self, other):
         # NOTE: below is for a single segment...
@@ -874,7 +875,7 @@ class SplineModelConditional():
         num_points = 100 * max_segments / (1 + np.log(len(conditionals)))
 
         ys = np.linspace(rough_limits[0], rough_limits[1], num_points)
-        return (limits, ys)
+        return limits, ys
 
 from .ddp_model import DDPModel
 

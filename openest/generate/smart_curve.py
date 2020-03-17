@@ -95,8 +95,10 @@ class CoefficientsCurve(SmartCurve):
             return {'main': FormatElement(' + '.join(["%s * %s_%d" % (self.variables[ii], coeffvar, ii + 1) for ii in range(len(self.variables))]))}
 
 class ZeroInterceptPolynomialCurve(CoefficientsCurve):
-    def __init__(self, coeffs, variables, allow_raising=False, descriptions={}):
+    def __init__(self, coeffs, variables, allow_raising=False, descriptions=None):
         super(ZeroInterceptPolynomialCurve, self).__init__(coeffs, variables)
+        if descriptions is None:
+            descriptions = {}
         self.allow_raising = allow_raising
         self.descriptions = descriptions
     

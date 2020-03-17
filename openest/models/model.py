@@ -117,7 +117,8 @@ class Model(object):
         for ii in range(1, len(merged)):
             try:
                 result = Model.mergers[result.kind() + "+" + merged[ii].kind()]([result, merged[ii]])
-            except:
+            except Exception as ex:  # CATBELL
+                import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
                 result = Model.mergers[merged[ii].kind() + "+" + result.kind()]([merged[ii], result])
 
         return result
@@ -140,7 +141,8 @@ class Model(object):
             else:
                 try:
                     sofar = Model.combiners[sofar.kind() + "+" + scaled.kind()](sofar, scaled)
-                except:
+                except Exception as ex:  # CATBELL
+                    import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
                     sofar = Model.combiners[scaled.kind() + "+" + sofar.kind()](scaled, sofar)
 
         return sofar
