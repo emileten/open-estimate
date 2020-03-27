@@ -22,6 +22,9 @@ class SmartCurve(object):
     def __call__(self, ds):
         raise NotImplementedError("call not implemented")
 
+    def get_univariate(self):
+        raise NotImplementedError("get_univariate not implemented")
+    
     def format(self, lang):
         raise NotImplementedError()
 
@@ -128,6 +131,9 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
                     
         return result
 
+    def get_univariate(self):
+        return curve.ZeroInterceptPolynomialCurve([-np.inf, np.inf], self.coeffs)
+    
     def format(self, lang):
         coeffvar = formatting.get_variable()
         variable = formatting.get_variable()
@@ -189,6 +195,9 @@ class CubicSplineCurve(CoefficientsCurve):
                 return curve.CubicSplineCurve(self.knots, self.coeffs)(ds._variables[self.variables[0]]._data)
 
             raise ex
+
+    def get_univariate(self):
+        return curve.CubicSplineCurve(self.knots, self.coeffs)
 
 class TransformCoefficientsCurve(SmartCurve):
     """Use a transformation of ds to produce each predictor."""
