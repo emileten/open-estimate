@@ -54,17 +54,22 @@ class UShapedCurve(UnivariateCurve):
         else:
             return np.concatenate((lowvalues2, highvalues2))
 
-class UShapeDynamicCurve(UnivariateCurve):
+class UShapedDynamicCurve(UnivariateCurve):
     def __init__(self, curve, midtemp, gettas, unicurve, ordered=False, numfills=50, direction='boatpose'):
-        super(UShapedCurve, self).__init__(curve.xx)
+        super(UShapedDynamicCurve, self).__init__(curve.xx)
+        self.curve = curve
+        self.midtemp = midtemp
+        self.gettas = gettas
         self.unicurve = unicurve
+        self.ordered = ordered
         self.numfills = numfills
+        self.direction = direction
 
     def __call__(self, xs):
         tas = self.gettas(xs)
-        fillxxs = np.arange(np.min(tas), np.max(tas), numfills)[1:-1]
-        fillyys = unicurve(tas)
-        ucurve = UShapedCurve(curve, midtemp, gettas, ordered, fillxxs, fillyys, direction=direction)
+        fillxxs = np.arange(np.min(tas), np.max(tas), self.numfills)[1:-1]
+        fillyys = self.unicurve(tas)
+        ucurve = UShapedCurve(self.curve, self.midtemp, self.gettas, self.ordered, self.fillxxs, self.fillyys, direction=direction)
         return ucurve(xs)
 
 # Return tmarginal evaluated at the innermost edge of plateaus

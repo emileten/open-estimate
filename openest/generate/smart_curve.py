@@ -290,7 +290,20 @@ class ShiftedCurve(SmartCurve):
     def __call__(self, ds):
         return self.curve1(ds) - self.offset
 
+    def get_univariate(self):
+        return ShiftedCurve(self.curve.get_univariate(), self.offset)
+    
     def format(self, lang):
         return formatting.build_recursive({'latex': r"(%s - " + str(self.offset) + ")",
                                            'julia': r"(%s - " + str(self.offset) + ")"},
                                           lang, self.curve)
+
+class ClippedCurve(curve.ClippedCurve, SmartCurve):
+    def get_univariate(self):
+        return ClippedCurve(self.curve.get_univariate(), self.cliplow)
+
+class MinimumCurve(curve.MinimumCurve, SmartCurve):
+    def get_univariate(self):
+        return MinimumCurve(self.curve1.get_univariate(), self.curve2.get_univariate())
+
+
