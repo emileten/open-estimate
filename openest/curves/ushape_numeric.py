@@ -69,7 +69,7 @@ class UShapedDynamicCurve(UnivariateCurve):
         tas = self.gettas(xs)
         fillxxs = np.arange(np.min(tas), np.max(tas), self.numfills)[1:-1]
         fillyys = self.unicurve(tas)
-        ucurve = UShapedCurve(self.curve, self.midtemp, self.gettas, self.ordered, self.fillxxs, self.fillyys, direction=direction)
+        ucurve = UShapedCurve(self.curve, self.midtemp, self.gettas, self.ordered, fillxxs, fillyys, direction=direction)
         return ucurve(xs)
 
 # Return tmarginal evaluated at the innermost edge of plateaus
