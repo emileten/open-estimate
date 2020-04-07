@@ -594,3 +594,96 @@ class KeepOnlyApplication(calculation.Application):
 
     def done(self):
         return self.subapp.done()
+
+class Clip(calculation.Calculation):
+    """Clip the values in a subcalculation.
+
+    Given a (min, max) interval of values in a subcalculation, values outside
+    of this interval are clipped to the interval edges. For example, with the
+    intervals ``[0.0, 1.0]``, values less than 0 become 0 and values greater
+    than 1 become 1.
+
+    Parameters
+    ----------
+    subcalc : openest.generate.calculation.Calculation
+    subcalc_min : float
+    subcalc_max : float
+    """
+    def __init__(self, subcalc, subcalc_min, subcalc_max):
+        super().__init__([subcalc.unitses[0]] + subcalc.unitses)
+        self.subcalc = subcalc
+        self.min = float(subcalc_min)
+        self.max = float(subcalc_max)
+
+    def apply(self, region, *args, **kwargs):
+        """Apply calculation to all subcalculations (`self.subcalc`)
+
+        All parameters are passed to ``self.subcalc.apply()``.
+
+        Parameters
+        ----------
+        region : str
+        args
+        kwargs
+
+        Returns
+        -------
+        openest.generate.Calculation.ApplicationPassCall
+        """
+        def generate(year, result):
+            # This is where the actual clipping happens
+            return max(self.min, min(result, self.max))
+
+        # Prepare the generator from our encapsulated operations
+        subapp = self.subcalc.apply(region, *args, **kwargs)
+        return calculation.ApplicationPassCall(region, subapp, generate, unshift=True)
+
+    def column_info(self):
+        """Get column information of values output from this calculation.
+
+        Returns
+        -------
+        Sequence of dicts
+            Each dict contains:
+
+                ``"name"``
+                    Short-length title of this calculation
+
+                ``"title"``
+                    Long-length title of this calculation
+
+                ``"description"``
+                    Long-form description of this calculation
+        """
+        infos = self.subcalc.column_info()
+        title_str = str(infos[0]['title'])
+        title = f'Clipped form of {title_str}'
+        description = f'The value of {title_str}, clipped to the interval [{self.min}, {self.max}].'
+        return [dict(name='clip', title=title, description=description)] + infos
+
+    @staticmethod
+    def describe():
+        """Get computer-readable description of the calculation
+
+        Returns
+        -------
+        dict
+            This contains:
+
+            ``"input_timerate"``
+                Expected time rate of data, day, month, year, or any.
+
+            ``"output_timerate"``
+                Expected time rate of data, day, month, year, or same.
+
+            ``"arguments"``
+                A list of subclasses of arguments.ArgumentType, describing each
+                constructor argument.
+
+            ``"description"``
+                Text description.
+
+        """
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.numeric, arguments.numeric],
+                    description="Return the clipped values of a previous result.")
