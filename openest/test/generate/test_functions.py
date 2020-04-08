@@ -124,6 +124,21 @@ class TestClip:
         victim_gen = clipped_calc.apply('foobar_region').push('not_a_ds')
         assert next(victim_gen) == expected
 
+    def test_apply_memory(self):
+        """Test that Clip.apply() doesn't hold memory between yields
+        """
+        subcalc_mock = MockApplication(
+            years=[0, 1, 2],
+            values=[0.0, 0.5, 1.0],
+            unitses=['fakeunit'],
+        )
+        clipped_calc = Clip(subcalc_mock, 0.0, 1.0)
+        victim_gen = clipped_calc.apply('foobar_region').push('not_a_ds')
+        iter0 = next(victim_gen)
+        iter1 = next(victim_gen)
+        iter2 = next(victim_gen)
+        assert (iter0 == [0, 0.0, 0.0]) and (iter1 == [1, 0.5, 0.5]) and (iter2 == [2, 1.0, 1.0])
+
     def test_column_info(self):
         """Ensure self.column_info() appends dict with correct keys
         """
