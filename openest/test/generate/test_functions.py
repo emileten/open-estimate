@@ -113,7 +113,7 @@ class TestClip:
         ids=['outside clip', 'clip edge', 'inside clip'],
     )
     def test_apply(self, in_years, in_values, expected):
-        """Test self.apply() clips values in, out, and on edge of interval
+        """Test Clip.apply() clips values in, out, and on edge of interval
         """
         subcalc_mock = MockApplication(
             years=in_years,
@@ -140,7 +140,7 @@ class TestClip:
         assert (iter0 == [0, 0.0, 0.0]) and (iter1 == [1, 0.5, 0.5]) and (iter2 == [2, 1.0, 1.0])
 
     def test_column_info(self):
-        """Ensure self.column_info() appends dict with correct keys
+        """Ensure Clip.column_info() appends dict with correct keys
         """
         subcalc_mock = MockApplication(years=[0], values=[1.0], unitses=['fakeunit'])
         clipped_calc = Clip(subcalc_mock, 0.0, 1.0)
@@ -150,7 +150,7 @@ class TestClip:
         assert list(victim[0].keys()) == ['name', 'title', 'description']
 
     def test_describe(self):
-        """Ensure self.describe() returns dict with correct keys
+        """Ensure Clip.describe() returns dict with correct keys
         """
         subcalc_mock = MockApplication(years=[0], values=[1.0], unitses=['fakeunit'])
         clipped_calc = Clip(subcalc_mock, 0.0, 1.0)
