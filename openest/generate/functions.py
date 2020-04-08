@@ -685,5 +685,5 @@ class Clip(calculation.Calculation):
 
         """
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculation, arguments.numeric, arguments.numeric],
+                    arguments=[arguments.calculation, arguments.numeric.rename('min'), arguments.numeric.rename('max')],
                     description="Return the clipped values of a previous result.")
