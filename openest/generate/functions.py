@@ -605,7 +605,7 @@ class Clip(calculation.Calculation):
 
     Parameters
     ----------
-    subcalc : openest.generate.calculation.Calculation
+    subcalc : openest.generate.calculation.Application
     subcalc_min : float
     subcalc_max : float
     """
