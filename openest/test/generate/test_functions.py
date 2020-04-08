@@ -9,10 +9,11 @@ from openest.generate.functions import Scale, Instabase, SpanInstabase, Clip, Su
 from .test_daily import test_curve
 
 
-class MockApplication:
+class MockAppCalc:
     """Mocks openest.generate.calculation.CustomFunctionalCalculation-like for ease
 
-    This primarily allows us to prime the Application generators with simple Sequences.
+    This primarily allows us to prime the Application generators with simple
+    Sequences. Is it an Application? Is it a Calculation? It's kinda both!
     """
     def __init__(self, years, values, unitses):
         self.unitses = unitses
@@ -105,8 +106,8 @@ class TestSum:
         """Tests that Sum instances correctly append units from the original subcalcs
         """
         unit = ['fakeunit']
-        subcalc_mock1 = MockApplication(years=[0], values=[1.0], unitses=unit)
-        subcalc_mock2 = MockApplication(years=[0], values=[2.0], unitses=unit)
+        subcalc_mock1 = MockAppCalc(years=[0], values=[1.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
 
         sum_calc = Sum([subcalc_mock1, subcalc_mock2], unshift=unshift_flag)
         assert sum_calc.unitses == unit * n_expected
@@ -115,8 +116,8 @@ class TestSum:
         """Test Sum.apply() actually sums values
         """
         unit = ['fakeunit']
-        subcalc_mock1 = MockApplication(years=[0], values=[1.0], unitses=unit)
-        subcalc_mock2 = MockApplication(years=[0], values=[2.0], unitses=unit)
+        subcalc_mock1 = MockAppCalc(years=[0], values=[1.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
 
         sum_calc = Sum([subcalc_mock1, subcalc_mock2])
         victim_gen = sum_calc.apply('foobar_region').push('not_a_ds')
@@ -126,8 +127,8 @@ class TestSum:
         """Test that Sum.apply() doesn't hold memory between yields
         """
         unit = ['fakeunit']
-        subcalc_mock1 = MockApplication(years=[0, 1], values=[1.0, 2.0], unitses=unit)
-        subcalc_mock2 = MockApplication(years=[0, 1], values=[2.0, 3.0], unitses=unit)
+        subcalc_mock1 = MockAppCalc(years=[0, 1], values=[1.0, 2.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0, 1], values=[2.0, 3.0], unitses=unit)
         sum_calc = Sum([subcalc_mock1, subcalc_mock2])
 
         victim_gen = sum_calc.apply('foobar_region').push('not_a_ds')
@@ -139,8 +140,8 @@ class TestSum:
         """Ensure Sum.column_info() appends dict with correct keys
         """
         unit = ['fakeunit']
-        subcalc_mock1 = MockApplication(years=[0], values=[1.0], unitses=unit)
-        subcalc_mock2 = MockApplication(years=[0], values=[2.0], unitses=unit)
+        subcalc_mock1 = MockAppCalc(years=[0], values=[1.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
         sum_calc = Sum([subcalc_mock1, subcalc_mock2])
         victim = sum_calc.column_info()
         # Check that first dict is from Sum instance
@@ -151,8 +152,8 @@ class TestSum:
         """Ensure Sum.describe() returns dict with correct keys
         """
         unit = ['fakeunit']
-        subcalc_mock1 = MockApplication(years=[0], values=[1.0], unitses=unit)
-        subcalc_mock2 = MockApplication(years=[0], values=[2.0], unitses=unit)
+        subcalc_mock1 = MockAppCalc(years=[0], values=[1.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
         sum_calc = Sum([subcalc_mock1, subcalc_mock2])
         victim = sum_calc.describe()
         assert list(victim.keys()) == ['input_timerate', 'output_timerate', 'arguments', 'description']
@@ -165,7 +166,7 @@ class TestClip:
         """Tests that Clip instances correctly append units from the original subcalc
         """
         unit = ['fakeunit']
-        subcalc_mock = MockApplication(years=[0], values=[1.0], unitses=unit)
+        subcalc_mock = MockAppCalc(years=[0], values=[1.0], unitses=unit)
         clipped_calc = Clip(subcalc_mock, 0.0, 1.0)
         assert clipped_calc.unitses == unit * 2
 
@@ -181,7 +182,7 @@ class TestClip:
     def test_apply(self, in_years, in_values, expected):
         """Test Clip.apply() clips values in, out, and on edge of interval
         """
-        subcalc_mock = MockApplication(
+        subcalc_mock = MockAppCalc(
             years=in_years,
             values=in_values,
             unitses=['fakeunit'],
@@ -193,7 +194,7 @@ class TestClip:
     def test_apply_memory(self):
         """Test that Clip.apply() doesn't hold memory between yields
         """
-        subcalc_mock = MockApplication(
+        subcalc_mock = MockAppCalc(
             years=[0, 1, 2],
             values=[0.0, 0.5, 1.0],
             unitses=['fakeunit'],
@@ -208,7 +209,7 @@ class TestClip:
     def test_column_info(self):
         """Ensure Clip.column_info() appends dict with correct keys
         """
-        subcalc_mock = MockApplication(years=[0], values=[1.0], unitses=['fakeunit'])
+        subcalc_mock = MockAppCalc(years=[0], values=[1.0], unitses=['fakeunit'])
         clipped_calc = Clip(subcalc_mock, 0.0, 1.0)
         victim = clipped_calc.column_info()
         # Check that first dict is from Clip instance
@@ -218,7 +219,7 @@ class TestClip:
     def test_describe(self):
         """Ensure Clip.describe() returns dict with correct keys
         """
-        subcalc_mock = MockApplication(years=[0], values=[1.0], unitses=['fakeunit'])
+        subcalc_mock = MockAppCalc(years=[0], values=[1.0], unitses=['fakeunit'])
         clipped_calc = Clip(subcalc_mock, 0.0, 1.0)
         victim = clipped_calc.describe()
         assert list(victim.keys()) == ['input_timerate', 'output_timerate', 'arguments', 'description']
