@@ -314,10 +314,15 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
                                arguments.output_unit.optional()],
                     description="Translate all results to z-scores against results up to a given year.")
 
-"""
-Sum two or more results
-"""
+
 class Sum(calculation.Calculation):
+    """Sum two or more subcalculations
+
+    Parameters
+    ----------
+    subcalcs : Sequence of ``openest.generate.calculation.Calculation``
+    unshift : bool, optional
+    """
     def __init__(self, subcalcs, unshift=True):
         fullunitses = subcalcs[0].unitses[:]
         for ii in range(1, len(subcalcs)):
@@ -347,6 +352,20 @@ class Sum(calculation.Calculation):
         return elements
         
     def apply(self, region, *args, **kwargs):
+        """Apply calculation to all subcalculations
+
+        All parameters are passed to ``self.subcalc.apply()``.
+
+        Parameters
+        ----------
+        region : str
+        args
+        kwargs
+
+        Returns
+        -------
+        openest.generate.Calculation.ApplicationPassCall
+        """
         def generate(year, results):
             if not self.deltamethod:
                 return np.sum([x[1] if x is not None else np.nan for x in results])
@@ -358,6 +377,22 @@ class Sum(calculation.Calculation):
         return calculation.ApplicationPassCall(region, subapps, generate, unshift=self.unshift)
 
     def column_info(self):
+        """Get column information of values output from this calculation.
+
+        Returns
+        -------
+        Sequence of dicts
+            Each dict contains:
+
+                ``"name"``
+                    Short-length title of this calculation
+
+                ``"title"``
+                    Long-length title of this calculation
+
+                ``"description"``
+                    Long-form description of this calculation
+        """
         infoses = [subcalc.column_info() for subcalc in self.subcalcs]
         title = 'Sum of previous results'
         description = 'Sum of ' + ', '.join([infos[0]['title'] for infos in infoses])
@@ -375,15 +410,38 @@ class Sum(calculation.Calculation):
     def partial_derivative(self, covariate, covarunit):
         """
         Returns a new calculation object that calculates the partial
-        derivative with respect to a given variable; currently only covariates are supported.
+        derivative with respect to a given variable; currently only covariates
+        are supported.
         """
         return Sum([subcalc.partial_derivative(covariate, covarunit) for subcalc in self.subcalcs])
 
     @staticmethod
     def describe():
+        """Get computer-readable description of the calculation
+
+        Returns
+        -------
+        dict
+            This contains:
+
+            ``"input_timerate"``
+                Expected time rate of data, day, month, year, or any.
+
+            ``"output_timerate"``
+                Expected time rate of data, day, month, year, or same.
+
+            ``"arguments"``
+                A list of subclasses of arguments.ArgumentType, describing each
+                constructor argument.
+
+            ``"description"``
+                Text description.
+
+        """
         return dict(input_timerate='any', output_timerate='same',
                     arguments=[arguments.calculationss, arguments.unshift.optional()],
                     description="Sum the results of multiple previous calculations.")
+
 
 """
 ConstantScale
