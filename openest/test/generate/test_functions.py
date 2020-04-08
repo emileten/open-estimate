@@ -10,7 +10,7 @@ from .test_daily import test_curve
 
 
 class MockApplication:
-    """Mocks openest.generate.calculation.Application for ease
+    """Mocks openest.generate.calculation.CustomFunctionalCalculation-like for ease
 
     This primarily allows us to prime the Application generators with simple Sequences.
     """
