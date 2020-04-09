@@ -515,22 +515,23 @@ class Positive(calculation.Calculation):
                     description="Return the maximum of a previous result or 0.")
 
 class Exponentiate(calculation.Calculation):
-    def __init__(self, subcalc):
+    def __init__(self, subcalc, errorvar):
         assert subcalc.unitses[0][:3] == 'log'
         super(Exponentiate, self).__init__([subcalc.unitses[0][3:].strip()] + subcalc.unitses)
         self.subcalc = subcalc
+        self.errorvar = errorvar
 
     def format(self, lang, *args, **kwargs):
         elements = self.subcalc.format(lang, *args, **kwargs)
         if lang == 'latex':
-            elements.update({'main': FormatElement(r"\exp{%s}" % elements['main'].repstr)})
+            elements.update({'main': FormatElement(r"\exp{%s + %f/2}" % (elements['main'].repstr, self.errorvar))})
         elif lang == 'julia':
-            elements.update({'main': FormatElement(r"exp(%s)" % elements['main'].repstr)})
+            elements.update({'main': FormatElement(r"exp(%s + %f/2)" % (elements['main'].repstr, self.errorvar))})
         return elements
             
     def apply(self, region, *args, **kwargs):
         def generate(year, result):
-            return np.exp(result)
+            return np.exp(result + 0.5*self.errorvar)
 
         # Prepare the generator from our encapsulated operations
         subapp = self.subcalc.apply(region, *args, **kwargs)
@@ -546,7 +547,7 @@ class Exponentiate(calculation.Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculation],
+                    arguments=[arguments.calculation, arguments.variance.rename('errorvar')],
                     description="Return the the exponentiation of a previous result.")
 
 class AuxillaryResult(calculation.Calculation):
