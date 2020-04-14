@@ -67,10 +67,12 @@ def format_iterate(elements):
         yield key, elements[key]
         queue.extend(elements[key].dependencies)
 
-def format_latex(elements, parameters={}):
+def format_latex(elements, parameters=None):
+    if parameters is None:
+        parameters = {}
     iter = format_iterate(elements)
     main = next(iter)
-    content = "Main calculation\n\\[\n  %s\n\\]\n\n" % (main.repstr)
+    content = "Main calculation\n\\[\n  %s\n\\]\n\n" % main.repstr
 
     content += "\\begin{description}"
     for key, element in iter:
@@ -85,7 +87,7 @@ def format_latex(elements, parameters={}):
                     valstr = str(value)
                 content.append("\n  \\item[$%s$]\n    %s\n" % (key, valstr))
             else:
-                content.append("\n  \\item[$%s$]\n    (parameter)\n" % (key))
+                content.append("\n  \\item[$%s$]\n    (parameter)\n" % key)
         elif element.is_abstract:
             content += "\n  \\item[$%s$]\n    %s\n" % (key, element.repstr)
         else:
@@ -94,11 +96,13 @@ def format_latex(elements, parameters={}):
 
     return content
 
-def format_julia(elements, parameters={}, include_comments=True):
+def format_julia(elements, parameters=None, include_comments=True):
+    if parameters is None:
+        parameters = {}
     iter = format_iterate(elements)
     main = next(iter)
     if include_comments:
-        content = ["\n# Main calculation\n%s" % (main.repstr)]
+        content = ["\n# Main calculation\n%s" % main.repstr]
     else:
         content = [main.repstr]
         
@@ -228,7 +232,8 @@ def interpret1(func):
     try:
         if func('sillystring') == 'sillystring':
             return "identity"
-    except:
+    except Exception as ex:  # CATBELL
+        import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
         return "unknown"
 
 def interpret2(func):
@@ -242,5 +247,6 @@ def interpret2(func):
             return '-'
         if func(555., 111.) == 555. * 111.:
             return '*'
-    except:
+    except Exception as ex:  # CATBELL
+        import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
         return "unknown"

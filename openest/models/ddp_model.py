@@ -409,7 +409,8 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
 
         try:
             return self.xx_text.index(str(x))
-        except:
+        except Exception as ex:  # CATBELL
+            import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
             idx = (abs(array(self.xx)-x)).argmin()
             return idx
 
@@ -477,7 +478,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         header = next(reader)
         fmt = header[0]
         if fmt not in ['ddp1', 'ddp2', 'ddv1', 'ddv2']:
-            raise ValueError("Unknown format: %s" % (fmt))
+            raise ValueError("Unknown format: %s" % fmt)
 
         self.source = source
 
@@ -527,7 +528,7 @@ class DDPModel(UnivariateModel, MemoizableUnivariate):
         self.xx_text = xx_text
         self.pp = pp
 
-        if self.scaled == True:
+        if self.scaled:
             print(pp)
             if self.p_format == 'ddp1':
                 sums = sum(pp, axis=1)

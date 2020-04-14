@@ -458,7 +458,7 @@ class ApplicationPassCall(Application):
                             fullresult.extend(yearresults[ii][1:] if yearresults[ii] is not None else [np.nan])
                         yield fullresult
                     else:
-                        yield (year, newresult)
+                        yield year, newresult
         else:
             for yearresult in self.subapp.push(ds):
                 year = yearresult[0]
@@ -471,7 +471,7 @@ class ApplicationPassCall(Application):
                     if self.unshift:
                         yield [year, newresult] + list(yearresult[1:])
                     else:
-                        yield (year, newresult)
+                        yield year, newresult
 
 
 class ApplicationByChunks(Application):

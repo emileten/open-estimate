@@ -168,7 +168,7 @@ class MonthlyZScoreApply(Calculation, Application):
         time = time[0]
         weather = self.weather_change(weather[0])
 
-        yield (time, self.curve((weather - self.monthmeans[time % 12][self.region_index]) / self.monthsdevs[time % 12][self.region_index]))
+        yield time, self.curve((weather - self.monthmeans[time % 12][self.region_index]) / self.monthsdevs[time % 12][self.region_index])
 
     def column_info(self):
         description = "Single value as z-score applied to " + self.curve_description

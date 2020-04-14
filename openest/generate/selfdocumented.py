@@ -33,7 +33,9 @@ class SelfDocumenting(object):
         raise NotImplementedError()
 
 class DocumentedFunction(SelfDocumenting):
-    def __init__(self, func, description=None, docfunc=None, docargs=[]):
+    def __init__(self, func, description=None, docfunc=None, docargs=None):
+        if docargs is None:
+            docargs = []
         self.func = func
         self.description = description
         self.docfunc = docfunc if docfunc is not None else func

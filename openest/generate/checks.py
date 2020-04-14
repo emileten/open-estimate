@@ -21,7 +21,8 @@ def assert_conformant_weather_input(curve, values):
     if isinstance(curve, UnivariateCurve):
         try:
             np.array(values)
-        except:
+        except Exception as ex:  # CATBELL
+            import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
             assert False, "Trying to pass a non-array_like into a curve. Did you mean to use weather_change to extract a variable?"
         return True
     assert False, "Unknown curve type: %s" % curve.__class__

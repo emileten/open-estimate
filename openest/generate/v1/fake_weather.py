@@ -34,7 +34,7 @@ def generate_growing_season(pathto, cropfile):
             plantday = float(row[1])
             harvestday = float(row[2])
             temp = bycounty[row[0]] - (10 / (harvestday - plantday)) * (365 / (2*math.pi)) * (math.sin(2*math.pi * harvestday / 365.0) - math.sin(2*math.pi * plantday / 365.0))
-            yield (row[0], temp)
+            yield row[0], temp
 
 def make_constant_365years(year0, const, num):
     yyyyddd = []

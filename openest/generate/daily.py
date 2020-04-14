@@ -37,14 +37,14 @@ class MonthlyDayBins(Calculation):
         funcvar = formatting.get_function()
         if lang == 'latex':
             return {'main': FormatElement(r"\frac{1}{12} \sum_{m \in y(t)} %s(T_m)",
-                                          ['T_m', "%s(\cdot)" % (funcvar)]),
+                                          ['T_m', "%s(\cdot)" % funcvar]),
                     'T_m': FormatElement("Temperature", is_abstract=True),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.curvegen))}
+                    "%s(\cdot)" % funcvar: FormatElement(str(self.curvegen))}
         elif lang == 'julia':
             return {'main': FormatElement(r"sum(%s(Tbymonth)) / 12",
-                                          ['Tbymonth', "%s(T)" % (funcvar)]),
+                                          ['Tbymonth', "%s(T)" % funcvar]),
                     'Tbymonth': FormatElement("# Days of within each bin"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.curvegen))}            
+                    "%s(T)" % funcvar: FormatElement(str(self.curvegen))}
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
@@ -56,7 +56,7 @@ class MonthlyDayBins(Calculation):
             result = np.nansum(results) / 12
 
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
         return ApplicationByYear(region, generate)
 
@@ -80,15 +80,15 @@ class YearlyDayBins(Calculation):
     def format(self, lang):
         funcvar = formatting.get_function()
         if lang == 'latex':
-            return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % (funcvar),
-                                          ['T_d', "%s(\cdot)" % (funcvar)]),
+            return {'main': FormatElement(r"\sum_{d \in y(t)} %s(T_d)" % funcvar,
+                                          ['T_d', "%s(\cdot)" % funcvar]),
                     'T_d': FormatElement("Temperature", is_abstract=True),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.curvegen))}
+                    "%s(\cdot)" % funcvar: FormatElement(str(self.curvegen))}
         elif lang == 'julia':
             return {'main': FormatElement(r"sum(%s(Tbins))",
-                                          ['Tbins', "%s(T)" % (funcvar)]),
+                                          ['Tbins', "%s(T)" % funcvar]),
                     'Tbins': FormatElement("# Temperature in bins"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.curvegen))}
+                    "%s(T)" % funcvar: FormatElement(str(self.curvegen))}
 
 
     def apply(self, region, *args):
@@ -109,7 +109,7 @@ class YearlyDayBins(Calculation):
                 result = np.nansum(curve(temps2))
 
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
         return ApplicationByYear(region, generate)
 
@@ -134,16 +134,16 @@ class AverageByMonth(Calculation):
     def format(self, lang):
         funcvar = formatting.get_function()
         if lang == 'latex':
-            return {'main': FormatElement(r"mean(\{mean_{d \in m(t)} %s(T_d)\})" % (funcvar),
-                                          ['T_d', "%s(\cdot)" % (funcvar)]),
+            return {'main': FormatElement(r"mean(\{mean_{d \in m(t)} %s(T_d)\})" % funcvar,
+                                          ['T_d', "%s(\cdot)" % funcvar]),
                     'T_d': FormatElement("Temperature", is_abstract=True),
-                    "%s(\cdot)" % (funcvar): FormatElement(str(self.curvegen))}
+                    "%s(\cdot)" % funcvar: FormatElement(str(self.curvegen))}
         elif lang == 'julia':
-            return {'main': FormatElement("mean([mean(%s(Tbyday[monthday[ii]:monthday[ii+1]-1])) for ii in 1:12])" % (funcvar),
-                                          ['Tbyday', "monthday", "%s(T)" % (funcvar)]),
+            return {'main': FormatElement("mean([mean(%s(Tbyday[monthday[ii]:monthday[ii+1]-1])) for ii in 1:12])" % funcvar,
+                                          ['Tbyday', "monthday", "%s(T)" % funcvar]),
                     'Tbyday': FormatElement("# Temperature by day"),
                     'monthday': FormatElement("cumsum([1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])"),
-                    "%s(T)" % (funcvar): FormatElement(str(self.curvegen))}
+                    "%s(T)" % funcvar: FormatElement(str(self.curvegen))}
 
     def apply(self, region):
         def generate(region, year, temps, **kw):
@@ -160,7 +160,7 @@ class AverageByMonth(Calculation):
 
             result = np.mean(bymonth)
             if not np.isnan(result):
-                yield (year, func(result))
+                yield year, func(result)
 
         return ApplicationByYear(region, generate)
 
@@ -251,7 +251,7 @@ class YearlyAverageDay(Calculation):
                 diagnostic.record(region, year, 'zero', float(np.nansum(curve(temps2) == 0)) / len(temps2))
 
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
         return ApplicationByYear(region, generate)
 
@@ -294,7 +294,7 @@ class YearlySumDay(YearlyAverageDay):
 
             if self.deltamethod:
                 terms = self.curvegen.get_lincom_terms(region, year, temps2.sum(), temps2)
-                yield (year, terms)
+                yield year, terms
                 return
             
             curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
@@ -309,7 +309,7 @@ class YearlySumDay(YearlyAverageDay):
                     diagnostic.record(region, year, 'avgv', float(np.nansum(temps2)))
 
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
         return ApplicationByYear(region, generate)
 
@@ -350,7 +350,7 @@ class YearlyDividedPolynomialAverageDay(Calculation):
                     diagnostic.record(region, year, 'avgtk_' + str(ii+1), sumtemps[ii])
 
             if not np.isnan(result):
-                yield (year, result)
+                yield year, result
 
         return ApplicationByYear(region, generate)
 

@@ -29,7 +29,7 @@ class LevelSizeModel(MeanSizeModel, HierarchicalModel):
     def __init__(self, xx_is_categorical=False, xx=None, means=None, sizes=None):
         super(LevelSizeModel, self).__init(xx_is_categorical, xx, means, sizes)
 
-    def valid_ranges(x=None):
+    def valid_ranges(self, x=None):
         """Returns a dictionary of {var: (lo, hi)} for knowns and unknowns."""
         index = self.get_xx().index(x)
         return {'obs_dlevel[]': self.means[index],
@@ -40,7 +40,7 @@ class LevelSizeModel(MeanSizeModel, HierarchicalModel):
                 'sigma_dlevel': (0, np.inf),
                 'pop_var': (0, np.inf)}
 
-    def eval_lp(env, x=None):
+    def eval_lp(self, env, x=None):
         # Refers to locals through env, in case this is a subclass
         # y_i ~ N(theta_i, tau_i)
         lp = stats.norm.logpdf(env['obs_dlevel[]'], env['true_dlevel[]'], env['sigma_tdl[]'])

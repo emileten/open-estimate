@@ -314,10 +314,15 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
                                arguments.output_unit.optional()],
                     description="Translate all results to z-scores against results up to a given year.")
 
-"""
-Sum two or more results
-"""
+
 class Sum(calculation.Calculation):
+    """Sum two or more subcalculations
+
+    Parameters
+    ----------
+    subcalcs : Sequence of ``openest.generate.calculation.Calculation``
+    unshift : bool, optional
+    """
     def __init__(self, subcalcs, unshift=True):
         fullunitses = subcalcs[0].unitses[:]
         for ii in range(1, len(subcalcs)):
@@ -347,6 +352,20 @@ class Sum(calculation.Calculation):
         return elements
         
     def apply(self, region, *args, **kwargs):
+        """Apply calculation to all subcalculations
+
+        All parameters are passed to ``self.subcalc.apply()``.
+
+        Parameters
+        ----------
+        region : str
+        args
+        kwargs
+
+        Returns
+        -------
+        openest.generate.Calculation.ApplicationPassCall
+        """
         def generate(year, results):
             if not self.deltamethod:
                 return np.sum([x[1] if x is not None else np.nan for x in results])
@@ -358,6 +377,22 @@ class Sum(calculation.Calculation):
         return calculation.ApplicationPassCall(region, subapps, generate, unshift=self.unshift)
 
     def column_info(self):
+        """Get column information of values output from this calculation.
+
+        Returns
+        -------
+        Sequence of dicts
+            Each dict contains:
+
+                ``"name"``
+                    Short-length title of this calculation
+
+                ``"title"``
+                    Long-length title of this calculation
+
+                ``"description"``
+                    Long-form description of this calculation
+        """
         infoses = [subcalc.column_info() for subcalc in self.subcalcs]
         title = 'Sum of previous results'
         description = 'Sum of ' + ', '.join([infos[0]['title'] for infos in infoses])
@@ -375,15 +410,38 @@ class Sum(calculation.Calculation):
     def partial_derivative(self, covariate, covarunit):
         """
         Returns a new calculation object that calculates the partial
-        derivative with respect to a given variable; currently only covariates are supported.
+        derivative with respect to a given variable; currently only covariates
+        are supported.
         """
         return Sum([subcalc.partial_derivative(covariate, covarunit) for subcalc in self.subcalcs])
 
     @staticmethod
     def describe():
+        """Get computer-readable description of the calculation
+
+        Returns
+        -------
+        dict
+            This contains:
+
+            ``"input_timerate"``
+                Expected time rate of data, day, month, year, or any.
+
+            ``"output_timerate"``
+                Expected time rate of data, day, month, year, or same.
+
+            ``"arguments"``
+                A list of subclasses of arguments.ArgumentType, describing each
+                constructor argument.
+
+            ``"description"``
+                Text description.
+
+        """
         return dict(input_timerate='any', output_timerate='same',
                     arguments=[arguments.calculationss, arguments.unshift.optional()],
                     description="Sum the results of multiple previous calculations.")
+
 
 """
 ConstantScale
@@ -457,22 +515,23 @@ class Positive(calculation.Calculation):
                     description="Return the maximum of a previous result or 0.")
 
 class Exponentiate(calculation.Calculation):
-    def __init__(self, subcalc):
+    def __init__(self, subcalc, errorvar):
         assert subcalc.unitses[0][:3] == 'log'
         super(Exponentiate, self).__init__([subcalc.unitses[0][3:].strip()] + subcalc.unitses)
         self.subcalc = subcalc
+        self.errorvar = errorvar
 
     def format(self, lang, *args, **kwargs):
         elements = self.subcalc.format(lang, *args, **kwargs)
         if lang == 'latex':
-            elements.update({'main': FormatElement(r"\exp{%s}" % elements['main'].repstr)})
+            elements.update({'main': FormatElement(r"\exp{%s + %f/2}" % (elements['main'].repstr, self.errorvar))})
         elif lang == 'julia':
-            elements.update({'main': FormatElement(r"exp(%s)" % elements['main'].repstr)})
+            elements.update({'main': FormatElement(r"exp(%s + %f/2)" % (elements['main'].repstr, self.errorvar))})
         return elements
             
     def apply(self, region, *args, **kwargs):
         def generate(year, result):
-            return np.exp(result)
+            return np.exp(result + 0.5*self.errorvar)
 
         # Prepare the generator from our encapsulated operations
         subapp = self.subcalc.apply(region, *args, **kwargs)
@@ -488,7 +547,7 @@ class Exponentiate(calculation.Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculation],
+                    arguments=[arguments.calculation, arguments.variance.rename('errorvar')],
                     description="Return the the exponentiation of a previous result.")
 
 class AuxillaryResult(calculation.Calculation):
@@ -594,3 +653,96 @@ class KeepOnlyApplication(calculation.Application):
 
     def done(self):
         return self.subapp.done()
+
+class Clip(calculation.Calculation):
+    """Clip the values in a subcalculation.
+
+    Given a (min, max) interval of values in a subcalculation, values outside
+    of this interval are clipped to the interval edges. For example, with the
+    intervals ``[0.0, 1.0]``, values less than 0 become 0 and values greater
+    than 1 become 1.
+
+    Parameters
+    ----------
+    subcalc : openest.generate.calculation.Application
+    subcalc_min : float
+    subcalc_max : float
+    """
+    def __init__(self, subcalc, subcalc_min, subcalc_max):
+        super().__init__([subcalc.unitses[0]] + subcalc.unitses)
+        self.subcalc = subcalc
+        self.min = float(subcalc_min)
+        self.max = float(subcalc_max)
+
+    def apply(self, region, *args, **kwargs):
+        """Apply calculation to all subcalculations (`self.subcalc`)
+
+        All parameters are passed to ``self.subcalc.apply()``.
+
+        Parameters
+        ----------
+        region : str
+        args
+        kwargs
+
+        Returns
+        -------
+        openest.generate.Calculation.ApplicationPassCall
+        """
+        def generate(year, result):
+            # This is where the actual clipping happens
+            return max(self.min, min(result, self.max))
+
+        # Prepare the generator from our encapsulated operations
+        subapp = self.subcalc.apply(region, *args, **kwargs)
+        return calculation.ApplicationPassCall(region, subapp, generate, unshift=True)
+
+    def column_info(self):
+        """Get column information of values output from this calculation.
+
+        Returns
+        -------
+        Sequence of dicts
+            Each dict contains:
+
+                ``"name"``
+                    Short-length title of this calculation
+
+                ``"title"``
+                    Long-length title of this calculation
+
+                ``"description"``
+                    Long-form description of this calculation
+        """
+        infos = self.subcalc.column_info()
+        title_str = str(infos[0]['title'])
+        title = f'Clipped form of {title_str}'
+        description = f'The value of {title_str}, clipped to the interval [{self.min}, {self.max}].'
+        return [dict(name='clip', title=title, description=description)] + infos
+
+    @staticmethod
+    def describe():
+        """Get computer-readable description of the calculation
+
+        Returns
+        -------
+        dict
+            This contains:
+
+            ``"input_timerate"``
+                Expected time rate of data, day, month, year, or any.
+
+            ``"output_timerate"``
+                Expected time rate of data, day, month, year, or same.
+
+            ``"arguments"``
+                A list of subclasses of arguments.ArgumentType, describing each
+                constructor argument.
+
+            ``"description"``
+                Text description.
+
+        """
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.numeric.rename('min'), arguments.numeric.rename('max')],
+                    description="Return the clipped values of a previous result.")

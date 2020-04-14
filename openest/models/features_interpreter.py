@@ -215,7 +215,8 @@ class FeaturesInterpreter:
 
         try:
             conditional.rescale()
-        except:
+        except Exception as ex:  # CATBELL
+            import traceback; print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
             return None
 
         return conditional

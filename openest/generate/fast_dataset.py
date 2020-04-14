@@ -261,7 +261,7 @@ def region_groupby(ds, year, regions, region_indices):
             
         newvars = {}
         newcoords = {'time': timevar}
-        for var in ds:
+        for var in ds.variables:
             if var in ['time', 'region']:
                 continue
             if var in ds.coords:
