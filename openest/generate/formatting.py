@@ -59,11 +59,11 @@ def format_iterate(elements):
         if key in used_keys:
             continue
 
+        used_keys.add(key)
         if key not in elements:
             yield key, None
             continue
 
-        used_keys.add(key)
         yield key, elements[key]
         queue.extend(elements[key].dependencies)
 
@@ -107,6 +107,11 @@ def format_julia(elements, parameters=None, include_comments=True):
         content = [main.repstr]
         
     for key, element in iter:
+        if element is None and key in map(lambda elt: elt.extname, functions_known.values()):
+            element = {elt.extname: elt for elt in functions_known.values()}[key]
+        if element is None and key in parameters:
+            element = ParameterFormatElement(key, get_parametername(key, 'julia'))
+
         if element is None:
             if include_comments:
                 content.append("# %s missing" % key)
