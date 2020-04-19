@@ -555,7 +555,7 @@ class AuxillaryResult(calculation.Calculation):
     Produce an additional output, but then pass the main result on.
     """
     def __init__(self, subcalc_main, subcalc_aux, auxname):
-        super(AuxillaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
+        super(AuxillaryResult, self).__init__([subcalc_main.unitses[0]] + subcalc_aux.unitses + subcalc_main.unitses[1:])
         self.subcalc_main = subcalc_main
         self.subcalc_aux = subcalc_aux
         self.auxname = auxname
@@ -606,7 +606,7 @@ class AuxillaryResultApplication(calculation.Application):
         for yearresult in self.subapp_main.push(ds):
             for yearresult_aux in self.subapp_aux.push(ds):
                 next # Just take the last one
-            yield list(yearresult[0:2]) + [yearresult_aux[1]] + list(yearresult[2:])
+            yield list(yearresult[0:2]) + list(yearresult_aux[1:]) + list(yearresult[2:])
 
     def done(self):
         self.subapp_aux.done()
