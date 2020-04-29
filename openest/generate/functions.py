@@ -443,7 +443,7 @@ class Sum(calculation.Calculation):
                     description="Sum the results of multiple previous calculations.")
 
 
-class Prod(calculation.Calculation):
+class Product(calculation.Calculation):
     """Product of two or more subcalculations
 
     Parameters
@@ -476,7 +476,7 @@ class Prod(calculation.Calculation):
         if lang in ['latex', 'julia']:
             elements['main'] = FormatElement(' * '.join([main.repstr for main in mains]), list(alldeps))
 
-        formatting.add_label('prod', elements)
+        formatting.add_label('product', elements)
         return elements
 
     def apply(self, region, *args, **kwargs):
@@ -529,7 +529,7 @@ class Prod(calculation.Calculation):
         fullinfos = []
         for infos in infoses:
             fullinfos.extend(infos)
-        return [dict(name='prod', title=title, description=description)] + fullinfos
+        return [dict(name='product', title=title, description=description)] + fullinfos
 
     def enable_deltamethod(self):
         raise NotImplementedError

@@ -5,7 +5,7 @@ import pytest
 
 from openest.generate.base import Constant
 from openest.generate.daily import YearlyDayBins
-from openest.generate.functions import Scale, Instabase, SpanInstabase, Clip, Sum, Prod
+from openest.generate.functions import Scale, Instabase, SpanInstabase, Clip, Sum, Product
 from .test_daily import test_curve
 
 
@@ -159,9 +159,9 @@ class TestSum:
         assert list(victim.keys()) == ['input_timerate', 'output_timerate', 'arguments', 'description']
 
 
-class TestProd:
+class TestProduct:
     """
-    Basic tests for openest.generate.functions.Prod
+    Basic tests for openest.generate.functions.Product
     """
     @pytest.mark.parametrize(
         "unshift_flag,n_expected",
@@ -169,33 +169,33 @@ class TestProd:
         ids=['shifted', 'unshifted'],
     )
     def test_units_append(self, unshift_flag, n_expected):
-        """Tests that Prod instances correctly append units from the original subcalcs
+        """Tests that Product instances correctly append units from the original subcalcs
         """
         unit = ['fakeunit']
         subcalc_mock1 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
         subcalc_mock2 = MockAppCalc(years=[0], values=[3.0], unitses=unit)
 
-        sum_calc = Prod([subcalc_mock1, subcalc_mock2], unshift=unshift_flag)
+        sum_calc = Product([subcalc_mock1, subcalc_mock2], unshift=unshift_flag)
         assert sum_calc.unitses == unit * n_expected
 
     def test_apply(self):
-        """Test Prod.apply() actually multiplies values
+        """Test Product.apply() actually multiplies values
         """
         unit = ['fakeunit']
         subcalc_mock1 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
         subcalc_mock2 = MockAppCalc(years=[0], values=[3.0], unitses=unit)
 
-        sum_calc = Prod([subcalc_mock1, subcalc_mock2])
+        sum_calc = Product([subcalc_mock1, subcalc_mock2])
         victim_gen = sum_calc.apply('foobar_region').push('not_a_ds')
         assert next(victim_gen) == [0, 6.0, 2.0, 3.0]
 
     def test_apply_memory(self):
-        """Test that Prod.apply() doesn't hold memory between yields
+        """Test that Product.apply() doesn't hold memory between yields
         """
         unit = ['fakeunit']
         subcalc_mock1 = MockAppCalc(years=[0, 1], values=[2.0, 3.0], unitses=unit)
         subcalc_mock2 = MockAppCalc(years=[0, 1], values=[3.0, 4.0], unitses=unit)
-        sum_calc = Prod([subcalc_mock1, subcalc_mock2])
+        sum_calc = Product([subcalc_mock1, subcalc_mock2])
 
         victim_gen = sum_calc.apply('foobar_region').push('not_a_ds')
         iter0 = next(victim_gen)
@@ -203,24 +203,24 @@ class TestProd:
         assert (iter0 == [0, 6.0, 2.0, 3.0]) and (iter1 == [1, 12.0, 3.0, 4.0])
 
     def test_column_info(self):
-        """Ensure Prod.column_info() appends dict with correct keys
+        """Ensure Product.column_info() appends dict with correct keys
         """
         unit = ['fakeunit']
         subcalc_mock1 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
         subcalc_mock2 = MockAppCalc(years=[0], values=[3.0], unitses=unit)
-        sum_calc = Prod([subcalc_mock1, subcalc_mock2])
+        sum_calc = Product([subcalc_mock1, subcalc_mock2])
         victim = sum_calc.column_info()
         # Check that first dict is from Sum instance
-        assert victim[0]['name'] == 'prod'
+        assert victim[0]['name'] == 'product'
         assert list(victim[0].keys()) == ['name', 'title', 'description']
 
     def test_describe(self):
-        """Ensure Prod.describe() returns dict with correct keys
+        """Ensure Product.describe() returns dict with correct keys
         """
         unit = ['fakeunit']
         subcalc_mock1 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
         subcalc_mock2 = MockAppCalc(years=[0], values=[3.0], unitses=unit)
-        sum_calc = Prod([subcalc_mock1, subcalc_mock2])
+        sum_calc = Product([subcalc_mock1, subcalc_mock2])
         victim = sum_calc.describe()
         assert list(victim.keys()) == ['input_timerate', 'output_timerate', 'arguments', 'description']
 
