@@ -455,8 +455,6 @@ class Prod(calculation.Calculation):
     def __init__(self, subcalcs, unshift=True):
         fullunitses = subcalcs[0].unitses[:]
         for ii in range(1, len(subcalcs)):
-            assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (
-            subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
             fullunitses.extend(subcalcs[ii].unitses)
         if unshift:
             super().__init__([subcalcs[0].unitses[0]] + fullunitses)
