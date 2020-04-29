@@ -532,9 +532,7 @@ class Prod(calculation.Calculation):
         return [dict(name='prod', title=title, description=description)] + fullinfos
 
     def enable_deltamethod(self):
-        self.deltamethod = True
-        for subcalc in self.subcalcs:
-            subcalc.enable_deltamethod()
+        raise NotImplementedError
 
     def partial_derivative(self, covariate, covarunit):
         """
