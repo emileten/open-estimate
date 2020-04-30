@@ -453,19 +453,17 @@ class Product(calculation.Calculation):
     """
 
     def __init__(self, subcalcs, unshift=True):
-        fullunitses = subcalcs[0].unitses[:]
-        for ii in range(1, len(subcalcs)):
-            fullunitses.extend(subcalcs[ii].unitses)
-
         # Unit of result is product of input subcalc units.
         units_product = [" * ".join([s.unitses[0] for s in subcalcs])]
         if unshift:
+            fullunitses = [unit for calc in subcalcs for unit in calc.unitses]
             super().__init__(units_product + fullunitses)
         else:
             super().__init__(units_product)
 
         self.unshift = unshift
         self.subcalcs = subcalcs
+
 
     def format(self, lang, *args, **kwargs):
         mains = []
@@ -528,10 +526,7 @@ class Product(calculation.Calculation):
         infoses = [subcalc.column_info() for subcalc in self.subcalcs]
         title = 'Product of previous results'
         description = 'Product of ' + ', '.join([infos[0]['title'] for infos in infoses])
-
-        fullinfos = []
-        for infos in infoses:
-            fullinfos.extend(infos)
+        fullinfos = [info for infos in infoses for info in infos]
         return [dict(name='product', title=title, description=description)] + fullinfos
 
     def enable_deltamethod(self):
@@ -545,12 +540,12 @@ class Product(calculation.Calculation):
         """
         # Partial deriv should be sum of products
         chain_products = []
-        for i in range(len(self.subcalcs)):
+        for i, subcalc in enumerate(self.subcalcs):
 
-            # product of (∂subcalc[i] / ∂covariate) and all other subcalcs
+            # product of (∂subcalc / ∂covariate) and all other subcalcs
             chain_products.append(
                 Product(
-                    [self.subcalcs[i].partial_derivative(covariate, covarunit)]
+                    [subcalc.partial_derivative(covariate, covarunit)]
                     + self.subcalcs[:i]
                     + self.subcalcs[(i + 1):]
                 )
