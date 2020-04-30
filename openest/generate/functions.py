@@ -456,10 +456,13 @@ class Product(calculation.Calculation):
         fullunitses = subcalcs[0].unitses[:]
         for ii in range(1, len(subcalcs)):
             fullunitses.extend(subcalcs[ii].unitses)
+
+        # Unit of result is product of input subcalc units.
+        units_product = [" * ".join([s.unitses[0] for s in subcalcs])]
         if unshift:
-            super().__init__([subcalcs[0].unitses[0]] + fullunitses)
+            super().__init__(units_product + fullunitses)
         else:
-            super().__init__([subcalcs[0].unitses[0]])
+            super().__init__(units_product)
 
         self.unshift = unshift
         self.subcalcs = subcalcs

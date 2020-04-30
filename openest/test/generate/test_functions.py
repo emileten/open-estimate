@@ -164,19 +164,24 @@ class TestProduct:
     Basic tests for openest.generate.functions.Product
     """
     @pytest.mark.parametrize(
-        "unshift_flag,n_expected",
-        [(True, 3), (False, 1)],
+        "unshift_flag",
+        [(True), (False)],
         ids=['shifted', 'unshifted'],
     )
-    def test_units_append(self, unshift_flag, n_expected):
-        """Tests that Product instances correctly append units from the original subcalcs
+    def test_units_append(self, unshift_flag):
+        """Tests that Product correctly tacks on units from the original subcalcs
         """
         unit = ['fakeunit']
         subcalc_mock1 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
         subcalc_mock2 = MockAppCalc(years=[0], values=[3.0], unitses=unit)
+        in_calcs = [subcalc_mock1, subcalc_mock2]
 
-        sum_calc = Product([subcalc_mock1, subcalc_mock2], unshift=unshift_flag)
-        assert sum_calc.unitses == unit * n_expected
+        sub_calc = Product(in_calcs, unshift=unshift_flag)
+
+        expected = [" * ".join(unit * len(in_calcs))]
+        if unshift_flag:
+            expected += unit * len(in_calcs)
+        assert sub_calc.unitses == expected
 
     def test_apply(self):
         """Test Product.apply() actually multiplies values
