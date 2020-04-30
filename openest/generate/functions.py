@@ -543,7 +543,20 @@ class Product(calculation.Calculation):
         derivative with respect to a given variable; currently only covariates
         are supported.
         """
-        return Sum([subcalc.partial_derivative(covariate, covarunit) for subcalc in self.subcalcs])
+        # Partial deriv should be sum of products
+        chain_products = []
+        for i in range(len(self.subcalcs)):
+
+            # product of (∂subcalc[i] / ∂covariate) and all other subcalcs
+            chain_products.append(
+                Product(
+                    [self.subcalcs[i].partial_derivative(covariate, covarunit)]
+                    + self.subcalcs[:i]
+                    + self.subcalcs[(i + 1):]
+                )
+            )
+
+        return Sum(chain_products)
 
     @staticmethod
     def describe():
