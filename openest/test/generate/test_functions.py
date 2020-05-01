@@ -5,7 +5,7 @@ import pytest
 
 from openest.generate.base import Constant
 from openest.generate.daily import YearlyDayBins
-from openest.generate.functions import Scale, Instabase, SpanInstabase, Clip, Sum, Product
+from openest.generate.functions import Scale, Instabase, SpanInstabase, Clip, Sum, Product, FractionSum
 from .test_daily import test_curve
 
 
@@ -239,6 +239,86 @@ class TestProduct:
 
         with pytest.raises(AttributeError):
             prod_calc.enable_deltamethod()
+
+
+class TestFractionSum:
+    """
+    Basic tests for openest.generate.functions.FractionSum
+    """
+    @pytest.mark.parametrize(
+        "unshift_flag,n_expected",
+        [(True, 3), (False, 1)],
+        ids=['shifted', 'unshifted'],
+    )
+    def test_units_append(self, unshift_flag, n_expected):
+        """Tests that FractionSum correctly appends units from the original subcalcs
+        """
+        unit = ['fakeunit']
+        frac_mock = MockAppCalc(years=[0], values=[0.1], unitses=unit)
+        subcalc_mock1 = MockAppCalc(years=[0], values=[1.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
+        subcalcs = [subcalc_mock1, subcalc_mock2]
+
+        fsum_calc = FractionSum(frac_mock, subcalcs, unshift=unshift_flag)
+        assert fsum_calc.unitses == unit * n_expected
+
+    def test_apply(self):
+        """Test FractionSum.apply() does math good
+        """
+        unit = ['fakeunit']
+        frac_mock = MockAppCalc(years=[0], values=[0.1], unitses=unit)
+        subcalc_mock1 = MockAppCalc(years=[0], values=[1.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
+        subcalcs = [subcalc_mock1, subcalc_mock2]
+
+        fsum_calc = FractionSum(frac_mock, subcalcs)
+        victim_gen = fsum_calc.apply('foobar_region').push('not_a_ds')
+        assert np.allclose(next(victim_gen), [0, 1.9, 0.1, 1.0, 2.0])
+
+    def test_apply_memory(self):
+        """Test that Sum.apply() doesn't hold memory between yields
+        """
+        unit = ['fakeunit']
+        frac_mock = MockAppCalc(years=[0, 1], values=[0.1, 0.2], unitses=unit)
+        subcalc_mock1 = MockAppCalc(years=[0, 1], values=[1.0, 2.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0, 1], values=[2.0, 3.0], unitses=unit)
+        subcalcs = [subcalc_mock1, subcalc_mock2]
+
+        fsum_calc = FractionSum(frac_mock, subcalcs)
+
+        victim_gen = fsum_calc.apply('foobar_region').push('not_a_ds')
+        iter0 = next(victim_gen)
+        iter1 = next(victim_gen)
+        assert (np.allclose(iter0, [0, 1.9, 0.1, 1.0, 2.0])
+                and np.allclose(iter1, [1, 2.8, 0.2, 2.0, 3.0]))
+
+    def test_column_info(self):
+        """Ensure Sum.column_info() appends dict with correct keys
+        """
+        unit = ['fakeunit']
+        frac_mock = MockAppCalc(years=[0], values=[0.1, 0.2], unitses=unit)
+        subcalc_mock1 = MockAppCalc(years=[0], values=[1.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
+        subcalcs = [subcalc_mock1, subcalc_mock2]
+
+        fsum_calc = FractionSum(frac_mock, subcalcs)
+        victim = fsum_calc.column_info()
+        # Check that first dict is from Sum instance
+        assert victim[0]['name'] == 'fractionsum'
+        assert list(victim[0].keys()) == ['name', 'title', 'description']
+
+    def test_describe(self):
+        """Ensure Sum.describe() returns dict with correct keys
+        """
+        unit = ['fakeunit']
+        frac_mock = MockAppCalc(years=[0], values=[0.1, 0.2], unitses=unit)
+        subcalc_mock1 = MockAppCalc(years=[0], values=[1.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
+        subcalcs = [subcalc_mock1, subcalc_mock2]
+
+        fsum_calc = FractionSum(frac_mock, subcalcs)
+        victim = fsum_calc.describe()
+        assert list(victim.keys()) == ['input_timerate', 'output_timerate', 'arguments', 'description']
 
 
 class TestClip:

@@ -584,6 +584,147 @@ class Product(calculation.Calculation):
                     description="Product of results from multiple previous calculations.")
 
 
+class FractionSum(calculation.Calculation):
+    """Sum of two subcalculations weighted on fraction of unity.
+
+    In short, ``frac * subcalc[0] + (1 - frac) * subcalc[1]``.
+
+    Parameters
+    ----------
+    frac : ``openest.generate.calculation.Calculation``
+        Result gives weight of first subcalculation. 1 - `frac` is weight of
+        second subcalculation. Must be ≤ 1. The
+    subcalcs : Sequence of ``openest.generate.calculation.Calculation``
+        Calculations to weight. Must be ``len(subcalcs) == 2``. The units of
+        the subcalcs elements must be the same.
+    unshift : bool, optional
+    """
+
+    def __init__(self, frac, subcalcs, unshift=True):
+        if len(subcalcs) != 2:
+            raise ValueError('Length of `subcalcs` must be 2')
+
+        fullunitses = subcalcs[0].unitses[:]
+        for ii in range(1, len(subcalcs)):
+            assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
+            fullunitses.extend(subcalcs[ii].unitses)
+        if unshift:
+            super().__init__([subcalcs[0].unitses[0]] + fullunitses)
+        else:
+            super().__init__([subcalcs[0].unitses[0]])
+
+        self.unshift = unshift
+        self.subcalcs = subcalcs
+        self.frac = frac
+
+
+    def format(self, lang, *args, **kwargs):
+        raise NotImplementedError
+        mains = []
+        elements = {}
+        alldeps = set()
+        for subcalc in self.subcalcs:
+            elements.update(subcalc.format(lang, *args, **kwargs))
+            mains.append(elements['main'])
+            alldeps.update(elements['main'].dependencies)
+
+        if lang in ['latex', 'julia']:
+            elements['main'] = FormatElement(' * '.join([main.repstr for main in mains]), list(alldeps))
+
+        formatting.add_label('product', elements)
+        return elements
+
+    def apply(self, region, *args, **kwargs):
+        """Apply calculation to all subcalculations
+
+        All parameters are passed to ``self.subcalc.apply()``.
+
+        Parameters
+        ----------
+        region : str
+        args
+        kwargs
+
+        Returns
+        -------
+        openest.generate.Calculation.ApplicationPassCall
+        """
+
+        def generate(year, results):
+            frac, x1, x2 = (r[1] for r in results)
+
+            if frac > 1 or frac < 0:
+                raise ValueError("`frac` results must be within [0, 1]")
+
+            return frac * x1 + (1 - frac) * x2
+
+        calcs = [self.frac, *self.subcalcs]
+        # Prepare the generator from our encapsulated operations
+        subapps = [c.apply(region, *args, **kwargs) for c in calcs]
+        return calculation.ApplicationPassCall(region, subapps, generate, unshift=self.unshift)
+
+    def column_info(self):
+        """Get column information of values output from this calculation.
+
+        Returns
+        -------
+        Sequence of dicts
+            Each dict contains:
+
+                ``"name"``
+                    Short-length title of this calculation
+
+                ``"title"``
+                    Long-length title of this calculation
+
+                ``"description"``
+                    Long-form description of this calculation
+        """
+        infoses = [subcalc.column_info() for subcalc in self.subcalcs]
+        title = 'FractionSum of previous results'
+        description = 'FractionSum of ' + ', '.join([infos[0]['title'] for infos in infoses])
+        fullinfos = [info for infos in infoses for info in infos]
+        return [dict(name='fractionsum', title=title, description=description)] + fullinfos
+
+    def enable_deltamethod(self):
+        raise NotImplementedError
+
+    def partial_derivative(self, covariate, covarunit):
+        """
+        Returns a new calculation object that calculates the partial
+        derivative with respect to a given variable; currently only covariates
+        are supported.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def describe():
+        """Get computer-readable description of the calculation
+
+        Returns
+        -------
+        dict
+            This contains:
+
+            ``"input_timerate"``
+                Expected time rate of data, day, month, year, or any.
+
+            ``"output_timerate"``
+                Expected time rate of data, day, month, year, or same.
+
+            ``"arguments"``
+                A list of subclasses of arguments.ArgumentType, describing each
+                constructor argument.
+
+            ``"description"``
+                Text description.
+
+        """
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.calculationss, arguments.unshift.optional()],
+                    description="Sum of two subcalculations weighted on fraction of unity.")
+
+
 """
 ConstantScale
 """
