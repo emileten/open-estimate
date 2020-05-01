@@ -497,10 +497,7 @@ class Product(calculation.Calculation):
         """
 
         def generate(year, results):
-            if not self.deltamethod:
-                return np.prod([x[1] if x is not None else np.nan for x in results])
-            else:
-                return np.prod([x[1] if x is not None else np.nan for x in results], 0)
+            return np.prod([x[1] if x is not None else np.nan for x in results])
 
         # Prepare the generator from our encapsulated operations
         subapps = [subcalc.apply(region, *args, **kwargs) for subcalc in self.subcalcs]
