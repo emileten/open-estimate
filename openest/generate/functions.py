@@ -446,6 +446,8 @@ class Sum(calculation.Calculation):
 class Product(calculation.Calculation):
     """Product of two or more subcalculations
 
+    Note that this does not support delta-method runs.
+
     Parameters
     ----------
     subcalcs : Sequence of ``openest.generate.calculation.Calculation``
@@ -527,7 +529,11 @@ class Product(calculation.Calculation):
         return [dict(name='product', title=title, description=description)] + fullinfos
 
     def enable_deltamethod(self):
-        raise NotImplementedError
+        """Enable delta-method calculations
+
+        Delta-method is unsupported for this calculation.
+        """
+        raise AttributeError(f'{self.__class__} does not support enabling deltamethod')
 
     def partial_derivative(self, covariate, covarunit):
         """
