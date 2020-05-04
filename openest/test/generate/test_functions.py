@@ -5,7 +5,7 @@ import pytest
 
 from openest.generate.base import Constant
 from openest.generate.daily import YearlyDayBins
-from openest.generate.functions import Scale, Instabase, SpanInstabase, Clip, Sum
+from openest.generate.functions import Scale, Instabase, SpanInstabase, Clip, Sum, Product
 from .test_daily import test_curve
 
 
@@ -157,6 +157,88 @@ class TestSum:
         sum_calc = Sum([subcalc_mock1, subcalc_mock2])
         victim = sum_calc.describe()
         assert list(victim.keys()) == ['input_timerate', 'output_timerate', 'arguments', 'description']
+
+
+class TestProduct:
+    """
+    Basic tests for openest.generate.functions.Product
+    """
+    @pytest.mark.parametrize(
+        "unshift_flag",
+        [(True), (False)],
+        ids=['shifted', 'unshifted'],
+    )
+    def test_units_append(self, unshift_flag):
+        """Tests that Product correctly tacks on units from the original subcalcs
+        """
+        unit = ['fakeunit']
+        subcalc_mock1 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[3.0], unitses=unit)
+        in_calcs = [subcalc_mock1, subcalc_mock2]
+
+        prod_calc = Product(in_calcs, unshift=unshift_flag)
+
+        expected = [" * ".join(unit * len(in_calcs))]
+        if unshift_flag:
+            expected += unit * len(in_calcs)
+        assert prod_calc.unitses == expected
+
+    def test_apply(self):
+        """Test Product.apply() actually multiplies values
+        """
+        unit = ['fakeunit']
+        subcalc_mock1 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[3.0], unitses=unit)
+
+        prod_calc = Product([subcalc_mock1, subcalc_mock2])
+        victim_gen = prod_calc.apply('foobar_region').push('not_a_ds')
+        assert next(victim_gen) == [0, 6.0, 2.0, 3.0]
+
+    def test_apply_memory(self):
+        """Test that Product.apply() doesn't hold memory between yields
+        """
+        unit = ['fakeunit']
+        subcalc_mock1 = MockAppCalc(years=[0, 1], values=[2.0, 3.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0, 1], values=[3.0, 4.0], unitses=unit)
+        prod_calc = Product([subcalc_mock1, subcalc_mock2])
+
+        victim_gen = prod_calc.apply('foobar_region').push('not_a_ds')
+        iter0 = next(victim_gen)
+        iter1 = next(victim_gen)
+        assert (iter0 == [0, 6.0, 2.0, 3.0]) and (iter1 == [1, 12.0, 3.0, 4.0])
+
+    def test_column_info(self):
+        """Ensure Product.column_info() appends dict with correct keys
+        """
+        unit = ['fakeunit']
+        subcalc_mock1 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[3.0], unitses=unit)
+        prod_calc = Product([subcalc_mock1, subcalc_mock2])
+        victim = prod_calc.column_info()
+        # Check that first dict is from Sum instance
+        assert victim[0]['name'] == 'product'
+        assert list(victim[0].keys()) == ['name', 'title', 'description']
+
+    def test_describe(self):
+        """Ensure Product.describe() returns dict with correct keys
+        """
+        unit = ['fakeunit']
+        subcalc_mock1 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[3.0], unitses=unit)
+        prod_calc = Product([subcalc_mock1, subcalc_mock2])
+        victim = prod_calc.describe()
+        assert list(victim.keys()) == ['input_timerate', 'output_timerate', 'arguments', 'description']
+
+    def test_enable_deltamethod_exception(self):
+        """Ensure that Product.enable_deltamethod() raises an exception
+        """
+        unit = ['fakeunit']
+        subcalc_mock1 = MockAppCalc(years=[0], values=[2.0], unitses=unit)
+        subcalc_mock2 = MockAppCalc(years=[0], values=[3.0], unitses=unit)
+        prod_calc = Product([subcalc_mock1, subcalc_mock2])
+
+        with pytest.raises(AttributeError):
+            prod_calc.enable_deltamethod()
 
 
 class TestClip:

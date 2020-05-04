@@ -443,6 +443,147 @@ class Sum(calculation.Calculation):
                     description="Sum the results of multiple previous calculations.")
 
 
+class Product(calculation.Calculation):
+    """Product of two or more subcalculations
+
+    Note that this does not support delta-method runs.
+
+    Parameters
+    ----------
+    subcalcs : Sequence of ``openest.generate.calculation.Calculation``
+    unshift : bool, optional
+    """
+
+    def __init__(self, subcalcs, unshift=True):
+        # Unit of result is product of input subcalc units.
+        units_product = [" * ".join([s.unitses[0] for s in subcalcs])]
+        if unshift:
+            fullunitses = [unit for calc in subcalcs for unit in calc.unitses]
+            super().__init__(units_product + fullunitses)
+        else:
+            super().__init__(units_product)
+
+        self.unshift = unshift
+        self.subcalcs = subcalcs
+
+
+    def format(self, lang, *args, **kwargs):
+        mains = []
+        elements = {}
+        alldeps = set()
+        for subcalc in self.subcalcs:
+            elements.update(subcalc.format(lang, *args, **kwargs))
+            mains.append(elements['main'])
+            alldeps.update(elements['main'].dependencies)
+
+        if lang in ['latex', 'julia']:
+            elements['main'] = FormatElement(' * '.join([main.repstr for main in mains]), list(alldeps))
+
+        formatting.add_label('product', elements)
+        return elements
+
+    def apply(self, region, *args, **kwargs):
+        """Apply calculation to all subcalculations
+
+        All parameters are passed to ``self.subcalc.apply()``.
+
+        Parameters
+        ----------
+        region : str
+        args
+        kwargs
+
+        Returns
+        -------
+        openest.generate.Calculation.ApplicationPassCall
+        """
+
+        def generate(year, results):
+            return np.prod([x[1] if x is not None else np.nan for x in results])
+
+        # Prepare the generator from our encapsulated operations
+        subapps = [subcalc.apply(region, *args, **kwargs) for subcalc in self.subcalcs]
+        return calculation.ApplicationPassCall(region, subapps, generate, unshift=self.unshift)
+
+    def column_info(self):
+        """Get column information of values output from this calculation.
+
+        Returns
+        -------
+        Sequence of dicts
+            Each dict contains:
+
+                ``"name"``
+                    Short-length title of this calculation
+
+                ``"title"``
+                    Long-length title of this calculation
+
+                ``"description"``
+                    Long-form description of this calculation
+        """
+        infoses = [subcalc.column_info() for subcalc in self.subcalcs]
+        title = 'Product of previous results'
+        description = 'Product of ' + ', '.join([infos[0]['title'] for infos in infoses])
+        fullinfos = [info for infos in infoses for info in infos]
+        return [dict(name='product', title=title, description=description)] + fullinfos
+
+    def enable_deltamethod(self):
+        """Enable delta-method calculations
+
+        Delta-method is unsupported for this calculation.
+        """
+        raise AttributeError(f'{self.__class__} does not support enabling deltamethod')
+
+    def partial_derivative(self, covariate, covarunit):
+        """
+        Returns a new calculation object that calculates the partial
+        derivative with respect to a given variable; currently only covariates
+        are supported.
+        """
+        # Partial deriv should be sum of products
+        chain_products = []
+        for i, subcalc in enumerate(self.subcalcs):
+
+            # product of (∂subcalc / ∂covariate) and all other subcalcs
+            chain_products.append(
+                Product(
+                    [subcalc.partial_derivative(covariate, covarunit)]
+                    + self.subcalcs[:i]
+                    + self.subcalcs[(i + 1):]
+                )
+            )
+
+        return Sum(chain_products)
+
+    @staticmethod
+    def describe():
+        """Get computer-readable description of the calculation
+
+        Returns
+        -------
+        dict
+            This contains:
+
+            ``"input_timerate"``
+                Expected time rate of data, day, month, year, or any.
+
+            ``"output_timerate"``
+                Expected time rate of data, day, month, year, or same.
+
+            ``"arguments"``
+                A list of subclasses of arguments.ArgumentType, describing each
+                constructor argument.
+
+            ``"description"``
+                Text description.
+
+        """
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculationss, arguments.unshift.optional()],
+                    description="Product of results from multiple previous calculations.")
+
+
 """
 ConstantScale
 """
