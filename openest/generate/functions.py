@@ -726,8 +726,8 @@ class FractionSum(calculation.Calculation):
 
         """
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculation, arguments.calculationss, arguments.unshift.optional()],
-                    description="Sum of two subcalculations weighted on fraction of unity.")
+                    arguments=[arguments.calculationss, arguments.unshift.optional()],
+                    description="Sum of subcalculations weighted on fractions of unity.")
 
 
 """
