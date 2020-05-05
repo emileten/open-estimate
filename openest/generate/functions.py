@@ -602,19 +602,19 @@ class FractionSum(calculation.Calculation):
         if not len(subcalcs) % 2:
             raise ValueError("len of `subcalcs` should be odd")
 
+        # Collect units. Check that fractions are unitless and other subcalcs
+        # have same units.
         fullunitses = subcalcs[0].unitses[:]
         for ii in range(1, len(subcalcs)):
             if ii % 2:
-                assert subcalcs[ii].unitses[0] is None  # Unitless?
+                assert subcalcs[ii].unitses[0] == "unitless"
             else:
                 assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
-
             fullunitses.extend(subcalcs[ii].unitses)
         if unshift:
             super().__init__([subcalcs[0].unitses[0]] + fullunitses)
         else:
             super().__init__([subcalcs[0].unitses[0]])
-
         self.unshift = unshift
         self.subcalcs = subcalcs
 
@@ -661,7 +661,7 @@ class FractionSum(calculation.Calculation):
                 raise ValueError("fraction weight results must be within [0, 1]")
 
             out = np.sum(weights * values[:-1])
-            out += values[-1] * (1 - weights.sum())
+            out += values[-1] * (1 - weights.sum())  # Add weighted last value.
             return out
 
         # Prepare the generator from our encapsulated operations

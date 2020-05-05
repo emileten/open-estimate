@@ -246,8 +246,9 @@ class TestFractionSum:
     Basic tests for openest.generate.functions.FractionSum
     """
     def _subcalcs_stuffer(self, values1, values2, fvalues, years, unit):
-        """Helper to get list of subcalcs for vanilla FunctionSum input"""
-        frac_mock = MockAppCalc(years=years, values=fvalues, unitses=[None])
+        """Helper returning list of subcalcs for vanilla FunctionSum input"""
+        frac_mock = MockAppCalc(years=years, values=fvalues,
+                                unitses=["unitless"])
         subcalc_mock1 = MockAppCalc(years=years, values=values1, unitses=unit)
         subcalc_mock2 = MockAppCalc(years=years, values=values2, unitses=unit)
         return [subcalc_mock1, frac_mock, subcalc_mock2]
@@ -264,6 +265,7 @@ class TestFractionSum:
         subcalcs = self._subcalcs_stuffer(values1=[1.0], values2=[2.0],
                                           fvalues=[0.1], years=[0], unit=unit)
         fsum_calc = FractionSum(subcalcs, unshift=unshift_flag)
+
         if unshift_flag:
             expected_units = unit + [unit for c in subcalcs for unit in c.unitses]
         else:
@@ -286,7 +288,7 @@ class TestFractionSum:
         ids=['too low', 'too high'],
     )
     def test_apply_oobweight(self, fracweight):
-        """Test FractionSum.apply() raises excep if fraction weight outside [0, 1]
+        """Test FractionSum.apply() raises except if fraction weight outside [0, 1]
         """
         unit = ['fakeunit']
         subcalcs = self._subcalcs_stuffer(values1=[1.0], values2=[2.0],
