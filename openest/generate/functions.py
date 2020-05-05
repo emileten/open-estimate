@@ -705,7 +705,11 @@ class FractionSum(calculation.Calculation):
         return [dict(name=self.__class__.__name__.lower(), title=title, description=description)] + fullinfos
 
     def enable_deltamethod(self):
-        raise NotImplementedError
+        """Enable delta-method calculations
+
+        Delta-method is unsupported for this calculation.
+        """
+        raise AttributeError(f'{self.__class__.__name__} does not support enabling deltamethod')
 
     def partial_derivative(self, covariate, covarunit):
         """
