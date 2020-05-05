@@ -585,28 +585,31 @@ class Product(calculation.Calculation):
 
 
 class FractionSum(calculation.Calculation):
-    """Sum of two subcalculations weighted on fraction of unity.
-
-    In short, ``frac * subcalc[0] + (1 - frac) * subcalc[1]``.
+    """Sum of subcalculations weighted on fractions of unity.
 
     Parameters
     ----------
-    frac : ``openest.generate.calculation.Calculation``
-        Result gives weight of first subcalculation. 1 - `frac` is weight of
-        second subcalculation. Must be ≤ 1. The
     subcalcs : Sequence of ``openest.generate.calculation.Calculation``
-        Calculations to weight. Must be ``len(subcalcs) == 2``. The units of
-        the subcalcs elements must be the same.
+        Sequence of alternating values to be weighted and fraction weights.
+        If there are p values to be weighted, there should be p - 1 weights,
+        as the weighted value of the last weight is 1 - the sum of previous
+        weights. Length of sequence must be odd. The units of the values to be
+        weighted must be the same. Weights must be unitless.
     unshift : bool, optional
     """
 
-    def __init__(self, frac, subcalcs, unshift=True):
-        if len(subcalcs) != 2:
-            raise ValueError('Length of `subcalcs` must be 2')
+    def __init__(self, subcalcs, unshift=True):
+
+        if not len(subcalcs) % 2:
+            raise ValueError("len of `subcalcs` should be odd")
 
         fullunitses = subcalcs[0].unitses[:]
         for ii in range(1, len(subcalcs)):
-            assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
+            if ii % 2:
+                assert subcalcs[ii].unitses[0] is None  # Unitless?
+            else:
+                assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
+
             fullunitses.extend(subcalcs[ii].unitses)
         if unshift:
             super().__init__([subcalcs[0].unitses[0]] + fullunitses)
@@ -615,8 +618,6 @@ class FractionSum(calculation.Calculation):
 
         self.unshift = unshift
         self.subcalcs = subcalcs
-        self.frac = frac
-
 
     def format(self, lang, *args, **kwargs):
         raise NotImplementedError
@@ -651,16 +652,21 @@ class FractionSum(calculation.Calculation):
         """
 
         def generate(year, results):
-            frac, x1, x2 = (r[1] for r in results)
+            results_a = np.array([r[1] for r in results])  # Extract values.
 
-            if frac > 1 or frac < 0:
-                raise ValueError("`frac` results must be within [0, 1]")
+            # Point to original array data. Values are not copied.
+            values = results_a[::2]
+            weights = results_a[1::2]
 
-            return frac * x1 + (1 - frac) * x2
+            if np.any(weights > 1) or np.any(weights < 0):
+                raise ValueError("fraction weight results must be within [0, 1]")
 
-        calcs = [self.frac, *self.subcalcs]
+            out = np.sum(weights * values[:-1])
+            out += values[-1] * (1 - weights.sum())
+            return out
+
         # Prepare the generator from our encapsulated operations
-        subapps = [c.apply(region, *args, **kwargs) for c in calcs]
+        subapps = [c.apply(region, *args, **kwargs) for c in self.subcalcs]
         return calculation.ApplicationPassCall(region, subapps, generate, unshift=self.unshift)
 
     def column_info(self):
