@@ -532,7 +532,7 @@ class Product(calculation.Calculation):
 
         Delta-method is unsupported for this calculation.
         """
-        raise AttributeError(f'{self.__class__} does not support enabling deltamethod')
+        raise AttributeError(f'{self.__class__.__name__} does not support enabling deltamethod')
 
     def partial_derivative(self, covariate, covarunit):
         """
