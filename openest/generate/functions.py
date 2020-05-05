@@ -619,7 +619,6 @@ class FractionSum(calculation.Calculation):
         self.subcalcs = subcalcs
 
     def format(self, lang, *args, **kwargs):
-        raise NotImplementedError
         mains = []
         elements = {}
         alldeps = set()
@@ -629,9 +628,23 @@ class FractionSum(calculation.Calculation):
             alldeps.update(elements['main'].dependencies)
 
         if lang in ['latex', 'julia']:
-            elements['main'] = FormatElement(' * '.join([main.repstr for main in mains]), list(alldeps))
+            # Do str formatting that looks like math...
+            subcalc_strs = [main.repstr for main in mains]
 
-        formatting.add_label('product', elements)
+            # Collect products to sum. Start with all subcalcs but last.
+            to_sum = []
+            for i in range(0, len(subcalc_strs) - 1, 2):
+                to_sum.append(' * '.join(subcalc_strs[i:i + 1]))
+
+            # Put together the last product; it's weight's based on sum of
+            # prev weights...
+            last_weight = ' + '.join(subcalc_strs[1:-1:2])
+            last_product = f"(1 - {last_weight}) * {subcalc_strs[-1]}"
+            to_sum.append(last_product)
+
+            elements['main'] = FormatElement(' + '.join(to_sum), list(alldeps))
+
+        formatting.add_label(self.__class__.__name__.lower(), elements)
         return elements
 
     def apply(self, region, *args, **kwargs):
