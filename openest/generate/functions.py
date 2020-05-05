@@ -699,10 +699,10 @@ class FractionSum(calculation.Calculation):
                     Long-form description of this calculation
         """
         infoses = [subcalc.column_info() for subcalc in self.subcalcs]
-        title = 'FractionSum of previous results'
-        description = 'FractionSum of ' + ', '.join([infos[0]['title'] for infos in infoses])
+        title = 'Sum of results weighted on fractions of unity'
+        description = f'{self.__class__.__name__} of ' + ', '.join([infos[0]['title'] for infos in infoses])
         fullinfos = [info for infos in infoses for info in infos]
-        return [dict(name='fractionsum', title=title, description=description)] + fullinfos
+        return [dict(name=self.__class__.__name__.lower(), title=title, description=description)] + fullinfos
 
     def enable_deltamethod(self):
         raise NotImplementedError
