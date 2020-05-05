@@ -466,7 +466,6 @@ class Product(calculation.Calculation):
         self.unshift = unshift
         self.subcalcs = subcalcs
 
-
     def format(self, lang, *args, **kwargs):
         mains = []
         elements = {}
