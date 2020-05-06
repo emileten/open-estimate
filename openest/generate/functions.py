@@ -724,8 +724,9 @@ class FractionSum(calculation.Calculation):
             out.append(Product(self.subcalcs[i:i + 1]))
         # Append negated weighted last value product before getting partial
         # from Sum.
+        out.append(self.subcalcs[-1])
         final_weight = ConstantScale(Sum(self.subcalcs[1:-1:2]), -1.0)
-        out.append(Product([self.subcalcs[-1], final_weight, self.subcalcs[-1]]))
+        out.append(Product([final_weight, self.subcalcs[-1]]))
         return Sum(out).partial_derivative(covariate, covarunit)
 
     @staticmethod
