@@ -670,7 +670,7 @@ class FractionSum(calculation.Calculation):
             values = results_a[::2]
             weights = results_a[1::2]
 
-            if np.any(weights > 1) or np.any(weights < 0):
+            if np.sum(weights) > 1 or np.any(weights < 0):
                 raise ValueError("fraction weight results must be within [0, 1]")
 
             out = np.sum(weights * values[:-1])
