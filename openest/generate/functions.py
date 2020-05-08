@@ -638,7 +638,7 @@ class FractionSum(calculation.Calculation):
 
             # Put together the last product; it's weight's based on sum of
             # prev weights...
-            last_weight = ' + '.join(subcalc_strs[1:-1:2])
+            last_weight = ' - '.join(subcalc_strs[1:-1:2])
             last_product = f"(1 - {last_weight}) * {subcalc_strs[-1]}"
             to_sum.append(last_product)
 
