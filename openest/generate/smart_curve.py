@@ -22,8 +22,9 @@ class SmartCurve(object):
     def __call__(self, ds):
         raise NotImplementedError("call not implemented")
 
-    def get_univariate(self):
-        raise NotImplementedError("get_univariate not implemented")
+    @property
+    def univariate(self):
+        raise NotImplementedError("univariate not implemented")
     
     def format(self, lang):
         raise NotImplementedError()
@@ -133,7 +134,8 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
                     
         return result
 
-    def get_univariate(self):
+    @property
+    def univariate(self):
         return curve.ZeroInterceptPolynomialCurve([-np.inf, np.inf], self.coeffs)
     
     def format(self, lang):
@@ -198,7 +200,8 @@ class CubicSplineCurve(CoefficientsCurve):
 
             raise ex
 
-    def get_univariate(self):
+    @property
+    def univariate(self):
         return curve.CubicSplineCurve(self.knots, self.coeffs)
 
 class TransformCoefficientsCurve(SmartCurve):
@@ -292,8 +295,9 @@ class ShiftedCurve(SmartCurve):
     def __call__(self, ds):
         return self.curve(ds) - self.offset
 
-    def get_univariate(self):
-        return curve.ShiftedCurve(self.curve.get_univariate(), self.offset)
+    @property
+    def univariate(self):
+        return curve.ShiftedCurve(self.curve.univariate, self.offset)
     
     def format(self, lang):
         return formatting.build_recursive({'latex': r"(%s - " + str(self.offset) + ")",
@@ -301,11 +305,13 @@ class ShiftedCurve(SmartCurve):
                                           lang, self.curve)
 
 class ClippedCurve(curve.ClippedCurve, SmartCurve):
-    def get_univariate(self):
-        return curve.ClippedCurve(self.curve.get_univariate(), self.cliplow)
+    @property
+    def univariate(self):
+        return curve.ClippedCurve(self.curve.univariate, self.cliplow)
 
 class MinimumCurve(curve.MinimumCurve, SmartCurve):
-    def get_univariate(self):
-        return curve.MinimumCurve(self.curve1.get_univariate(), self.curve2.get_univariate())
+    @property
+    def univariate(self):
+        return curve.MinimumCurve(self.curve1.univariate, self.curve2.univariate)
 
 
