@@ -22,6 +22,9 @@ class SmartCurve(object):
     def __call__(self, ds):
         raise NotImplementedError("call not implemented")
 
+    def get_univariate(self):
+        raise NotImplementedError("get_univariate not implemented")
+    
     def format(self, lang):
         raise NotImplementedError()
 
@@ -130,6 +133,9 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
                     
         return result
 
+    def get_univariate(self):
+        return curve.ZeroInterceptPolynomialCurve([-np.inf, np.inf], self.coeffs)
+    
     def format(self, lang):
         coeffvar = formatting.get_variable()
         variable = formatting.get_variable()
@@ -191,6 +197,9 @@ class CubicSplineCurve(CoefficientsCurve):
                 return curve.CubicSplineCurve(self.knots, self.coeffs)(ds._variables[self.variables[0]]._data)
 
             raise ex
+
+    def get_univariate(self):
+        return curve.CubicSplineCurve(self.knots, self.coeffs)
 
 class TransformCoefficientsCurve(SmartCurve):
     """Use a transformation of ds to produce each predictor."""
@@ -281,9 +290,22 @@ class ShiftedCurve(SmartCurve):
         self.offset = offset
 
     def __call__(self, ds):
-        return self.curve1(ds) - self.offset
+        return self.curve(ds) - self.offset
 
+    def get_univariate(self):
+        return curve.ShiftedCurve(self.curve.get_univariate(), self.offset)
+    
     def format(self, lang):
         return formatting.build_recursive({'latex': r"(%s - " + str(self.offset) + ")",
                                            'julia': r"(%s - " + str(self.offset) + ")"},
                                           lang, self.curve)
+
+class ClippedCurve(curve.ClippedCurve, SmartCurve):
+    def get_univariate(self):
+        return curve.ClippedCurve(self.curve.get_univariate(), self.cliplow)
+
+class MinimumCurve(curve.MinimumCurve, SmartCurve):
+    def get_univariate(self):
+        return curve.MinimumCurve(self.curve1.get_univariate(), self.curve2.get_univariate())
+
+
