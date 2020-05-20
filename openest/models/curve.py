@@ -104,6 +104,7 @@ class CoefficientsCurve(UnivariateCurve):
         elif self.xtrans is not None:
             return self.xtrans(x).dot(self.coeffs)
         else:
+            x = np.array(x)
             return x.dot(self.coeffs)
         
 class ShiftedCurve(UnivariateCurve):

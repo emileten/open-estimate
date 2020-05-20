@@ -15,7 +15,7 @@ def test_1d():
     inside = ray_tracing_inside(points, polytope)
     np.testing.assert_equal(inside, [False, False, True, False])
 
-    beyond_dists, beyond_bounds = within_convex_polytope(points, polytope)
+    beyond_dists, beyond_bounds, bounds = within_convex_polytope(points, polytope)
     np.testing.assert_equal(np.isnan(beyond_bounds), [False, False, True, False])
 
 ## 2-D test
@@ -32,7 +32,7 @@ def test_2d():
     inside = ray_tracing_inside(points, polytope)
     np.testing.assert_equal(inside, [False, True, False, True])
 
-    beyond_dists, beyond_bounds = within_convex_polytope(points, polytope)
+    beyond_dists, beyond_bounds, bounds = within_convex_polytope(points, polytope)
     np.testing.assert_equal(np.isnan(beyond_bounds), [False, True, False, True])
 
 ## 3-D test
@@ -60,7 +60,7 @@ def test_3d():
 
     np.testing.assert_equal(inside, [False, False, True, True, True, False])
 
-    beyond_dists, beyond_bounds = within_convex_polytope(points, polytope)
+    beyond_dists, beyond_bounds, bounds = within_convex_polytope(points, polytope)
     np.testing.assert_equal(np.isnan(beyond_bounds), [False, False, True, True, True, False])
 
 ## 4-D test
@@ -84,13 +84,13 @@ def test_4d():
               dict(point=(0, 0, 0, 1), outvec=(0, 0, 0, 1))] # far
 
     points = np.array([(0, 1, .05, -2), (0, .5, .05, -2), (0, 0, .05, -2), (0, -.5, .05, -2), (0, 0, .75, -2), (0, -.5, .75, -2)])
-    beyond_dists, beyond_bounds = within_convex_polytope(points, bounds)
+    beyond_dists, beyond_bounds, bounds = within_convex_polytope(points, bounds)
     np.testing.assert_equal(np.isnan(beyond_bounds), [False, False, False, False, False, False])
     
     points = np.array([(0, 1, .05, 0), (0, .5, .05, 0), (0, 0, .05, 0), (0, -.5, .05, 0), (0, 0, .75, 0), (0, -.5, .75, 0)])
-    beyond_dists, beyond_bounds = within_convex_polytope(points, bounds)
+    beyond_dists, beyond_bounds, bounds = within_convex_polytope(points, bounds)
     np.testing.assert_equal(np.isnan(beyond_bounds), [False, False, True, True, True, False])
 
     points = np.array([(0, 1, .05, 2), (0, .5, .05, 2), (0, 0, .05, 2), (0, -.5, .05, 2), (0, 0, .75, 2), (0, -.5, .75, 2)])
-    beyond_dists, beyond_bounds = within_convex_polytope(points, bounds)
+    beyond_dists, beyond_bounds, bounds = within_convex_polytope(points, bounds)
     np.testing.assert_equal(np.isnan(beyond_bounds), [False, False, False, False, False, False])

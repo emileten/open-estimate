@@ -170,4 +170,5 @@ def within_convex_polytope(points, bounds):
         beyond_dists[idx] = outdists[idx]
         beyond_bounds[idx] = ii
 
-    return beyond_dists, beyond_bounds
+    return beyond_dists, beyond_bounds, bounds
+## [bounds[ii] if ii != 0 else None for ii in beyond_bounds]
