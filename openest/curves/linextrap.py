@@ -1,8 +1,62 @@
+"""Curve definitions that implement linear extrapolation clipping.
+
+These Curve classes take a curve and represent it with a linear
+extrapolation beyond certain bounds. Slopes for the linear
+extrapolation are determined by the behavior of the curve within some
+margin of the bounds.
+
+Two options are available for representing bounds, and they imply
+different logic for clipping. If the bounds are a (convex) polytope,
+the extrapolation for a given point is determined by the orthogonal
+vector from whatever facet it lies closest to. If that facet is
+slanted, slopes will be applied to multiple dimensions. If the bounds
+are given as a set of limits for each dimension, the extrapolation for
+a given point is determined separately for each of its
+dimensions. Only those dimensions that it lies beyond will be
+adjusted.
+"""
+
 import numpy as np
 from openest.models.curve import UnivariateCurve
 import bounding
 
 class LinearExtrapolationCurve(UnivariateCurve):
+    """Linear extrapolation clipping curve which takes a list of multidimensional points.
+
+    Bounds can be described as a polytope (see options in
+    bounding.py), or a dictionary of bounds (see above for difference
+    in logic). In the latter case, the dictionary should have a key
+    for each dimension that should be clipped. The values of the
+    dictionary should be 2-tuples with the high and low bounds for
+    that dimension.
+
+    Margins should be provided for each dimension. These are allowed
+    to be different by dimension, and should depend on the scale of
+    the variable.
+
+    The inputs should be a list of N x L, where L is the total number
+    of variables. This may be smaller than the number of independent
+    dimensions, if some of the variables are transformations of
+    others. For example, a 4th order polynomial input would be applied
+    to the curve as an N x 4, but only the first dimension in the
+    independent variable. The `getindeps` function provides this
+    translation, and in the polynomial case would return an N x 1
+    matrix.
+
+    Parameters
+    ----------
+    curve : UnivariateCurve
+        Curve to be clipped
+    bounds : dict or list
+        Either a dictionary of {dim: (lower, upper)} bounds or a polytope
+    margins : array_like
+        A array_like with a margin for each dimension
+    scaling : float
+        A factor that the slope is scaled by
+    getindeps : function(array_like) -> array_like
+        Translates from the full variable matrix to just the independent variables.
+    """
+    
     def __init__(self, curve, bounds, margins, scaling, getindeps):
         super(LinearExtrapolationCurve, self).__init__(curve.xx)
         assert isinstance(bounds, list) or isinstance(bounds, dict)
@@ -14,6 +68,21 @@ class LinearExtrapolationCurve(UnivariateCurve):
         self.getindeps = getindeps
 
     def __call__(self, xs):
+        """Returns the projected variables after clipping.
+
+        The values should be appropriate for passing to both the
+        internal curve and the `getindeps` function.
+
+        Parameters
+        ----------
+        xs : array_like
+            A matrix of N x L with all input data.
+
+        Returns
+        -------
+        array_like
+            A sequence of values after clipping.
+        """
         values = self.curve(xs)
         indeps = self.getindeps(xs)
 
@@ -48,6 +117,27 @@ class LinearExtrapolationCurve(UnivariateCurve):
         return(values)
 
     def beyond_orthotope(self, indeps):
+        """Yields each point that needs to clipped for orthotope bounds.
+
+        Checks whether each point is beyond any of the bounds and
+        yields the following for those points that need to be clipped:
+          (ii, edgekey, invector)
+
+        where ii is the index of the point, edgekey is a numeric key
+          unique to every combination of bounds that can be crossed,
+          and invector is a vector from the point to the closest
+          orthogonal point on the boundary.
+        
+        Parameters
+        ----------
+        indeps : array_like
+            A matrix of N x K with independent variables
+
+        Yields
+        ------
+        Tuple of (int, int, array_like)
+
+        """
         # Case 1: k-orthotope, provided by dict of {index: (low, high)}
         assert isinstance(self.bounds, dict)
         
@@ -70,53 +160,30 @@ class LinearExtrapolationCurve(UnivariateCurve):
             yield ii, edgekey, invector[ii,:]
 
     def beyond_polytope(self, indeps):
+        """Yields each point that needs to clipped for a convex polytope.
+
+        As with beyond_orthotope, except in the calculation of the yielded outputs:
+          (ii, edgekey, invector)
+
+        where ii is the index of the point to be clipped, edgekey is
+          the index of the facet exceeded, and invector is an
+          orthogonal vector to the exceeded facet.
+
+        Parameters
+        ----------
+        indeps : array_like
+            A matrix of N x K with independent variables
+
+        Yields
+        ------
+        Tuple of (int, int, array_like)
+
+        """
         # Case 2: Convex polytope
         assert isinstance(self.bounds, list)
 
         dists, edgekeys, bounds = bounding.within_convex_polytope(indeps, self.bounds)
         for ii in np.nonzero(dists > 0)[0]:
             yield ii, edgekeys[ii], -dists[ii] * bounds[edgekeys[ii]]['outvec']
-
-from openest.models.curve import ZeroInterceptPolynomialCurve, CoefficientsCurve
-basecurve1 = ZeroInterceptPolynomialCurve([-np.inf, np.inf], [1, 1])
-
-## 1-D orthotope
-
-bounds1 = {0: (0, 1)}
-clipcurve = LinearExtrapolationCurve(basecurve1, bounds1, [.1], 1, lambda x: x)
-yy0 = basecurve1([0, .5, 1])
-
-points1 = np.expand_dims(np.array([-.2, -.1, .5, 1.2, 1.3]), axis=-1)
-slope0 = (basecurve1(0) - basecurve1(.1)) / .1
-slope1 = (basecurve1(1) - basecurve1(.9)) / .1
-np.testing.assert_almost_equal(slope0, -1.1)
-np.testing.assert_almost_equal(slope1, 2.9)
-
-yy1 = clipcurve(points1)[:, 0]
-desired = [yy0[0] + .2 * slope0, yy0[0] + .1 * slope0, yy0[1], yy0[2] + .2 * slope1, yy0[2] + .3 * slope1]
-np.testing.assert_allclose(yy1, desired)
-
-clipcurve = LinearExtrapolationCurve(basecurve1, bounds1, [.1], .1, lambda x: x)
-yy1 = clipcurve(points1)[:, 0]
-desired = [yy0[0] + .2 * slope0 / 10, yy0[0] + .1 * slope0 / 10, yy0[1], yy0[2] + .2 * slope1 / 10, yy0[2] + .3 * slope1 / 10]
-np.testing.assert_allclose(yy1, desired)
-
-## 2-D orthotope
-basecurve2 = CoefficientsCurve([1, 1], basecurve1)
-
-bounds2 = {0: (0, 1), 1:(0, 1)}
-clipcurve = LinearExtrapolationCurve(basecurve2, bounds2, [.1, .1], 1, lambda x: x)
-yy0 = basecurve2(np.array([[0, .5], [0, 0], [.5, .25], [.5, 1], [1, 1]]))
-                  
-points2 = np.array([[-.1, .5], [-.1, -.1], [.5, .25], [.5, 1.21], [1.1, 1.21]])
-slope0x = (basecurve2([0, .5]) - basecurve2([.1, .5])) / .1
-slope0y = (basecurve2([0, 0]) - basecurve2([0, .1])) / .1
-slope1y = (basecurve2([.5, 1]) - basecurve2([.5, .9])) / .1
-slope1x = (basecurve2([1, 1]) - basecurve2([.9, 1])) / .1
-np.testing.assert_allclose([slope0x, slope0y, slope1y, slope1x], [-1, -1, 1, 1])
-
-yy1 = clipcurve(points2)
-desired = [yy0[0] + .1 * slope0x, yy0[1] + .1 * slope0x + .1 * slope0y, yy0[2], yy0[3] + .21 * slope1y, yy0[4] + .1 * slope1x + .21 * slope1y]
-np.testing.assert_allclose(yy1, desired)
 
 ## NEXT: Need the smart_curve version
