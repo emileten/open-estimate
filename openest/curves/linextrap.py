@@ -18,7 +18,7 @@ adjusted.
 
 import numpy as np
 from openest.models.curve import UnivariateCurve
-import bounding
+from . import bounding
 
 class LinearExtrapolationCurve(UnivariateCurve):
     """Linear extrapolation clipping curve which takes a list of multidimensional points.
@@ -183,7 +183,7 @@ class LinearExtrapolationCurve(UnivariateCurve):
         assert isinstance(self.bounds, list)
 
         dists, edgekeys, bounds = bounding.within_convex_polytope(indeps, self.bounds)
-        for ii in np.nonzero(dists > 0)[0]:
-            yield ii, edgekeys[ii], -dists[ii] * bounds[edgekeys[ii]]['outvec']
+        for ii in np.nonzero(dists < np.inf)[0]:
+            yield ii, edgekeys[ii], -np.array(dists[ii]) * np.array(bounds[int(edgekeys[ii])]['outvec'])
 
 ## NEXT: Need the smart_curve version

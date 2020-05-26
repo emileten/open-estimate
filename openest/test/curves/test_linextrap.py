@@ -52,6 +52,7 @@ def test_1d_polytope():
     
 ## 2-D orthotope
 def test_2d_orthotope():
+    basecurve1 = ZeroInterceptPolynomialCurve([-np.inf, np.inf], [1, 1])
     basecurve2 = CoefficientsCurve([1, 1], basecurve1)
 
     bounds2 = {0: (0, 1), 1:(0, 1)}
@@ -67,20 +68,22 @@ def test_2d_orthotope():
 
     yy1 = clipcurve(points2)
     desired = [yy0[0] + .1 * slope0x, yy0[1] + .1 * slope0x + .1 * slope0y, yy0[2], yy0[3] + .21 * slope1y, yy0[4] + .1 * slope1x + .21 * slope1y]
+    print(yy1)
     np.testing.assert_allclose(yy1, desired)
 
 ## 2-D polytope
-def test_2d_orthotope():
+def test_2d_polytope():
+    basecurve1 = ZeroInterceptPolynomialCurve([-np.inf, np.inf], [1, 1])
     basecurve2 = CoefficientsCurve([1, 1], basecurve1)
 
     bounds2 = [(1, 0), (0, -1), (-1, 0)]
     clipcurve = LinearExtrapolationCurve(basecurve2, bounds2, [.1, .1], 1, lambda x: x)
-    yy0 = basecurve2(np.array([[0, 0], [.5, -.5]]))
+    yy0 = basecurve2(np.array([[0, 0], [.5, -.5], [.2, -.1]]))
                   
     points2 = np.array([[0, .5], [1, -1], [.2, -.1]])
     slope0y = (basecurve2([0, 0]) - basecurve2([0, -.1])) / .1
     slope1xy = (basecurve2([.5, -.5]) - basecurve2([.5 - .1 * np.sqrt(2)/2, -.5 + .1 * np.sqrt(2)/2])) / .1
-    print([slope0y, slope1y, slope1x])
+    np.testing.assert_allclose([slope0y, slope1xy], [1., 0.])
 
     yy1 = clipcurve(points2)
     desired = [yy0[0] + .5 * slope0y, yy0[1] + .5 * slope1xy * np.sqrt(2)/2, yy0[2]]
