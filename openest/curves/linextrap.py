@@ -212,5 +212,5 @@ def beyond_polytope(bounds, indeps):
     assert isinstance(bounds, list)
 
     dists, edgekeys, bounds = bounding.within_convex_polytope(indeps, bounds)
-    for ii in np.nonzero(dists > 0)[0]:
-        yield ii, edgekeys[ii], -dists[ii] * bounds[edgekeys[ii]]['outvec']
+    for ii in np.nonzero(dists < np.inf)[0]:
+        yield ii, edgekeys[ii], -np.array(dists[ii]) * np.array(bounds[int(edgekeys[ii])]['outvec'])
