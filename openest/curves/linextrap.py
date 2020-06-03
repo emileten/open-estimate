@@ -18,7 +18,7 @@ adjusted.
 
 import numpy as np
 from openest.models.curve import UnivariateCurve
-import bounding
+from . import bounding
 
 class LinearExtrapolationCurve(UnivariateCurve):
     """Linear extrapolation clipping curve which takes a list of multidimensional points.
@@ -86,104 +86,131 @@ class LinearExtrapolationCurve(UnivariateCurve):
         values = self.curve(xs)
         indeps = self.getindeps(xs)
 
-        known_slopes = {}
-        if isinstance(self.bounds, dict):
-            for ii, edgekey, invector in self.beyond_orthotope(indeps):
-                if edgekey not in known_slopes:
-                    slopes = []
-                    for kk in self.bounds:
-                        if invector[kk] == 0:
-                            slopes.append(0)
-                        else:
-                            y0 = self.curve(indeps[ii, :] + invector)
-                            y1 = self.curve(indeps[ii, :] + invector + self.margins[kk] * (np.sign(invector[kk]) * (np.arange(len(invector)) == kk)))
-                            slopes.append(self.scaling * (y1 - y0) / self.margins[kk])
-                    known_slopes[edgekey] = np.array(slopes)
+        return replace_oob(values, indeps, self.curve, self.bounds, self.margins, self.scaling)
 
-                depen = self.curve(indeps[ii, :] + invector) + np.sum(known_slopes[edgekey] * -np.abs(invector))
-                values[ii] = depen
-                
-        else:
-            for ii, edgekey, invector in self.beyond_polytope(indeps):
-                if edgekey not in known_slopes:
-                    y0 = self.curve(indeps[ii, :] + invector)
-                    y1 = self.curve(indeps[ii, :] + invector + self.margins * invector / np.linalg.norm(invector))
-                    slope = self.scaling * (y1 - y0) / np.linalg.norm(self.margins * invector / np.linalg.norm(invector))
-                    known_slopes[edgekey] = slope
+def replace_oob(values, indeps, curve, bounds, margins, scaling):
+    """Replace out-of-bound point values.
 
-                depen = self.curve(indeps[ii, :] + invector) + np.sum(known_slopes[edgekey] * -np.abs(invector))
-                values[ii] = depen
+    This is split out from LinearExtrapolationCurve to make
+    smart-generalization easier.
 
-        return(values)
+    Parameters
+    ----------
+    values : array_like
+        A vector of before clipping curve values
+    indeps : array_like
+        A matrix of N x K with independent variables
+    curve : UnivariateCurve
+        Curve to be clipped
+    bounds : dict or list
+        Either a dictionary of {dim: (lower, upper)} bounds or a polytope
+    margins : array_like
+        A array_like with a margin for each dimension
+    scaling : float
+        A factor that the slope is scaled by
 
-    def beyond_orthotope(self, indeps):
-        """Yields each point that needs to clipped for orthotope bounds.
+    Returns
+    -------
+    array_like
+        A vector of values after clipping.
+    """
 
-        Checks whether each point is beyond any of the bounds and
-        yields the following for those points that need to be clipped:
-          (ii, edgekey, invector)
+    known_slopes = {}
+    if isinstance(bounds, dict):
+        for ii, edgekey, invector in beyond_orthotope(bounds, indeps):
+            if edgekey not in known_slopes:
+                slopes = []
+                for kk in bounds:
+                    if invector[kk] == 0:
+                        slopes.append(0)
+                    else:
+                        y0 = curve(indeps[ii, :] + invector)
+                        y1 = curve(indeps[ii, :] + invector + margins[kk] * (np.sign(invector[kk]) * (np.arange(len(invector)) == kk)))
+                        slopes.append(scaling * (y1 - y0) / margins[kk])
+                known_slopes[edgekey] = np.array(slopes)
 
-        where ii is the index of the point, edgekey is a numeric key
-          unique to every combination of bounds that can be crossed,
-          and invector is a vector from the point to the closest
-          orthogonal point on the boundary.
-        
-        Parameters
-        ----------
-        indeps : array_like
-            A matrix of N x K with independent variables
+            depen = curve(indeps[ii, :] + invector) + np.sum(known_slopes[edgekey] * -np.abs(invector))
+            values[ii] = depen
 
-        Yields
-        ------
-        Tuple of (int, int, array_like)
+    else:
+        for ii, edgekey, invector in beyond_polytope(bounds, indeps):
+            if edgekey not in known_slopes:
+                y0 = curve(indeps[ii, :] + invector)
+                y1 = curve(indeps[ii, :] + invector + margins * invector / np.linalg.norm(invector))
+                slope = scaling * (y1 - y0) / np.linalg.norm(margins * invector / np.linalg.norm(invector))
+                known_slopes[edgekey] = slope
 
-        """
-        # Case 1: k-orthotope, provided by dict of {index: (low, high)}
-        assert isinstance(self.bounds, dict)
-        
-        outside = np.zeros(indeps.shape[0], np.bool_)
-        invector = np.zeros(indeps.shape)
+            depen = curve(indeps[ii, :] + invector) + np.sum(known_slopes[edgekey] * -np.abs(invector))
+            values[ii] = depen
 
-        for kk in self.bounds:
-            belows = self.bounds[kk][0] - indeps[:, kk]
-            idx = np.nonzero(belows > 0)[0]
-            outside[idx] = True
-            invector[idx, kk] = belows[idx]
-                
-            aboves = indeps[:, kk] - self.bounds[kk][1]
-            idx = np.nonzero(aboves > 0)[0]
-            outside[idx] = True
-            invector[idx, kk] = -aboves[idx]
+    return values
 
-        for ii in np.nonzero(outside)[0]:
-            edgekey = np.sum(np.sign(invector[ii,:]) * (3 ** np.arange(invector.shape[1])))
-            yield ii, edgekey, invector[ii,:]
+def beyond_orthotope(bounds, indeps):
+    """Yields each point that needs to clipped for orthotope bounds.
 
-    def beyond_polytope(self, indeps):
-        """Yields each point that needs to clipped for a convex polytope.
+    Checks whether each point is beyond any of the bounds and
+    yields the following for those points that need to be clipped:
+      (ii, edgekey, invector)
 
-        As with beyond_orthotope, except in the calculation of the yielded outputs:
-          (ii, edgekey, invector)
+    where ii is the index of the point, edgekey is a numeric key
+      unique to every combination of bounds that can be crossed,
+      and invector is a vector from the point to the closest
+      orthogonal point on the boundary.
 
-        where ii is the index of the point to be clipped, edgekey is
-          the index of the facet exceeded, and invector is an
-          orthogonal vector to the exceeded facet.
+    Parameters
+    ----------
+    indeps : array_like
+        A matrix of N x K with independent variables
 
-        Parameters
-        ----------
-        indeps : array_like
-            A matrix of N x K with independent variables
+    Yields
+    ------
+    Tuple of (int, int, array_like)
 
-        Yields
-        ------
-        Tuple of (int, int, array_like)
+    """
+    # Case 1: k-orthotope, provided by dict of {index: (low, high)}
+    assert isinstance(bounds, dict)
 
-        """
-        # Case 2: Convex polytope
-        assert isinstance(self.bounds, list)
+    outside = np.zeros(indeps.shape[0], np.bool_)
+    invector = np.zeros(indeps.shape)
 
-        dists, edgekeys, bounds = bounding.within_convex_polytope(indeps, self.bounds)
-        for ii in np.nonzero(dists > 0)[0]:
-            yield ii, edgekeys[ii], -dists[ii] * bounds[edgekeys[ii]]['outvec']
+    for kk in bounds:
+        belows = bounds[kk][0] - indeps[:, kk]
+        idx = np.nonzero(belows > 0)[0]
+        outside[idx] = True
+        invector[idx, kk] = belows[idx]
 
-## NEXT: Need the smart_curve version
+        aboves = indeps[:, kk] - bounds[kk][1]
+        idx = np.nonzero(aboves > 0)[0]
+        outside[idx] = True
+        invector[idx, kk] = -aboves[idx]
+
+    for ii in np.nonzero(outside)[0]:
+        edgekey = np.sum(np.sign(invector[ii,:]) * (3 ** np.arange(invector.shape[1])))
+        yield ii, edgekey, invector[ii,:]
+
+def beyond_polytope(bounds, indeps):
+    """Yields each point that needs to clipped for a convex polytope.
+
+    As with beyond_orthotope, except in the calculation of the yielded outputs:
+      (ii, edgekey, invector)
+
+    where ii is the index of the point to be clipped, edgekey is
+      the index of the facet exceeded, and invector is an
+      orthogonal vector to the exceeded facet.
+
+    Parameters
+    ----------
+    indeps : array_like
+        A matrix of N x K with independent variables
+
+    Yields
+    ------
+    Tuple of (int, int, array_like)
+
+    """
+    # Case 2: Convex polytope
+    assert isinstance(bounds, list)
+
+    dists, edgekeys, bounds = bounding.within_convex_polytope(indeps, bounds)
+    for ii in np.nonzero(dists > 0)[0]:
+        yield ii, edgekeys[ii], -dists[ii] * bounds[edgekeys[ii]]['outvec']
