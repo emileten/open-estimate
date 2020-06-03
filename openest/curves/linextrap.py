@@ -1,4 +1,4 @@
-"""Curve definitions that implement linear extrapolation clipping.
+"""Curve definition that implements linear extrapolation clipping.
 
 These Curve classes take a curve and represent it with a linear
 extrapolation beyond certain bounds. Slopes for the linear

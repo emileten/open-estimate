@@ -1,9 +1,18 @@
+"""SmartCurve definition that implements linear extrapolation clipping.
+
+See linextrap.py for logical details.
+"""
+
 import numpy as np
 from . import linextrap
 from openest.generate.smart_curve import SmartCurve
 
 class LinearExtrapolationCurve(SmartCurve):
     """Linear extrapolation clipping curve which takes a xarray Dataset.
+
+    The arguments are similar to linextrap.LinearExtrapolationCurve,
+    except that the smart curve version is aware of the variable names
+    that it needs to extract from the Dataset.
 
     Parameters
     ----------
@@ -17,6 +26,7 @@ class LinearExtrapolationCurve(SmartCurve):
         A dict with margin for each variable
     scaling : float
         A factor that the slope is scaled by
+
     """
     def __init__(self, curve, indepvars, bounds, margins, scaling):
         super(LinearExtrapolationCurve, self).__init__()
@@ -49,6 +59,8 @@ class LinearExtrapolationCurve(SmartCurve):
         return linextrap.replace_oob(values, indeps, self.curve.get_univariate(), self.bounds, self.margins, self.scaling)
 
     def format(self, lang):
+        # This is complicated. We may want to create a parallel Julia
+        # package that implements this kind of logic.
         raise NotImplementedError()
         # elements = SmartCurve.format_call(lang, self.curve, self.indepvars)
         # if lang == 'latex':
