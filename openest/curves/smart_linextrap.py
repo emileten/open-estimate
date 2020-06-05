@@ -34,7 +34,10 @@ class LinearExtrapolationCurve(SmartCurve):
         
         self.curve = curve
         self.indepvars = indepvars # need this order in case of polytope bounds
-        self.bounds = {kk: bounds[indepvars[kk]] for kk in range(len(indepvars))} # convert into indexed bounds
+        if isinstance(bounds, dict):
+            self.bounds = {kk: bounds[indepvars[kk]] for kk in range(len(indepvars))} # convert into indexed bounds
+        else:
+            self.bounds = bounds # polytope
         self.margins = [margins[indepvars[kk]] for kk in range(len(indepvars))] # convert into ordered list
         self.scaling = scaling
 
