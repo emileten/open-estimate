@@ -18,7 +18,7 @@ adjusted.
 
 import numpy as np
 from openest.models.curve import UnivariateCurve
-from . import bounding
+from openest.curves import bounding
 
 
 class LinearExtrapolationCurve(UnivariateCurve):
@@ -51,7 +51,7 @@ class LinearExtrapolationCurve(UnivariateCurve):
     bounds : dict or list
         Either a dictionary of {dim: (lower, upper)} bounds or a polytope
     margins : array_like
-        A array_like with a margin for each dimension
+        A array_like with a float for each dimension
     scaling : float
         A factor that the slope is scaled by
     getindeps : function(array_like) -> array_like
@@ -127,7 +127,8 @@ def replace_oob(values, indeps, curve, bounds, margins, scaling):
                         slopes.append(0)
                     else:
                         y0 = curve(indeps[ii, :] + invector)
-                        y1 = curve(indeps[ii, :] + invector + margins[kk] * (np.sign(invector[kk]) * (np.arange(len(invector)) == kk)))
+                        y1 = curve(indeps[ii, :] + invector +
+                                   margins[kk] * (np.sign(invector[kk]) * (np.arange(len(invector)) == kk)))
                         slopes.append(scaling * (y1 - y0) / margins[kk])
                 known_slopes[edgekey] = np.array(slopes)
 
@@ -162,13 +163,19 @@ def beyond_orthotope(bounds, indeps):
 
     Parameters
     ----------
+    bounds : dict
+        A dictionary of {dim: (lower, upper)} bounds
     indeps : array_like
         A matrix of N x K with independent variables
 
     Yields
     ------
-    Tuple of (int, int, array_like)
-
+    ii : int
+        Index of point out of bounds
+    edgekey : hashable
+        A unique key for the edge the point is beyond
+    invector : array_like
+        A vector representing a vector from the point to the edge
     """
     # Case 1: k-orthotope, provided by dict of {index: (low, high)}
     assert isinstance(bounds, dict)
@@ -188,8 +195,8 @@ def beyond_orthotope(bounds, indeps):
         invector[idx, kk] = -aboves[idx]
 
     for ii in np.nonzero(outside)[0]:
-        edgekey = np.sum(np.sign(invector[ii,:]) * (3 ** np.arange(invector.shape[1])))
-        yield ii, edgekey, invector[ii,:]
+        edgekey = np.sum(np.sign(invector[ii, :]) * (3 ** np.arange(invector.shape[1])))
+        yield ii, edgekey, invector[ii, :]
 
         
 def beyond_polytope(bounds, indeps):
@@ -204,13 +211,19 @@ def beyond_polytope(bounds, indeps):
 
     Parameters
     ----------
+    bounds : list
+        A convex polytope
     indeps : array_like
         A matrix of N x K with independent variables
 
     Yields
     ------
-    Tuple of (int, int, array_like)
-
+    ii : int
+        Index of point out of bounds
+    edgekey : hashable
+        A unique key for the edge the point is beyond
+    invector : array_like
+        A vector representing a vector from the point to the edge
     """
     # Case 2: Convex polytope
     assert isinstance(bounds, list)
@@ -218,3 +231,4 @@ def beyond_polytope(bounds, indeps):
     dists, edgekeys, bounds = bounding.within_convex_polytope(indeps, bounds)
     for ii in np.nonzero(dists < np.inf)[0]:
         yield ii, edgekeys[ii], -np.array(dists[ii]) * np.array(bounds[int(edgekeys[ii])]['outvec'])
+

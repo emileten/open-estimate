@@ -4,7 +4,7 @@ See linextrap.py for logical details.
 """
 
 import numpy as np
-from . import linextrap
+from openest.curves import linextrap
 from openest.generate.smart_curve import SmartCurve
 
 
@@ -34,12 +34,12 @@ class LinearExtrapolationCurve(SmartCurve):
         assert isinstance(bounds, list) or isinstance(bounds, dict)
         
         self.curve = curve
-        self.indepvars = indepvars # need this order in case of polytope bounds
+        self.indepvars = indepvars  # need this order in case of polytope bounds
         if isinstance(bounds, dict):
-            self.bounds = {kk: bounds[indepvars[kk]] for kk in range(len(indepvars))} # convert into indexed bounds
+            self.bounds = {kk: bounds[indepvars[kk]] for kk in range(len(indepvars))}  # convert into indexed bounds
         else:
-            self.bounds = bounds # polytope
-        self.margins = [margins[indepvars[kk]] for kk in range(len(indepvars))] # convert into ordered list
+            self.bounds = bounds  # polytope
+        self.margins = [margins[indepvar] for indepvar in indepvars]  # convert into ordered list
         self.scaling = scaling
 
     def __call__(self, ds):
@@ -62,6 +62,12 @@ class LinearExtrapolationCurve(SmartCurve):
 
         return linextrap.replace_oob(values, indeps, self.curve.get_univariate(), self.bounds, self.margins, self.scaling)
 
+    def get_univariate(self):
+        """Return a UnivariateCurve version of this curve."""
+        return linextrap.LinearExtrapolationCurve(self.curve.get_univariate(), self.bounds, self.margins,
+                                                  self.scaling, lambda xs: xs[:, 0])
+                                                  
+    
     def format(self, lang):
         # This is complicated. We may want to create a parallel Julia
         # package that implements this kind of logic.

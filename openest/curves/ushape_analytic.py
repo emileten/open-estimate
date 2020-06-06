@@ -121,16 +121,16 @@ def derivative_clipping(ccs, mintemp):
     levels = [] # min level for each span
     spans = [] # list of tuples with spans
     evalpts = [] # used for marginal calcs
-    for ii in range(len(roots)):
+    for ii, root in enumerate(roots):
         if direction[ii] < 0: # ignore if turning back up
             levels.append(rootvals[ii])
-            evalpts.append(roots[ii])
-            if roots[ii] < mintemp:
-                spans.append((-np.inf, roots[ii]))
-                alllimits.update([-np.inf, roots[ii]])
+            evalpts.append(root)
+            if root < mintemp:
+                spans.append((-np.inf, root))
+                alllimits.update([-np.inf, root])
             else:
-                spans.append((roots[ii], np.inf))
-                alllimits.update([roots[ii], np.inf])
+                spans.append((root, np.inf))
+                alllimits.update([root, np.inf])
 
     # Look at mintemp
     datmin = np.polyval(derivcoeffs[::-1], mintemp)
