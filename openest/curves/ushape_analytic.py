@@ -149,90 +149,94 @@ def derivative_clipping(ccs, mintemp):
     return mergeplateaus(alllimits, spans, levels, evalpts)
 
 
-def UShapedCurve(ccs, mintemp):
-    xxlimits, levels, evalpts = derivative_clipping(ccs, mintemp)
-    return EMaximumCurve(ZeroInterceptPolynomialCurve([-np.inf, np.inf], ccs), EStepCurve(xxlimits, levels, evalpts))
+class UShapedCurve(EMaximumCurve):
+    def __init__(self, ccs, mintemp):
+        xxlimits, levels, evalpts = derivative_clipping(ccs, mintemp)
+        super(UShapedCurve, self).__init__(ZeroInterceptPolynomialCurve([-np.inf, np.inf], ccs),
+                                           EStepCurve(xxlimits, levels, evalpts))
 
 
-def UShapedMinimumCurve(curve1, ccs1, curve2, ccs2, mintemp):
-    baselevel1 = curve1(mintemp)
-    derivcoeffs1 = polyderiv(ccs1)
-    roots1 = np.real(filter(np.isreal, np.roots(derivcoeffs1[::-1])))
+class UShapedMinimumCurve(EMaximumCurve):
+    def __init__(self, curve1, ccs1, curve2, ccs2, mintemp):
+        baselevel1 = curve1(mintemp)
+        derivcoeffs1 = polyderiv(ccs1)
+        roots1 = np.real(filter(np.isreal, np.roots(derivcoeffs1[::-1])))
 
-    baselevel2 = curve2(mintemp)
-    derivcoeffs2 = polyderiv(ccs2)
-    roots2 = np.real(filter(np.isreal, np.roots(derivcoeffs2[::-1])))
+        baselevel2 = curve2(mintemp)
+        derivcoeffs2 = polyderiv(ccs2)
+        roots2 = np.real(filter(np.isreal, np.roots(derivcoeffs2[::-1])))
 
-    crosses = np.real(filter(np.isreal, np.roots(np.concatenate((np.array(ccs1[::-1]) - np.array(ccs2[::-1]), [-baselevel1 + baselevel2])))))
+        crosses = np.real(filter(np.isreal, np.roots(np.concatenate((np.array(ccs1[::-1]) - np.array(ccs2[::-1]), [-baselevel1 + baselevel2])))))
 
-    alllimits = set(crosses)
-    alllimits.update(roots1)
-    alllimits.update(roots2)
-    alllimits.update([-np.inf, mintemp, np.inf])
-    xxlimits = np.sort(list(alllimits))
+        alllimits = set(crosses)
+        alllimits.update(roots1)
+        alllimits.update(roots2)
+        alllimits.update([-np.inf, mintemp, np.inf])
+        xxlimits = np.sort(list(alllimits))
 
-    clipcurve1 = EClippedCurve(EShiftedCurve(curve1, -baselevel1))
-    clipcurve2 = EClippedCurve(EShiftedCurve(curve2, -baselevel2))
-    
-    # Force plateaus to be u-shaped
-    lolevels = [] # in opposite order
-    loevalpts = [] # used for marginal calcs
-    minlevel = 0
-    evalpt = mintemp
-    for ii in range(np.where(xxlimits == mintemp)[0][0])[::-1]:
-        # What is shown between xxlimits[ii] and xxlimits[ii+1]?  Note: ended at minlevel = xxlimits[ii+1]
-        if ii == 0:
-            curve1x = clipcurve1(xxlimits[ii+1] - 1)
-            curve2x = clipcurve2(xxlimits[ii+1] - 1)
-        else:
-            curve1x = clipcurve1(xxlimits[ii])
-            curve2x = clipcurve2(xxlimits[ii])
-        lolevels.append(minlevel)
-        loevalpts.append(evalpt)
-        if curve1x < curve2x:
-            if curve1x > minlevel:
+        clipcurve1 = EClippedCurve(EShiftedCurve(curve1, -baselevel1))
+        clipcurve2 = EClippedCurve(EShiftedCurve(curve2, -baselevel2))
+
+        # Force plateaus to be u-shaped
+        lolevels = [] # in opposite order
+        loevalpts = [] # used for marginal calcs
+        minlevel = 0
+        evalpt = mintemp
+        for ii in range(np.where(xxlimits == mintemp)[0][0])[::-1]:
+            # What is shown between xxlimits[ii] and xxlimits[ii+1]?  Note: ended at minlevel = xxlimits[ii+1]
+            if ii == 0:
+                curve1x = clipcurve1(xxlimits[ii+1] - 1)
+                curve2x = clipcurve2(xxlimits[ii+1] - 1)
+            else:
+                curve1x = clipcurve1(xxlimits[ii])
+                curve2x = clipcurve2(xxlimits[ii])
+            lolevels.append(minlevel)
+            loevalpts.append(evalpt)
+            if curve1x < curve2x:
+                if curve1x > minlevel:
+                    minlevel = curve1x
+                    evalpt = xxlimits[ii]
+            elif curve1x > curve2x:
+                if curve2x > minlevel:
+                    minlevel = curve2x
+                    evalpt = xxlimits[ii]
+            elif curve1x > minlevel: # and equal
                 minlevel = curve1x
                 evalpt = xxlimits[ii]
-        elif curve1x > curve2x:
-            if curve2x > minlevel:
-                minlevel = curve2x
-                evalpt = xxlimits[ii]
-        elif curve1x > minlevel: # and equal
-            minlevel = curve1x
-            evalpt = xxlimits[ii]
 
-    hilevels = []
-    hievalpts = []
-    minlevel = 0
-    evalpt = mintemp
-    for ii in range(np.where(xxlimits == mintemp)[0][0], len(xxlimits) - 1):
-        # What is shown between xxlimits[ii] and xxlimits[ii+1]?  Note: ended at minlevel = xxlimits[ii]
-        if ii+1 == len(xxlimits) - 1:
-            curve1x = clipcurve1(xxlimits[ii] + 1)
-            curve2x = clipcurve2(xxlimits[ii] + 1)
-        else:
-            curve1x = clipcurve1(xxlimits[ii+1])
-            curve2x = clipcurve2(xxlimits[ii+1])
-        hilevels.append(minlevel)
-        hievalpts.append(evalpt)
-        if curve1x < curve2x:
-            if curve1x > minlevel:
-                minlevel = curve1x
+        hilevels = []
+        hievalpts = []
+        minlevel = 0
+        evalpt = mintemp
+        for ii in range(np.where(xxlimits == mintemp)[0][0], len(xxlimits) - 1):
+            # What is shown between xxlimits[ii] and xxlimits[ii+1]?  Note: ended at minlevel = xxlimits[ii]
+            if ii+1 == len(xxlimits) - 1:
+                curve1x = clipcurve1(xxlimits[ii] + 1)
+                curve2x = clipcurve2(xxlimits[ii] + 1)
+            else:
+                curve1x = clipcurve1(xxlimits[ii+1])
+                curve2x = clipcurve2(xxlimits[ii+1])
+            hilevels.append(minlevel)
+            hievalpts.append(evalpt)
+            if curve1x < curve2x:
+                if curve1x > minlevel:
+                    minlevel = curve1x
+                    evalpt = xxlimits[ii+1]
+            elif curve1x > curve2x:
+                if curve2x > minlevel:
+                    minlevel = curve2x
+                    evalpt = xxlimits[ii+1]
+            elif curve1x > minlevel: # and equal
+                minlevel = curve1x    
                 evalpt = xxlimits[ii+1]
-        elif curve1x > curve2x:
-            if curve2x > minlevel:
-                minlevel = curve2x
-                evalpt = xxlimits[ii+1]
-        elif curve1x > minlevel: # and equal
-            minlevel = curve1x    
-            evalpt = xxlimits[ii+1]
 
-    return EMaximumCurve(EMinimumCurve(clipcurve1, clipcurve2),
-                         EStepCurve(xxlimits, lolevels[::-1] + hilevels, loevalpts[::-1] + hievalpts))
+        super(UShapedMinimumCurve, self).__init__(EMinimumCurve(clipcurve1, clipcurve2),
+                                                  EStepCurve(xxlimits, lolevels[::-1] + hilevels, loevalpts[::-1] + hievalpts))
 
 
 class UShapedMarginal(UnivariateCurve):
     def __init__(self, curve, marginal):
+        super(UShapedMarginal, self).__init__([-np.inf, np.inf])
         self.curve = curve
         self.marginal = marginal
 

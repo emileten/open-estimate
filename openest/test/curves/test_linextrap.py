@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from openest.models.curve import ZeroInterceptPolynomialCurve, CoefficientsCurve
-from openest.curves.linextrap import *
+from openest.curves.linextrap import LinearExtrapolationCurve
 
 ## 1-D orthotope
 def test_1d_orthotope():

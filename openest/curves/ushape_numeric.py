@@ -3,15 +3,15 @@ from openest.curves.basic import UnivariateCurve
 
 
 class UShapedCurve(UnivariateCurve):
-    def __init__(self, curve, midtemp, gettas, ordered=False, fillxxs=[], fillyys=[], direction='boatpose'):
+    def __init__(self, curve, midtemp, gettas, ordered=False, fillxxs=None, fillyys=None, direction='boatpose'):
         # Ordered only used for unit testing
         super(UShapedCurve, self).__init__(curve.xx)
         self.curve = curve
         self.midtemp = midtemp
         self.gettas = gettas
         self.ordered = ordered
-        self.fillxxs = fillxxs
-        self.fillyys = fillyys
+        self.fillxxs = [] if fillxxs is None else fillxxs
+        self.fillyys = [] if fillyys is None else fillyys
         assert direction in ['boatpose', 'downdog'], "Unknown direction for u-shaped clipping."
         self.direction = direction
 
@@ -86,7 +86,7 @@ class UShapedClipping(UnivariateCurve):
         self.ordered = ordered
 
     def __call__(self, xs):
-        increasingvalues = self.curve(xs) # these are ordered as low..., high...
+        increasingvalues = self.curve(xs)  # these are ordered as low..., high...
         increasingplateaus = np.diff(increasingvalues) == 0
 
         tas = self.gettas(xs)
@@ -95,21 +95,23 @@ class UShapedClipping(UnivariateCurve):
 
         n_below = sum(orderedtas < self.midtemp)
         
-        lowindicesofordered = np.arange(n_below)[::-1] # [N-1 ... 0]
+        lowindicesofordered = np.arange(n_below)[::-1]  # [N-1 ... 0]
         if len(lowindicesofordered) > 1:
             lowindicesofordered[np.concatenate(([False], increasingplateaus[:len(lowindicesofordered)-1]))] = n_below
             lowindicesofordered = np.minimum.accumulate(lowindicesofordered)
         
-        highindicesofordered = np.arange(sum(orderedtas >= self.midtemp)) + n_below # [N ... T-1]
+        highindicesofordered = np.arange(sum(orderedtas >= self.midtemp)) + n_below  # [N ... T-1]
         if len(highindicesofordered) > 1:
             highindicesofordered[np.concatenate(([False], increasingplateaus[-len(highindicesofordered)+1:]))] = n_below
             highindicesofordered = np.maximum.accumulate(highindicesofordered)
 
         if len(xs.shape) == 2:
-            increasingresults = np.concatenate((self.tmarginal_curve(xs[order[lowindicesofordered], :]), self.tmarginal_curve(xs[order[highindicesofordered], :]))) # ordered low..., high...
+            increasingresults = np.concatenate((self.tmarginal_curve(xs[order[lowindicesofordered], :]),
+                                                self.tmarginal_curve(xs[order[highindicesofordered], :])))  # ordered low..., high...
         else:
-            increasingresults = np.concatenate((self.tmarginal_curve(xs[order[lowindicesofordered]]), self.tmarginal_curve(xs[order[highindicesofordered]]))) # ordered low..., high...
-        increasingresults[increasingvalues <= 0] = 0 # replace truly clipped with 0
+            increasingresults = np.concatenate((self.tmarginal_curve(xs[order[lowindicesofordered]]),
+                                                self.tmarginal_curve(xs[order[highindicesofordered]])))  # ordered low..., high...
+        increasingresults[increasingvalues <= 0] = 0  # replace truly clipped with 0
 
         if self.ordered:
             return np.concatenate((increasingresults[tas < self.midtemp][::-1], increasingresults[tas >= self.midtemp]))

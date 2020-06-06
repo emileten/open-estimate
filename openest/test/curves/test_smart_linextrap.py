@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from openest.generate.smart_curve import *
-from openest.curves.smart_linextrap import *
+from openest.generate.smart_curve import ZeroInterceptPolynomialCurve
+from openest.curves.smart_linextrap import LinearExtrapolationCurve
 
 ## 1-D orthotope
 def test_1d_orthotope():

@@ -1,14 +1,14 @@
 import pytest
 import numpy as np
 
-from openest.curves.bounding import *
+from openest.curves.bounding import ray_tracing_inside, facets, within_convex_polytope
 
 ## 1-D test
 def test_1d():
     polytope = [(.25,), (.75,)]
-    iter = facets(polytope)
-    np.testing.assert_equal(next(iter), ([(0.25,)], (-1,)))
-    np.testing.assert_equal(next(iter), ([(0.75,)], (1,)))
+    facetiter = facets(polytope)
+    np.testing.assert_equal(next(facetiter), ([(0.25,)], (-1,)))
+    np.testing.assert_equal(next(facetiter), ([(0.75,)], (1,)))
 
     points = np.expand_dims(np.array([.1, .2, .4, .8]), axis=-1)
 
@@ -21,11 +21,11 @@ def test_1d():
 ## 2-D test
 def test_2d():
     polytope = [(1, 0), (0, -1), (-1, 0), (0, 1)]
-    iter = facets(polytope)
-    np.testing.assert_equal(next(iter), ([(1, 0), (0, -1)], (0.7071067811865475, -0.7071067811865475)))
-    np.testing.assert_equal(next(iter), ([(0, -1), (-1, 0)], (-0.7071067811865475, -0.7071067811865475)))
-    np.testing.assert_equal(next(iter), ([(-1, 0), (0, 1)], (-0.7071067811865475, 0.7071067811865475)))
-    np.testing.assert_equal(next(iter), ([(0, 1), (1, 0)], (0.7071067811865475, 0.7071067811865475)))
+    facetiter = facets(polytope)
+    np.testing.assert_equal(next(facetiter), ([(1, 0), (0, -1)], (0.7071067811865475, -0.7071067811865475)))
+    np.testing.assert_equal(next(facetiter), ([(0, -1), (-1, 0)], (-0.7071067811865475, -0.7071067811865475)))
+    np.testing.assert_equal(next(facetiter), ([(-1, 0), (0, 1)], (-0.7071067811865475, 0.7071067811865475)))
+    np.testing.assert_equal(next(facetiter), ([(0, 1), (1, 0)], (0.7071067811865475, 0.7071067811865475)))
 
     points = np.array([[.75, -.5], [.75, .05], [-.75, .5], [-.75, .05]])
 
@@ -41,17 +41,17 @@ def test_3d():
                 [(1, .5, 0), (0, -1, 0), (-1, .5, 0)], # bottom
                 [(-1, .5, 0), (0, -1, 0), (0, 0, 1)], # left
                 [(1, .5, 0), (0, 0, 1), (0, -1, 0)]] # right
-    iter = facets(polytope)
-    facet, outunit1 = next(iter)
+    facetiter = facets(polytope)
+    facet, outunit1 = next(facetiter)
     np.testing.assert_almost_equal(facet, [(0, 0, 1), (1, 0.5, 0), (-1, 0.5, 0)])
     np.testing.assert_almost_equal(outunit1, np.array([0.        , 0.89442719, 0.4472136 ]))
-    facet, outunit2 = next(iter)
+    facet, outunit2 = next(facetiter)
     np.testing.assert_almost_equal(facet, [(1, 0.5, 0), (0, -1, 0), (-1, 0.5, 0)])
     np.testing.assert_almost_equal(outunit2, np.array([-0.,  0., -1.]))
-    facet, outunit3 = next(iter)
+    facet, outunit3 = next(facetiter)
     np.testing.assert_almost_equal(facet, [(-1, 0.5, 0), (0, -1, 0), (0, 0, 1)])
     np.testing.assert_almost_equal(outunit3, np.array([-0.72760688, -0.48507125,  0.48507125]))
-    facet, outunit4 = next(iter)
+    facet, outunit4 = next(facetiter)
     np.testing.assert_almost_equal(facet, [(1, 0.5, 0), (0, 0, 1), (0, -1, 0)])
     np.testing.assert_almost_equal(outunit4, np.array([ 0.72760688, -0.48507125,  0.48507125]))
     
@@ -70,11 +70,11 @@ def test_4d():
                 [(1, .5, 0), (0, -1, 0), (-1, .5, 0)], # bottom
                 [(-1, .5, 0), (0, -1, 0), (0, 0, 1)], # left
                 [(1, .5, 0), (0, 0, 1), (0, -1, 0)]] # right
-    iter = facets(polytope)
-    facet, outunit1 = next(iter)
-    facet, outunit2 = next(iter)
-    facet, outunit3 = next(iter)
-    facet, outunit4 = next(iter)
+    facetiter = facets(polytope)
+    facet, outunit1 = next(facetiter)
+    facet, outunit2 = next(facetiter)
+    facet, outunit3 = next(facetiter)
+    facet, outunit4 = next(facetiter)
 
     bounds = [dict(point=(0, 0, 1, 0), outvec=np.concatenate((outunit1, (0,)))), # front
               dict(point=(1, .5, 0, 0), outvec=np.concatenate((outunit2, (0,)))), # bottom
