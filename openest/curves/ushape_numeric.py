@@ -1,6 +1,7 @@
 import numpy as np
 from openest.curves.basic import UnivariateCurve
 
+
 class UShapedCurve(UnivariateCurve):
     def __init__(self, curve, midtemp, gettas, ordered=False, fillxxs=[], fillyys=[], direction='boatpose'):
         # Ordered only used for unit testing
@@ -54,6 +55,7 @@ class UShapedCurve(UnivariateCurve):
         else:
             return np.concatenate((lowvalues2, highvalues2))
 
+        
 class UShapedDynamicCurve(UnivariateCurve):
     def __init__(self, curve, midtemp, gettas, unicurve, ordered=False, numfills=50, direction='boatpose'):
         super(UShapedDynamicCurve, self).__init__(curve.xx)
@@ -72,6 +74,7 @@ class UShapedDynamicCurve(UnivariateCurve):
         ucurve = UShapedCurve(self.curve, self.midtemp, self.gettas, self.ordered, fillxxs, fillyys, direction=self.direction)
         return ucurve(xs)
 
+    
 # Return tmarginal evaluated at the innermost edge of plateaus
 class UShapedClipping(UnivariateCurve):
     def __init__(self, curve, tmarginal_curve, midtemp, gettas, ordered=False):

@@ -3,6 +3,7 @@ from openest.curves.basic import MaximumCurve, MinimumCurve, ClippedCurve, Shift
 
 ##### Evaluation point aware curves (for marginal effects)
 
+
 class EMaximumCurve(MaximumCurve):
     def uclip_evalpts(self, xs):
         ys1 = self.curve1(xs)
@@ -22,6 +23,7 @@ class EMaximumCurve(MaximumCurve):
         
         return evalpts
 
+    
 class EMinimumCurve(MinimumCurve):
     def uclip_evalpts(self, xs):
         ys1 = self.curve1(xs)
@@ -41,6 +43,7 @@ class EMinimumCurve(MinimumCurve):
 
         return evalpts
 
+    
 class EClippedCurve(ClippedCurve):
     def __init__(self, curve, cliplow=True):
         super(EClippedCurve, self).__init__(curve, cliplow=cliplow)
@@ -56,6 +59,7 @@ class EClippedCurve(ClippedCurve):
 
         return evalpts
 
+    
 class EStepCurve(StepCurve):
     def __init__(self, xxlimits, yy, evalpts, xtrans=None):
         super(EStepCurve, self).__init__(xxlimits, yy, xtrans=xtrans)
@@ -67,6 +71,7 @@ class EStepCurve(StepCurve):
         evalpts[np.isfinite(xs)] = np.array(self.evalpts)[bins - 1]
         return evalpts
 
+    
 class EShiftedCurve(ShiftedCurve):
     def uclip_evalpts(self, xs):
         if isinstance(self.curve, ZeroInterceptPolynomialCurve):
@@ -74,12 +79,15 @@ class EShiftedCurve(ShiftedCurve):
         
         return self.curve.uclip_evalpts(xs)
     
+
 ##### Algorithm
-    
+
+
 def polyderiv(ccs):
     # Construct the derivative
     # Ordered as x, x^2, x^3, x^4; returns as c, x, x^2, x^3
     return np.array(ccs) * np.arange(1, len(ccs) + 1)
+
 
 def mergeplateaus(alllimits, spans, levels, evalpts):
     xxlimits = np.sort(list(alllimits))
@@ -97,6 +105,7 @@ def mergeplateaus(alllimits, spans, levels, evalpts):
         xx.append(evalpt)
 
     return xxlimits, yy, xx
+
 
 def derivative_clipping(ccs, mintemp):
     # Ordered as x, x^2, x^3, x^4
@@ -139,9 +148,11 @@ def derivative_clipping(ccs, mintemp):
 
     return mergeplateaus(alllimits, spans, levels, evalpts)
 
+
 def UShapedCurve(ccs, mintemp):
     xxlimits, levels, evalpts = derivative_clipping(ccs, mintemp)
     return EMaximumCurve(ZeroInterceptPolynomialCurve([-np.inf, np.inf], ccs), EStepCurve(xxlimits, levels, evalpts))
+
 
 def UShapedMinimumCurve(curve1, ccs1, curve2, ccs2, mintemp):
     baselevel1 = curve1(mintemp)
@@ -218,6 +229,7 @@ def UShapedMinimumCurve(curve1, ccs1, curve2, ccs2, mintemp):
 
     return EMaximumCurve(EMinimumCurve(clipcurve1, clipcurve2),
                          EStepCurve(xxlimits, lolevels[::-1] + hilevels, loevalpts[::-1] + hievalpts))
+
 
 class UShapedMarginal(UnivariateCurve):
     def __init__(self, curve, marginal):

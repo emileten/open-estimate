@@ -20,6 +20,7 @@ import numpy as np
 from openest.models.curve import UnivariateCurve
 from . import bounding
 
+
 class LinearExtrapolationCurve(UnivariateCurve):
     """Linear extrapolation clipping curve which takes a list of multidimensional points.
 
@@ -88,6 +89,7 @@ class LinearExtrapolationCurve(UnivariateCurve):
 
         return replace_oob(values, indeps, self.curve, self.bounds, self.margins, self.scaling)
 
+    
 def replace_oob(values, indeps, curve, bounds, margins, scaling):
     """Replace out-of-bound point values.
 
@@ -145,6 +147,7 @@ def replace_oob(values, indeps, curve, bounds, margins, scaling):
 
     return values
 
+
 def beyond_orthotope(bounds, indeps):
     """Yields each point that needs to clipped for orthotope bounds.
 
@@ -188,6 +191,7 @@ def beyond_orthotope(bounds, indeps):
         edgekey = np.sum(np.sign(invector[ii,:]) * (3 ** np.arange(invector.shape[1])))
         yield ii, edgekey, invector[ii,:]
 
+        
 def beyond_polytope(bounds, indeps):
     """Yields each point that needs to clipped for a convex polytope.
 

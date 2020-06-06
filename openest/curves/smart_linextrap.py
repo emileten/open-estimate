@@ -7,6 +7,7 @@ import numpy as np
 from . import linextrap
 from openest.generate.smart_curve import SmartCurve
 
+
 class LinearExtrapolationCurve(SmartCurve):
     """Linear extrapolation clipping curve which takes a xarray Dataset.
 

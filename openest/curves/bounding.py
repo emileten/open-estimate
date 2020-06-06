@@ -16,28 +16,43 @@ facets, each of which is a K-1 polytope (e.g., a polygon for a
 polyhedron). For any dimension, convex polytopes can also be
 represented by planes characterized by a point and an outward-facing
 vector.
+
+Data structures:
+The following data structures are used in this code.
+ - K-tuple: a tuple with K entries
+ - point: a K-tuple, where K is the number of dimensions of the point.
+ - points: a N x K array_like, representing N points with K dimensions.
+ - K-polytope: a list describing a polytope in K dimensions. Each entry
+   of the list is a K-1-polytope facets.
+ - facet: the edge of a polytope, which is another polytope of 1 fewer
+   dimension. The facet of 2-D or lower polytope can consist of points.
+ - out-vector: a K-tuple describing a vector orthogonoal to a facet.
 """
 
 import numpy as np
+
 
 def ray_tracing_inside(points, polytope):
     """Determine if the set of points is within the polytope.
 
     The method passes a ray parallel to the x-axis. If it passes
-    through an odd number of facets, the point is inside the polytope.
+    through an odd number of facets, the point is inside the
+    polytope. The polytope and points are in K-dimensions.
 
     Parameters
     ----------
-    points: np.array of N x K
-        N points with K dimensions
-    polytope: list of K-tuples or K-1-polytope facets
-        See main description for representations.
+    points : array_like
+        N x K array describing N points with K dimensions
+    polytope : list
+        The list should contain K-tuples or K-1-polytope facets.
+        See the bounding.py file description for representations.
 
     Returns
     -------
     np.array of N booleans
         Each entry is True iff the corresponding point is within the
         polytope.
+
     """
     assert isinstance(polytope, list)
 
@@ -52,25 +67,27 @@ def ray_tracing_inside(points, polytope):
         return inside
 
     # Iterate through facets, checking if passes through each
-    for facet, outunit in facets(polytope): # facet is list of points
+    for facet, outunit in facets(polytope):  # facet is list of points
         if outunit[0] == 0:
-            continue # Ray can't pass through
+            continue  # Ray can't pass through
         # Check if it could intersect at all
         maxs = np.maximum.reduce(facet)
         mins = np.minimum.reduce(facet)
-        idx = np.nonzero((points[:, 1:] > mins[1:]).all(axis=1) & (points[:, 1:] <= maxs[1:]).all(axis=1) & (points[:, 0] < maxs[0]))[0]
+        idx = np.nonzero((points[:, 1:] > mins[1:]).all(axis=1) & (points[:, 1:] <= maxs[1:]).all(axis=1) &
+                         (points[:, 0] < maxs[0]))[0]
         if len(idx) == 0:
             continue
         # Define plane as dot(outunit, pt - facet[0]) = 0
         # Ray from point is point + a i-hat
         # Solve for a = dot(outunit, point - facet[0]) / outunit[0]
-        raydist = -np.dot(points[idx,:] - facet[0], outunit) / outunit[0]
-        pointsleft = raydist > 0 # only these rays pass through
+        raydist = -np.dot(points[idx, :] - facet[0], outunit) / outunit[0]
+        pointsleft = raydist > 0  # only these rays pass through
         subinside = ray_tracing_inside(points[idx[pointsleft], 1:], [tuple(pt[1:]) for pt in facet])
         passedthrough = idx[pointsleft][subinside]
         inside[passedthrough] = ~inside[passedthrough]
 
     return inside
+
 
 def facets(polytope):
     """Yields each of the K-1 facets and its corresponding outward unit vector.
@@ -81,13 +98,16 @@ def facets(polytope):
 
     Parameters
     ----------
-    polytope: list of K-tuples or K-1-polytope facets
-        See main description for representations.
+    polytope : list
+        The list should contain K-tuples or K-1-polytope facets.
+        See the bounding.py file description for representations.
 
     Yields
     ------
-    2-tuple of list of points, and outward vector
-
+    facet : list
+        A list of points, describing a facet.
+    out-vector : tuple
+        A unit vector facing outward from the facet.
     """
     assert isinstance(polytope, list)
     
@@ -96,6 +116,7 @@ def facets(polytope):
         assert len(polytope[0][0]) <= 3
         dim = '<=3'
     else:
+        assert len(polytope[0]) < 3, "A polytope can only be defined as a list of points for 2 or fewer dimensions."
         dim = len(polytope[0])
     
     for ii in range(len(polytope)):
@@ -128,6 +149,7 @@ def facets(polytope):
             
         yield facet, outunit
 
+        
 def within_convex_polytope(points, bounds):
     """Determine if the set of points is within convex bounds.
 
@@ -138,14 +160,22 @@ def within_convex_polytope(points, bounds):
 
     Parameters
     ----------
-    points: np.array of N x K
-        N points with K dimensions
-    polytope: list of K-tuples, K-1-polytope facets, or dict of point, outvec
-        See main description for representations.
+    points : array_like
+        N x K array describing N points with K dimensions
+    bounds : list or dict
+        If bounds is a list, the list should contain K-tuples or K-1-polytope facets.
+        If bounds is a dict, it should contain entries for a point and an out-vector.
+        See the bounding.py file description for representations.
 
     Returns
     -------
-    2-tuple of np.array of N dists and np.array of N indexes
+    dists : array_like
+        A sequence of out-of-bound distances to each points
+    edgekeys : sequence of hashable
+        A unique hashable key for the edge each point is beyond
+    bounds : sequence of ints
+        The index of the facet that each point is beyond
+
         If the distance corresponding to a point is < inf, then this is
         the distance to the closest exceeded bound, and the index will
         be non-NaN identifying the exceeded bound.
@@ -171,4 +201,3 @@ def within_convex_polytope(points, bounds):
         beyond_bounds[idx] = ii
 
     return beyond_dists, beyond_bounds, bounds
-## [bounds[ii] if ii != 0 else None for ii in beyond_bounds]
