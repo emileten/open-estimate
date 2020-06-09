@@ -104,6 +104,7 @@ class CoefficientsCurve(UnivariateCurve):
         elif self.xtrans is not None:
             return self.xtrans(x).dot(self.coeffs)
         else:
+            x = np.array(x)
             return x.dot(self.coeffs)
         
 class ShiftedCurve(UnivariateCurve):
@@ -158,6 +159,15 @@ class MinimumCurve(UnivariateCurve):
 
     def __call__(self, xs):
         return np.minimum(self.curve1(xs), self.curve2(xs))
+
+class MaximumCurve(UnivariateCurve):
+    def __init__(self, curve1, curve2):
+        super(MaximumCurve, self).__init__(curve1.xx)
+        self.curve1 = curve1
+        self.curve2 = curve2
+
+    def __call__(self, xs):
+        return np.maximum(self.curve1(xs), self.curve2(xs))
 
 class SelectiveInputCurve(UnivariateCurve):
     """Assumes input is a matrix, and only pass selected input columns to child curve."""
