@@ -1,1 +1,1 @@
-from models.curve import *
+from openest.models.curve import *
