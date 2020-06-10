@@ -58,7 +58,7 @@ class LinearExtrapolationCurve(UnivariateCurve):
         Translates from the full variable matrix to just the independent variables.
     """
     
-    def __init__(self, curve, bounds, margins, scaling, getindeps):
+    def __init__(self, curve, bounds, margins, scaling, getindeps, fromindeps):
         super(LinearExtrapolationCurve, self).__init__(curve.xx)
         assert isinstance(bounds, list) or isinstance(bounds, dict)
         
@@ -67,6 +67,7 @@ class LinearExtrapolationCurve(UnivariateCurve):
         self.margins = margins
         self.scaling = scaling
         self.getindeps = getindeps
+        self.fromindeps = fromindeps
 
     def __call__(self, xs):
         """Returns the projected variables after clipping.
@@ -87,10 +88,10 @@ class LinearExtrapolationCurve(UnivariateCurve):
         values = self.curve(xs)
         indeps = self.getindeps(xs)
 
-        return replace_oob(values, indeps, self.curve, self.bounds, self.margins, self.scaling)
+        return replace_oob(values, indeps, self.curve, self.bounds, self.margins, self.scaling, self.fromindeps)
 
     
-def replace_oob(values, indeps, curve, bounds, margins, scaling):
+def replace_oob(values, indeps, curve, bounds, margins, scaling, fromindeps=lambda xx: xx):
     """Replace out-of-bound point values.
 
     This is split out from LinearExtrapolationCurve to make
@@ -126,24 +127,24 @@ def replace_oob(values, indeps, curve, bounds, margins, scaling):
                     if invector[kk] == 0:
                         slopes.append(0)
                     else:
-                        y0 = curve(indeps[ii, :] + invector)
-                        y1 = curve(indeps[ii, :] + invector +
-                                   margins[kk] * (np.sign(invector[kk]) * (np.arange(len(invector)) == kk)))
+                        y0 = curve(fromindeps(indeps[ii, :] + invector))
+                        y1 = curve(fromindeps(indeps[ii, :] + invector +
+                                                   margins[kk] * (np.sign(invector[kk]) * (np.arange(len(invector)) == kk))))
                         slopes.append(scaling * (y1 - y0) / margins[kk])
                 known_slopes[edgekey] = np.array(slopes)
 
-            depen = curve(indeps[ii, :] + invector) + np.sum(known_slopes[edgekey] * -np.abs(invector))
+            depen = curve(fromindeps(indeps[ii, :] + invector)) + np.sum(known_slopes[edgekey] * -np.abs(invector))
             values[ii] = depen
 
     else:
         for ii, edgekey, invector in beyond_polytope(bounds, indeps):
             if edgekey not in known_slopes:
-                y0 = curve(indeps[ii, :] + invector)
-                y1 = curve(indeps[ii, :] + invector + margins * invector / np.linalg.norm(invector))
+                y0 = curve(fromindeps(indeps[ii, :] + invector))
+                y1 = curve(fromindeps(indeps[ii, :] + invector + margins * invector / np.linalg.norm(invector)))
                 slope = scaling * (y1 - y0) / np.linalg.norm(margins * invector / np.linalg.norm(invector))
                 known_slopes[edgekey] = slope
 
-            depen = curve(indeps[ii, :] + invector) + np.sum(known_slopes[edgekey] * -np.abs(invector))
+            depen = curve(fromindeps(indeps[ii, :] + invector)) + np.sum(known_slopes[edgekey] * -np.abs(invector))
             values[ii] = depen
 
     return values
