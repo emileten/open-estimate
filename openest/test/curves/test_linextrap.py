@@ -9,7 +9,7 @@ def test_1d_orthotope():
     basecurve1 = ZeroInterceptPolynomialCurve([-np.inf, np.inf], [1, 1])
 
     bounds1 = {0: (0, 1)}
-    clipcurve = LinearExtrapolationCurve(basecurve1, bounds1, [.1], 1, lambda x: x)
+    clipcurve = LinearExtrapolationCurve(basecurve1, bounds1, [.1], 1, lambda xx: np.transpose(np.array([xx, xx**2])))
     yy0 = basecurve1([0, .5, 1])
 
     points1 = np.expand_dims(np.array([-.2, -.1, .5, 1.2, 1.3]), axis=-1)
@@ -22,7 +22,7 @@ def test_1d_orthotope():
     desired = [yy0[0] + .2 * slope0, yy0[0] + .1 * slope0, yy0[1], yy0[2] + .2 * slope1, yy0[2] + .3 * slope1]
     np.testing.assert_allclose(yy1, desired)
 
-    clipcurve = LinearExtrapolationCurve(basecurve1, bounds1, [.1], .1, lambda x: x)
+    clipcurve = LinearExtrapolationCurve(basecurve1, bounds1, [.1], .1, lambda xx: np.transpose(np.array([xx, xx**2])))
     yy1 = clipcurve(points1)[:, 0]
     desired = [yy0[0] + .2 * slope0 / 10, yy0[0] + .1 * slope0 / 10, yy0[1], yy0[2] + .2 * slope1 / 10, yy0[2] + .3 * slope1 / 10]
     np.testing.assert_allclose(yy1, desired)
@@ -32,7 +32,7 @@ def test_1d_polytope():
     basecurve1 = ZeroInterceptPolynomialCurve([-np.inf, np.inf], [1, 1])
 
     bounds1 = [(0.,), (1.,)]
-    clipcurve = LinearExtrapolationCurve(basecurve1, bounds1, [.1], 1, lambda x: x)
+    clipcurve = LinearExtrapolationCurve(basecurve1, bounds1, [.1], 1, lambda xx: np.transpose(np.array([xx, xx**2])))
     yy0 = basecurve1([0, .5, 1])
 
     points1 = np.expand_dims(np.array([-.2, -.1, .5, 1.2, 1.3]), axis=-1)
@@ -45,7 +45,7 @@ def test_1d_polytope():
     desired = [yy0[0] + .2 * slope0, yy0[0] + .1 * slope0, yy0[1], yy0[2] + .2 * slope1, yy0[2] + .3 * slope1]
     np.testing.assert_allclose(yy1, desired)
 
-    clipcurve = LinearExtrapolationCurve(basecurve1, bounds1, [.1], .1, lambda x: x)
+    clipcurve = LinearExtrapolationCurve(basecurve1, bounds1, [.1], .1, lambda xx: np.transpose(np.array([xx, xx**2])))
     yy1 = clipcurve(points1)[:, 0]
     desired = [yy0[0] + .2 * slope0 / 10, yy0[0] + .1 * slope0 / 10, yy0[1], yy0[2] + .2 * slope1 / 10, yy0[2] + .3 * slope1 / 10]
     np.testing.assert_allclose(yy1, desired)
@@ -56,7 +56,7 @@ def test_2d_orthotope():
     basecurve2 = CoefficientsCurve([1, 1], basecurve1)
 
     bounds2 = {0: (0, 1), 1:(0, 1)}
-    clipcurve = LinearExtrapolationCurve(basecurve2, bounds2, [.1, .1], 1, lambda x: x)
+    clipcurve = LinearExtrapolationCurve(basecurve2, bounds2, [.1, .1], 1, lambda xx: np.transpose(np.array([xx, xx**2])))
     yy0 = basecurve2(np.array([[0, .5], [0, 0], [.5, .25], [.5, 1], [1, 1]]))
                   
     points2 = np.array([[-.1, .5], [-.1, -.1], [.5, .25], [.5, 1.21], [1.1, 1.21]])
@@ -77,7 +77,7 @@ def test_2d_polytope():
     basecurve2 = CoefficientsCurve([1, 1], basecurve1)
 
     bounds2 = [(1, 0), (0, -1), (-1, 0)]
-    clipcurve = LinearExtrapolationCurve(basecurve2, bounds2, [.1, .1], 1, lambda x: x)
+    clipcurve = LinearExtrapolationCurve(basecurve2, bounds2, [.1, .1], 1, lambda xx: np.transpose(np.array([xx, xx**2])))
     yy0 = basecurve2(np.array([[0, 0], [.5, -.5], [.2, -.1]]))
                   
     points2 = np.array([[0, .5], [1, -1], [.2, -.1]])

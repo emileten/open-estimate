@@ -56,11 +56,11 @@ class LinearExtrapolationCurve(UnivariateCurve):
         A factor that the slope is scaled by
     getindeps : function(array_like) -> array_like
         Translates from the full variable matrix to just the independent variables.
-    fromindeps : Callable or None, optional
-        Passed to ``replace_oob``.
+    fromindeps : Callable
+        Translate from the independent variables to the corresponding full matrix.
     """
     
-    def __init__(self, curve, bounds, margins, scaling, getindeps, fromindeps=None):
+    def __init__(self, curve, bounds, margins, scaling, getindeps, fromindeps):
         super(LinearExtrapolationCurve, self).__init__(curve.xx)
         assert isinstance(bounds, list) or isinstance(bounds, dict)
         
@@ -93,7 +93,7 @@ class LinearExtrapolationCurve(UnivariateCurve):
         return replace_oob(values, indeps, self.curve, self.bounds, self.margins, self.scaling, self.fromindeps)
 
     
-def replace_oob(values, indeps, curve, bounds, margins, scaling, fromindeps=None):
+def replace_oob(values, indeps, curve, bounds, margins, scaling, fromindeps):
     """Replace out-of-bound point values.
 
     This is split out from LinearExtrapolationCurve to make
@@ -113,18 +113,14 @@ def replace_oob(values, indeps, curve, bounds, margins, scaling, fromindeps=None
         A array_like with a margin for each dimension
     scaling : float
         A factor that the slope is scaled by
-    fromindeps : Callable or None, optional
-        If ``None``, simply return the variable value.
+    fromindeps : Callable
+        Translate from the independent variables to the corresponding full matrix.
 
     Returns
     -------
     array_like
         A vector of values after clipping.
     """
-    if fromindeps is None:
-        def fromindeps(xx):
-            return xx
-
     known_slopes = {}
     if isinstance(bounds, dict):
         for ii, edgekey, invector in beyond_orthotope(bounds, indeps):
