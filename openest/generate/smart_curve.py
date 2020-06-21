@@ -179,6 +179,14 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
 
         return result
 
+    
+class SumPolynomialCurve(ZeroInterceptPolynomialCurve):
+    def __call__(self, ds):
+        print(ds)
+        print(self.variables[0](ds))
+        returnsuper(SumPolynomialCurve, self).__call__(ds)
+
+    
 class CubicSplineCurve(CoefficientsCurve):
     def __init__(self, coeffs, knots, variables, allow_raising=False):
         super(CubicSplineCurve, self).__init__(coeffs, variables)
