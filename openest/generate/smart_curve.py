@@ -180,12 +180,30 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
         return result
 
     
-class SumPolynomialCurve(ZeroInterceptPolynomialCurve):
-    def __call__(self, ds):
-        print(ds)
-        print(self.variables[0](ds))
-        returnsuper(SumPolynomialCurve, self).__call__(ds)
+class SumPolynomialCurve(SmartCurve):
+    def __init__(self, coeffmat, variables, allow_raising=False, descriptions=None):
+        super(ZeroInterceptPolynomialCurve, self).__init__()
+        self.coeffmat = coeffmat # K x T
+        self.variables = variables
+        self.allow_raising = allow_raising
+        if descriptions is None:
+            descriptions = {}
+        self.descriptions = descriptions
 
+        self.getters = [(lambda ds: ds._variables[variable]) if isinstance(variable, str) else variable for variable in self.variables]
+
+    def __call__(self, ds):
+        lindata = self.getters[0](ds)._data
+        result = np.sum(coeffmat[0, :len(lindata)] * lindata)
+        
+        for ii in range(1, len(self.variables)):
+            if not self.allow_raising or self.variables[ii] in ds._variables:
+                termdata = self.getters[ii](ds)._data
+                result += np.sum(self.coeffmat[ii, :len(lindata)] * termdata) # throws error if length mismatch
+            else:
+                result += np.sum(self.coeffmat[ii, :len(lindata)] * (lindata ** (ii + 1)))
+                
+        return result
     
 class CubicSplineCurve(CoefficientsCurve):
     def __init__(self, coeffs, knots, variables, allow_raising=False):
