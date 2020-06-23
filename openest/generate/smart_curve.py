@@ -105,7 +105,8 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
         self.allow_raising = allow_raising
         self.descriptions = descriptions
 
-        self.getters = [(lambda ds: ds._variables[variable]) if isinstance(variable, str) else variable for variable in self.variables]
+        self.getters = [((lambda ds, var=variable: ds._variables[var]) if isinstance(variable, str) else variable)
+                        for variable in self.variables]
     
     def __call__(self, ds):
         result = self.coeffs[0] * self.getters[0](ds)._data
