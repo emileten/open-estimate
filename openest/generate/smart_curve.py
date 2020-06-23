@@ -180,7 +180,7 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
         return result
 
     
-class SumPolynomialCurve(SmartCurve):
+class SumByTimePolynomialCurve(SmartCurve):
     def __init__(self, coeffmat, variables, allow_raising=False, descriptions=None):
         super(ZeroInterceptPolynomialCurve, self).__init__()
         self.coeffmat = coeffmat # K x T
@@ -190,7 +190,7 @@ class SumPolynomialCurve(SmartCurve):
             descriptions = {}
         self.descriptions = descriptions
 
-        self.getters = [(lambda ds: ds._variables[variable]) if isinstance(variable, str) else variable for variable in self.variables]
+        self.getters = [(lambda ds: ds._variables[variable]) if isinstance(variable, str) else variable for variable in self.variables] # functions return vector of length T
 
     def __call__(self, ds):
         lindata = self.getters[0](ds)._data
@@ -204,6 +204,53 @@ class SumPolynomialCurve(SmartCurve):
                 result += np.sum(self.coeffmat[ii, :len(lindata)] * (lindata ** (ii + 1)))
                 
         return result
+
+    def get_univariate(self):
+        raise NotImplementedError("Probably want to define a matrix-taking curve before this.")
+
+    def format(self, lang):
+        coeffvar = formatting.get_variable()
+        variable = formatting.get_variable()
+        funcvars = {}
+
+        repterms = []
+        if lang == 'latex':
+            if isinstance(self.variables[0], str):
+                repterms.append(r"%s_1 \cdot %s" % (coeffvar, variable))
+            else:
+                funcvar = formatting.get_function()
+                funcvars[self.variables[0]] = funcvar
+                repterms.append(r"%s_1 \cdot %s(%s)" % (coeffvar, funcvar, variable))
+        elif lang == 'julia':
+            if isinstance(self.variables[0], str):
+                repterms.append(r"sum(%s[1,:] * %s)" % (coeffvar, variable))
+            else:
+                funcvar = formatting.get_function()
+                funcvars[self.variables[0]] = funcvar
+                repterms.append(r"sum(%s[1,:] * %s(%s))" % (coeffvar, funcvar, variable))
+        
+        for ii in range(1, len(self.variables)):
+            if lang == 'latex':
+                if isinstance(self.variables[0], str):
+                    repterms.append(r"%s_1 \cdot %s^%d" % (coeffvar, variable, ii + 1))
+                else:
+                    funcvar = formatting.get_function()
+                    funcvars[self.variables[ii]] = funcvar
+                    repterms.append(r"%s_1 \cdot %s(%s)^%d" % (coeffvar, funcvar, variable, ii + 1))
+            elif lang == 'julia':
+                if isinstance(self.variables[0], str):
+                    repterms.append(r"sum(%s[1,:] * %s^%d)" % (coeffvar, variable, ii + 1))
+                else:
+                    funcvar = formatting.get_function()
+                    funcvars[self.variables[ii]] = funcvar
+                    repterms.append(r"sum(%s[1,:] * %s(%s)^%d)" % (coeffvar, funcvar, variable, ii + 1))
+
+        result = {'main': FormatElement(' + '.join(repterms))}
+        for variable in funcvars:
+            result[funcvars[variable]] = FormatElement(self.descriptions.get(variable, "Unknown"))
+
+        return result
+    
     
 class CubicSplineCurve(CoefficientsCurve):
     def __init__(self, coeffs, knots, variables, allow_raising=False):
