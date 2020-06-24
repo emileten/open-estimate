@@ -104,32 +104,19 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
             descriptions = {}
         self.allow_raising = allow_raising
         self.descriptions = descriptions
+
+        self.getters = [((lambda ds, var=variable: ds._variables[var]) if isinstance(variable, str) else variable)
+                        for variable in self.variables]
     
     def __call__(self, ds):
-        if isinstance(self.variables[0], str):
-            result = np.zeros(ds[self.variables[0]].shape)
-            iis = list(range(len(self.variables)))
-        else:
-            result = self.coeffs[0] * self.variables[0](ds)._data
-            iis = list(range(1, len(self.variables)))
+        result = self.coeffs[0] * self.getters[0](ds)._data
             
-        for ii in iis:
-            if not self.allow_raising:
-                if isinstance(self.variables[ii], str):
-                    result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
-                else:
-                    result += self.coeffs[ii] * self.variables[ii](ds)._data
-            elif self.variables[ii] in ds._variables:
+        for ii in range(1, len(self.variables)):
+            if not self.allow_raising or self.variables[ii] in ds._variables:
                 #result += self.coeffs[ii] * ds[self.variables[ii]].values # TOO SLOW
-                if isinstance(self.variables[ii], str):
-                    result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
-                else:
-                    result += self.coeffs[ii] * self.variables[ii](ds)._data
+                result += self.coeffs[ii] * self.getters[ii](ds)._data
             else:
-                if isinstance(self.variables[0], str):
-                    result += self.coeffs[ii] * (ds._variables[self.variables[0]]._data ** (ii + 1))
-                else:
-                    result += self.coeffs[ii] * (self.variables[0](ds)._data ** (ii + 1))
+                result += self.coeffs[ii] * (self.getters[0](ds)._data ** (ii + 1))
                     
         return result
 
