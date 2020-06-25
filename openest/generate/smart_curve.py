@@ -182,7 +182,7 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
     
 class SumByTimePolynomialCurve(SmartCurve):
     def __init__(self, coeffmat, variables, allow_raising=False, descriptions=None):
-        super(ZeroInterceptPolynomialCurve, self).__init__()
+        super(SumByTimePolynomialCurve, self).__init__()
         self.coeffmat = coeffmat # K x T
         self.variables = variables
         self.allow_raising = allow_raising
@@ -193,12 +193,13 @@ class SumByTimePolynomialCurve(SmartCurve):
         self.getters = [(lambda ds: ds._variables[variable]) if isinstance(variable, str) else variable for variable in self.variables] # functions return vector of length T
 
     def __call__(self, ds):
-        lindata = self.getters[0](ds)._data
-        result = np.sum(coeffmat[0, :len(lindata)] * lindata)
+        maxtime = self.coeffmat.shape[1]
+        lindata = self.getters[0](ds)._data[:maxtime]
+        result = np.sum(self.coeffmat[0, :len(lindata)] * lindata)
         
         for ii in range(1, len(self.variables)):
             if not self.allow_raising or self.variables[ii] in ds._variables:
-                termdata = self.getters[ii](ds)._data
+                termdata = self.getters[ii](ds)._data[:maxtime]
                 result += np.sum(self.coeffmat[ii, :len(lindata)] * termdata) # throws error if length mismatch
             else:
                 result += np.sum(self.coeffmat[ii, :len(lindata)] * (lindata ** (ii + 1)))
