@@ -101,7 +101,7 @@ def mergeplateaus(alllimits, spans, levels, evalpts):
 def derivative_clipping(ccs, mintemp):
     # Ordered as x, x^2, x^3, x^4
     derivcoeffs = polyderiv(ccs)
-    roots = filter(np.isreal, np.roots(derivcoeffs[::-1])) # only consider real roots
+    roots = list(filter(np.isreal, np.roots(derivcoeffs[::-1]))) # only consider real roots
     
     deriv2coeffs = derivcoeffs[1:] * np.arange(1, len(derivcoeffs)) # Second derivative
     direction = np.polyval(deriv2coeffs[::-1], roots)

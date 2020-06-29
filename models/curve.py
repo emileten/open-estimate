@@ -1,5 +1,5 @@
 import numpy as np
-from univariate_model import UnivariateModel
+from openest.models.univariate_model import UnivariateModel
 from scipy.interpolate import UnivariateSpline
 from statsmodels.distributions.empirical_distribution import StepFunction
 
