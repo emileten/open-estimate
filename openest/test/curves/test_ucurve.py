@@ -18,7 +18,7 @@ results_old = ucurve_old(tas)
 results_new = ucurve_new(tas)
 
 ## Check that same results from old version
-assert sorted(results_old) == sorted(results_new)
+np.testing.assert_equal(sorted(results_old), sorted(results_new))
 
 ## Check that all values match up to plateau
 hiplateau = None
@@ -29,12 +29,12 @@ for ii in range(len(tas)):
             if hiplateau is None:
                 hiplateau = results_new[ii]
             else:
-                assert results_new[ii] == hiplateau
+                np.testing.assert_equal(results_new[ii], hiplateau)
         else:
             if loplateau is None:
                 loplateau = results_new[ii]
             else:
-                assert results_new[ii] == loplateau
+                np.testing.assert_equal(results_new[ii], loplateau)
 
 ucurveclip_old = ushape_numeric.UShapedClipping(ucurve_old, curve, 0, lambda x: x, ordered=False)
 ucurveclip_new = ushape_numeric.UShapedClipping(ucurve_new, curve, 0, lambda x: x, ordered='maintain')
@@ -43,16 +43,16 @@ results_old = ucurveclip_old(tas)
 results_new = ucurveclip_new(tas)
 
 ## Check that same results from old version
-assert sorted(results_old) == sorted(results_new)
+np.testing.assert_equal(sorted(results_old), sorted(results_new))
 
 ## Check that all values match up to plateau
 hiplateau = None
 for ii in range(len(tas)):
     if curve(tas[ii]) < 0:
-        assert results_new[ii] == 0
+        np.testing.assert_equal(results_new[ii], 0)
     elif results_new[ii] != curve(tas[ii]):
         if hiplateau is None:
             hiplateau = results_new[ii]
         else:
-            assert results_new[ii] == hiplateau
+            np.testing.assert_equal(results_new[ii], hiplateau)
 
