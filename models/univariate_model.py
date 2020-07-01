@@ -1,4 +1,4 @@
-from model import Model
+from openest.models.model import Model
 import numpy as np
 
 class UnivariateModel(Model):
