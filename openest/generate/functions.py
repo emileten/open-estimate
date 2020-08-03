@@ -864,12 +864,12 @@ class Exponentiate(calculation.Calculation):
                     arguments=[arguments.calculation, arguments.variance.rename('errorvar')],
                     description="Return the the exponentiation of a previous result.")
 
-class AuxillaryResult(calculation.Calculation):
+class AuxiliaryResult(calculation.Calculation):
     """
     Produce an additional output, but then pass the main result on.
     """
     def __init__(self, subcalc_main, subcalc_aux, auxname):
-        super(AuxillaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
+        super(AuxiliaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
         self.subcalc_main = subcalc_main
         self.subcalc_aux = subcalc_aux
         self.auxname = auxname
@@ -891,7 +891,7 @@ class AuxillaryResult(calculation.Calculation):
         Returns a new calculation object that calculates the partial
         derivative with respect to a given variable; currently only covariates are supported.
         """
-        return AuxillaryResult(self.subcalc_main.partial_derivative(covariate, covarunit),
+        return AuxiliaryResult(self.subcalc_main.partial_derivative(covariate, covarunit),
                                self.subcalc_aux.partial_derivative(covariate, covarunit), self.auxname)
         
     def column_info(self):
@@ -904,7 +904,7 @@ class AuxillaryResult(calculation.Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculation, arguments.calculation.describe("An auxillary calculation, placed behind the main calculation."), arguments.label],
+                    arguments=[arguments.calculation, arguments.calculation.describe("An auxiliary calculation, placed behind the main calculation."), arguments.label],
                     description="Add an additional result to the columns.")
 
 class AuxillaryResultApplication(calculation.Application):
