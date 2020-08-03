@@ -884,7 +884,7 @@ class AuxiliaryResult(calculation.Calculation):
     def apply(self, region, *args, **kwargs):
         subapp_main = self.subcalc_main.apply(region, *args, **kwargs)
         subapp_aux = self.subcalc_aux.apply(region, *args, **kwargs)
-        return AuxillaryResultApplication(region, subapp_main, subapp_aux)
+        return AuxiliaryResultApplication(region, subapp_main, subapp_aux)
 
     def partial_derivative(self, covariate, covarunit):
         """
@@ -907,12 +907,12 @@ class AuxiliaryResult(calculation.Calculation):
                     arguments=[arguments.calculation, arguments.calculation.describe("An auxiliary calculation, placed behind the main calculation."), arguments.label],
                     description="Add an additional result to the columns.")
 
-class AuxillaryResultApplication(calculation.Application):
+class AuxiliaryResultApplication(calculation.Application):
     """
-    Perform both main and auxillary calculation, and order as main[0], aux, main[1:]
+    Perform both main and auxiliary calculation, and order as main[0], aux, main[1:]
     """
     def __init__(self, region, subapp_main, subapp_aux):
-        super(AuxillaryResultApplication, self).__init__(region)
+        super(AuxiliaryResultApplication, self).__init__(region)
         self.subapp_main = subapp_main
         self.subapp_aux = subapp_aux
 
