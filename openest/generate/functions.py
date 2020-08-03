@@ -907,6 +907,22 @@ class AuxiliaryResult(calculation.Calculation):
                     arguments=[arguments.calculation, arguments.calculation.describe("An auxiliary calculation, placed behind the main calculation."), arguments.label],
                     description="Add an additional result to the columns.")
 
+
+class AuxillaryResult(AuxiliaryResult):
+    """Deprecated variation of AuxiliaryResult
+
+    Emits a FutureWarning whenever used. Exists for backwards compatibility
+    and legacy support.
+    """
+    def init(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            "`AuxillaryResult` is deprecated, please use `AuxiliaryResult`",
+            FutureWarning
+        )
+        super().__init__(*args, **kwargs)
+
+
 class AuxiliaryResultApplication(calculation.Application):
     """
     Perform both main and auxiliary calculation, and order as main[0], aux, main[1:]
