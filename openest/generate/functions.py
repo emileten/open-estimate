@@ -942,6 +942,22 @@ class AuxiliaryResultApplication(calculation.Application):
         self.subapp_aux.done()
         return self.subapp_main.done()
 
+
+class AuxillaryResultApplication(AuxiliaryResultApplication):
+    """Deprecated variation of AuxiliaryResultApplication
+
+    Emits a FutureWarning whenever used. Exists for backwards compatibility
+    and legacy support.
+    """
+    def init(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            "`AuxillaryResultApplication` is deprecated, please use `AuxiliaryResultApplication`",
+            FutureWarning
+        )
+        super().__init__(*args, **kwargs)
+
+
 class KeepOnly(calculation.Calculation):
     """
     Keep only a subset of the calculation results, with given names.
