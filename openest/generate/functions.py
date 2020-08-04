@@ -864,12 +864,12 @@ class Exponentiate(calculation.Calculation):
                     arguments=[arguments.calculation, arguments.variance.rename('errorvar')],
                     description="Return the the exponentiation of a previous result.")
 
-class AuxillaryResult(calculation.Calculation):
+class AuxiliaryResult(calculation.Calculation):
     """
     Produce an additional output, but then pass the main result on.
     """
     def __init__(self, subcalc_main, subcalc_aux, auxname):
-        super(AuxillaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
+        super(AuxiliaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
         self.subcalc_main = subcalc_main
         self.subcalc_aux = subcalc_aux
         self.auxname = auxname
@@ -884,14 +884,14 @@ class AuxillaryResult(calculation.Calculation):
     def apply(self, region, *args, **kwargs):
         subapp_main = self.subcalc_main.apply(region, *args, **kwargs)
         subapp_aux = self.subcalc_aux.apply(region, *args, **kwargs)
-        return AuxillaryResultApplication(region, subapp_main, subapp_aux)
+        return AuxiliaryResultApplication(region, subapp_main, subapp_aux)
 
     def partial_derivative(self, covariate, covarunit):
         """
         Returns a new calculation object that calculates the partial
         derivative with respect to a given variable; currently only covariates are supported.
         """
-        return AuxillaryResult(self.subcalc_main.partial_derivative(covariate, covarunit),
+        return AuxiliaryResult(self.subcalc_main.partial_derivative(covariate, covarunit),
                                self.subcalc_aux.partial_derivative(covariate, covarunit), self.auxname)
         
     def column_info(self):
@@ -904,15 +904,31 @@ class AuxillaryResult(calculation.Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculation, arguments.calculation.describe("An auxillary calculation, placed behind the main calculation."), arguments.label],
+                    arguments=[arguments.calculation, arguments.calculation.describe("An auxiliary calculation, placed behind the main calculation."), arguments.label],
                     description="Add an additional result to the columns.")
 
-class AuxillaryResultApplication(calculation.Application):
+
+class AuxillaryResult(AuxiliaryResult):
+    """Deprecated variation of AuxiliaryResult
+
+    Emits a FutureWarning whenever used. Exists for backwards compatibility
+    and legacy support.
     """
-    Perform both main and auxillary calculation, and order as main[0], aux, main[1:]
+    def init(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            "`AuxillaryResult` is deprecated, please use `AuxiliaryResult`",
+            FutureWarning
+        )
+        super().__init__(*args, **kwargs)
+
+
+class AuxiliaryResultApplication(calculation.Application):
+    """
+    Perform both main and auxiliary calculation, and order as main[0], aux, main[1:]
     """
     def __init__(self, region, subapp_main, subapp_aux):
-        super(AuxillaryResultApplication, self).__init__(region)
+        super(AuxiliaryResultApplication, self).__init__(region)
         self.subapp_main = subapp_main
         self.subapp_aux = subapp_aux
 
@@ -925,6 +941,22 @@ class AuxillaryResultApplication(calculation.Application):
     def done(self):
         self.subapp_aux.done()
         return self.subapp_main.done()
+
+
+class AuxillaryResultApplication(AuxiliaryResultApplication):
+    """Deprecated variation of AuxiliaryResultApplication
+
+    Emits a FutureWarning whenever used. Exists for backwards compatibility
+    and legacy support.
+    """
+    def init(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            "`AuxillaryResultApplication` is deprecated, please use `AuxiliaryResultApplication`",
+            FutureWarning
+        )
+        super().__init__(*args, **kwargs)
+
 
 class KeepOnly(calculation.Calculation):
     """
