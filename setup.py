@@ -11,6 +11,8 @@ setup(name='openest',
       setup_requires=['setuptools_scm'],
       install_requires=['numpy', 'scipy', 'emcee', 'statsmodels', 'xarray',
                         'pandas', 'metacsv'],
-      tests_require=['pytest', 'pytest-mock'],
+      extras_require={
+            "test": ["pytest", "pytest-mock"],
+      },
       zip_safe=False,
       )
