@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-
 from openest.models.curve import ZeroInterceptPolynomialCurve, CoefficientsCurve
 from openest.curves.linextrap import LinearExtrapolationCurve
 
