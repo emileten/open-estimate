@@ -62,7 +62,7 @@ class ConstantCurve(SmartCurve):
         return np.repeat(self.constant, len(ds[self.dimension]))
 
     def format(self, lang):
-        return {'main': FormatElement(str(self.contant))}
+        return {'main': formatting.FormatElement(str(self.contant))}
     
 class LinearCurve(CurveCurve):
     def __init__(self, slope, variable):
@@ -95,9 +95,9 @@ class CoefficientsCurve(SmartCurve):
     def format(self, lang):
         coeffvar = formatting.get_variable()
         if lang == 'latex':
-            return {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join([varname for varname in self.variables]), coeffvar))}
+            return {'main': formatting.FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join([varname for varname in self.variables]), coeffvar))}
         elif lang == 'julia':
-            return {'main': FormatElement(' + '.join(["%s * %s_%d" % (self.variables[ii], coeffvar, ii + 1) for ii in range(len(self.variables))]))}
+            return {'main': formatting.FormatElement(' + '.join(["%s * %s_%d" % (self.variables[ii], coeffvar, ii + 1) for ii in range(len(self.variables))]))}
 
 class ZeroInterceptPolynomialCurve(CoefficientsCurve):
     def __init__(self, coeffs, variables, allow_raising=False, descriptions=None):
@@ -106,33 +106,19 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
             descriptions = {}
         self.allow_raising = allow_raising
         self.descriptions = descriptions
+
+        self.getters = [((lambda ds, var=variable: ds._variables[var]) if isinstance(variable, str) else variable)
+                        for variable in self.variables]
     
     def __call__(self, ds):
-        if isinstance(self.variables[0], str):
-            assert isinstance(ds, xr.Dataset), "Not an Dataset: " + str(ds)
-            result = np.zeros(ds[self.variables[0]].shape)
-            iis = list(range(len(self.variables)))
-        else:
-            result = self.coeffs[0] * self.variables[0](ds)._data
-            iis = list(range(1, len(self.variables)))
+        result = self.coeffs[0] * self.getters[0](ds)._data
             
-        for ii in iis:
-            if not self.allow_raising:
-                if isinstance(self.variables[ii], str):
-                    result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
-                else:
-                    result += self.coeffs[ii] * self.variables[ii](ds)._data
-            elif self.variables[ii] in ds._variables:
+        for ii in range(1, len(self.variables)):
+            if not self.allow_raising or self.variables[ii] in ds._variables:
                 #result += self.coeffs[ii] * ds[self.variables[ii]].values # TOO SLOW
-                if isinstance(self.variables[ii], str):
-                    result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
-                else:
-                    result += self.coeffs[ii] * self.variables[ii](ds)._data
+                result += self.coeffs[ii] * self.getters[ii](ds)._data
             else:
-                if isinstance(self.variables[0], str):
-                    result += self.coeffs[ii] * (ds._variables[self.variables[0]]._data ** (ii + 1))
-                else:
-                    result += self.coeffs[ii] * (self.variables[0](ds)._data ** (ii + 1))
+                result += self.coeffs[ii] * (self.getters[0](ds)._data ** (ii + 1))
                     
         return result
 
@@ -177,12 +163,86 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
                     funcvars[self.variables[ii]] = funcvar
                     repterms.append(r"%s[1] * %s(%s)^%d" % (coeffvar, funcvar, variable, ii + 1))
 
-        result = {'main': FormatElement(' + '.join(repterms))}
+        result = {'main': formatting.FormatElement(' + '.join(repterms))}
         for variable in funcvars:
-            result[funcvars[variable]] = FormatElement(self.descriptions.get(variable, "Unknown"))
+            result[funcvars[variable]] = formatting.FormatElement(self.descriptions.get(variable, "Unknown"))
 
         return result
 
+    
+class SumByTimePolynomialCurve(SmartCurve):
+    def __init__(self, coeffmat, variables, allow_raising=False, descriptions=None):
+        super(SumByTimePolynomialCurve, self).__init__()
+        self.coeffmat = coeffmat # K x T
+        self.variables = variables
+        self.allow_raising = allow_raising
+        if descriptions is None:
+            descriptions = {}
+        self.descriptions = descriptions
+
+        self.getters = [(lambda ds: ds._variables[variable]) if isinstance(variable, str) else variable for variable in self.variables] # functions return vector of length T
+
+    def __call__(self, ds):
+        maxtime = self.coeffmat.shape[1]
+        lindata = self.getters[0](ds)._data[:maxtime]
+        result = np.sum(self.coeffmat[0, :len(lindata)] * lindata)
+        
+        for ii in range(1, len(self.variables)):
+            if not self.allow_raising or self.variables[ii] in ds._variables:
+                termdata = self.getters[ii](ds)._data[:maxtime]
+                result += np.sum(self.coeffmat[ii, :len(lindata)] * termdata) # throws error if length mismatch
+            else:
+                result += np.sum(self.coeffmat[ii, :len(lindata)] * (lindata ** (ii + 1)))
+                
+        return result
+
+    def get_univariate(self):
+        raise NotImplementedError("Probably want to define a matrix-taking curve before this.")
+
+    def format(self, lang):
+        coeffvar = formatting.get_variable()
+        variable = formatting.get_variable()
+        funcvars = {}
+
+        repterms = []
+        if lang == 'latex':
+            if isinstance(self.variables[0], str):
+                repterms.append(r"%s_1 \cdot %s" % (coeffvar, variable))
+            else:
+                funcvar = formatting.get_function()
+                funcvars[self.variables[0]] = funcvar
+                repterms.append(r"%s_1 \cdot %s(%s)" % (coeffvar, funcvar, variable))
+        elif lang == 'julia':
+            if isinstance(self.variables[0], str):
+                repterms.append(r"sum(%s[1,:] * %s)" % (coeffvar, variable))
+            else:
+                funcvar = formatting.get_function()
+                funcvars[self.variables[0]] = funcvar
+                repterms.append(r"sum(%s[1,:] * %s(%s))" % (coeffvar, funcvar, variable))
+        
+        for ii in range(1, len(self.variables)):
+            if lang == 'latex':
+                if isinstance(self.variables[0], str):
+                    repterms.append(r"%s_1 \cdot %s^%d" % (coeffvar, variable, ii + 1))
+                else:
+                    funcvar = formatting.get_function()
+                    funcvars[self.variables[ii]] = funcvar
+                    repterms.append(r"%s_1 \cdot %s(%s)^%d" % (coeffvar, funcvar, variable, ii + 1))
+            elif lang == 'julia':
+                if isinstance(self.variables[0], str):
+                    repterms.append(r"sum(%s[1,:] * %s^%d)" % (coeffvar, variable, ii + 1))
+                else:
+                    funcvar = formatting.get_function()
+                    funcvars[self.variables[ii]] = funcvar
+                    repterms.append(r"sum(%s[1,:] * %s(%s)^%d)" % (coeffvar, funcvar, variable, ii + 1))
+
+        result = {'main': formatting.FormatElement(' + '.join(repterms))}
+        for variable in funcvars:
+            result[funcvars[variable]] = formatting.FormatElement(self.descriptions.get(variable, "Unknown"))
+
+        return result
+    
+    
 class CubicSplineCurve(CoefficientsCurve):
     def __init__(self, coeffs, knots, variables, allow_raising=False):
         super(CubicSplineCurve, self).__init__(coeffs, variables)
@@ -236,12 +296,12 @@ class TransformCoefficientsCurve(SmartCurve):
         coeffvar = formatting.get_variable()
         funcvars = [formatting.get_function() for transform in self.transforms]
         if lang == 'latex':
-            result = {'main': FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join(["%s" % funcvars[ii] for ii in range(len(funcvars))]), coeffvar))}
+            result = {'main': formatting.FormatElement(r"(%s) \cdot \vec{%s}" % (', '.join(["%s" % funcvars[ii] for ii in range(len(funcvars))]), coeffvar))}
         elif lang == 'julia':
-            result = {'main': FormatElement(' + '.join(["%s() * %s_%d" % (funcvars[ii], coeffvar, ii + 1) for ii in range(len(funcvars))]))}
+            result = {'main': formatting.FormatElement(' + '.join(["%s() * %s_%d" % (funcvars[ii], coeffvar, ii + 1) for ii in range(len(funcvars))]))}
 
         for ii in range(len(funcvars)):
-            result[funcvars[ii]] = FormatElement(self.descriptions[ii])
+            result[funcvars[ii]] = formatting.FormatElement(self.descriptions[ii])
 
         return result
     

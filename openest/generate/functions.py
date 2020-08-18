@@ -443,6 +443,320 @@ class Sum(calculation.Calculation):
                     description="Sum the results of multiple previous calculations.")
 
 
+class Product(calculation.Calculation):
+    """Product of two or more subcalculations
+
+    Note that this does not support delta-method runs.
+
+    Parameters
+    ----------
+    subcalcs : Sequence of ``openest.generate.calculation.Calculation``
+    unshift : bool, optional
+    """
+
+    def __init__(self, subcalcs, unshift=True):
+        # Unit of result is product of input subcalc units.
+        units_product = [" * ".join([s.unitses[0] for s in subcalcs])]
+        if unshift:
+            fullunitses = [unit for calc in subcalcs for unit in calc.unitses]
+            super().__init__(units_product + fullunitses)
+        else:
+            super().__init__(units_product)
+
+        self.unshift = unshift
+        self.subcalcs = subcalcs
+
+    def format(self, lang, *args, **kwargs):
+        mains = []
+        elements = {}
+        alldeps = set()
+        for subcalc in self.subcalcs:
+            elements.update(subcalc.format(lang, *args, **kwargs))
+            mains.append(elements['main'])
+            alldeps.update(elements['main'].dependencies)
+
+        if lang in ['latex', 'julia']:
+            elements['main'] = FormatElement(' * '.join([main.repstr for main in mains]), list(alldeps))
+
+        formatting.add_label('product', elements)
+        return elements
+
+    def apply(self, region, *args, **kwargs):
+        """Apply calculation to all subcalculations
+
+        All parameters are passed to ``self.subcalc.apply()``.
+
+        Parameters
+        ----------
+        region : str
+        args
+        kwargs
+
+        Returns
+        -------
+        openest.generate.Calculation.ApplicationPassCall
+        """
+
+        def generate(year, results):
+            return np.prod([x[1] if x is not None else np.nan for x in results])
+
+        # Prepare the generator from our encapsulated operations
+        subapps = [subcalc.apply(region, *args, **kwargs) for subcalc in self.subcalcs]
+        return calculation.ApplicationPassCall(region, subapps, generate, unshift=self.unshift)
+
+    def column_info(self):
+        """Get column information of values output from this calculation.
+
+        Returns
+        -------
+        Sequence of dicts
+            Each dict contains:
+
+                ``"name"``
+                    Short-length title of this calculation
+
+                ``"title"``
+                    Long-length title of this calculation
+
+                ``"description"``
+                    Long-form description of this calculation
+        """
+        infoses = [subcalc.column_info() for subcalc in self.subcalcs]
+        title = 'Product of previous results'
+        description = 'Product of ' + ', '.join([infos[0]['title'] for infos in infoses])
+        fullinfos = [info for infos in infoses for info in infos]
+        return [dict(name='product', title=title, description=description)] + fullinfos
+
+    def enable_deltamethod(self):
+        """Enable delta-method calculations
+
+        Delta-method is unsupported for this calculation.
+        """
+        raise AttributeError(f'{self.__class__.__name__} does not support enabling deltamethod')
+
+    def partial_derivative(self, covariate, covarunit):
+        """
+        Returns a new calculation object that calculates the partial
+        derivative with respect to a given variable; currently only covariates
+        are supported.
+        """
+        # Partial deriv should be sum of products
+        chain_products = []
+        for i, subcalc in enumerate(self.subcalcs):
+
+            # product of (∂subcalc / ∂covariate) and all other subcalcs
+            chain_products.append(
+                Product(
+                    [subcalc.partial_derivative(covariate, covarunit)]
+                    + self.subcalcs[:i]
+                    + self.subcalcs[(i + 1):]
+                )
+            )
+
+        return Sum(chain_products)
+
+    @staticmethod
+    def describe():
+        """Get computer-readable description of the calculation
+
+        Returns
+        -------
+        dict
+            This contains:
+
+            ``"input_timerate"``
+                Expected time rate of data, day, month, year, or any.
+
+            ``"output_timerate"``
+                Expected time rate of data, day, month, year, or same.
+
+            ``"arguments"``
+                A list of subclasses of arguments.ArgumentType, describing each
+                constructor argument.
+
+            ``"description"``
+                Text description.
+
+        """
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculationss, arguments.unshift.optional()],
+                    description="Product of results from multiple previous calculations.")
+
+
+class FractionSum(calculation.Calculation):
+    """Sum of subcalculations weighted on fractions of unity.
+
+    Parameters
+    ----------
+    subcalcs : Sequence of ``openest.generate.calculation.Calculation``
+        Sequence of alternating values to be weighted and fraction weights.
+        If there are p values to be weighted, there should be p - 1 weights,
+        as the weighted value of the last weight is 1 - the sum of previous
+        weights. Length of sequence must be odd. The units of the values to be
+        weighted must be the same. Weights must be unitless.
+    unshift : bool, optional
+    """
+
+    def __init__(self, subcalcs, unshift=True):
+
+        if not len(subcalcs) % 2:
+            raise ValueError("len of `subcalcs` should be odd")
+
+        # Collect units. Check that fractions are unitless and other subcalcs
+        # have same units.
+        fullunitses = subcalcs[0].unitses[:]
+        for ii in range(1, len(subcalcs)):
+            if ii % 2:
+                assert subcalcs[ii].unitses[0] == "unitless"
+            else:
+                assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
+            fullunitses.extend(subcalcs[ii].unitses)
+        if unshift:
+            super().__init__([subcalcs[0].unitses[0]] + fullunitses)
+        else:
+            super().__init__([subcalcs[0].unitses[0]])
+        self.unshift = unshift
+        self.subcalcs = subcalcs
+
+    def format(self, lang, *args, **kwargs):
+        mains = []
+        elements = {}
+        alldeps = set()
+        for subcalc in self.subcalcs:
+            elements.update(subcalc.format(lang, *args, **kwargs))
+            mains.append(elements['main'])
+            alldeps.update(elements['main'].dependencies)
+
+        if lang in ['latex', 'julia']:
+            # Do str formatting that looks like math...
+            subcalc_strs = [main.repstr for main in mains]
+
+            # Collect products to sum. Start with all subcalcs but last.
+            to_sum = []
+            for i in range(0, len(subcalc_strs) - 1, 2):
+                to_sum.append(' * '.join(subcalc_strs[i:i + 1]))
+
+            # Put together the last product; it's weight's based on sum of
+            # prev weights...
+            last_weight = ' - '.join(subcalc_strs[1:-1:2])
+            last_product = f"(1 - {last_weight}) * {subcalc_strs[-1]}"
+            to_sum.append(last_product)
+
+            elements['main'] = FormatElement(' + '.join(to_sum), list(alldeps))
+
+        formatting.add_label(self.__class__.__name__.lower(), elements)
+        return elements
+
+    def apply(self, region, *args, **kwargs):
+        """Apply calculation to all subcalculations
+
+        All parameters are passed to ``self.subcalc.apply()``.
+
+        Parameters
+        ----------
+        region : str
+        args
+        kwargs
+
+        Returns
+        -------
+        openest.generate.Calculation.ApplicationPassCall
+        """
+
+        def generate(year, results):
+            results_a = np.array([r[1] for r in results])  # Extract values.
+
+            # Point to original array data. Values are not copied.
+            values = results_a[::2]
+            weights = results_a[1::2]
+
+            if np.sum(weights) > 1 or np.any(weights < 0):
+                raise ValueError("fraction weight results must be within [0, 1]")
+
+            out = np.sum(weights * values[:-1])
+            out += values[-1] * (1 - weights.sum())  # Add weighted last value.
+            return out
+
+        # Prepare the generator from our encapsulated operations
+        subapps = [c.apply(region, *args, **kwargs) for c in self.subcalcs]
+        return calculation.ApplicationPassCall(region, subapps, generate, unshift=self.unshift)
+
+    def column_info(self):
+        """Get column information of values output from this calculation.
+
+        Returns
+        -------
+        Sequence of dicts
+            Each dict contains:
+
+                ``"name"``
+                    Short-length title of this calculation
+
+                ``"title"``
+                    Long-length title of this calculation
+
+                ``"description"``
+                    Long-form description of this calculation
+        """
+        infoses = [subcalc.column_info() for subcalc in self.subcalcs]
+        title = 'Sum of results weighted on fractions of unity'
+        description = f'{self.__class__.__name__} of ' + ', '.join([infos[0]['title'] for infos in infoses])
+        fullinfos = [info for infos in infoses for info in infos]
+        return [dict(name=self.__class__.__name__.lower(), title=title, description=description)] + fullinfos
+
+    def enable_deltamethod(self):
+        """Enable delta-method calculations
+
+        Delta-method is unsupported for this calculation.
+        """
+        raise AttributeError(f'{self.__class__.__name__} does not support enabling deltamethod')
+
+    def partial_derivative(self, covariate, covarunit):
+        """
+        Returns a new calculation object that calculates the partial
+        derivative with respect to a given variable; currently only covariates
+        are supported.
+        """
+        # Sum of products.
+        # First we get all weight, values except last value.
+        out = []
+        for i in range(0, len(self.subcalcs) - 1, 2):
+            out.append(Product(self.subcalcs[i:i + 1]))
+        # Append negated weighted last value product before getting partial
+        # from Sum.
+        out.append(self.subcalcs[-1])
+        final_weight = ConstantScale(Sum(self.subcalcs[1:-1:2]), -1.0)
+        out.append(Product([final_weight, self.subcalcs[-1]]))
+        return Sum(out).partial_derivative(covariate, covarunit)
+
+    @staticmethod
+    def describe():
+        """Get computer-readable description of the calculation
+
+        Returns
+        -------
+        dict
+            This contains:
+
+            ``"input_timerate"``
+                Expected time rate of data, day, month, year, or any.
+
+            ``"output_timerate"``
+                Expected time rate of data, day, month, year, or same.
+
+            ``"arguments"``
+                A list of subclasses of arguments.ArgumentType, describing each
+                constructor argument.
+
+            ``"description"``
+                Text description.
+
+        """
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculationss, arguments.unshift.optional()],
+                    description="Sum of subcalculations weighted on fractions of unity.")
+
+
 """
 ConstantScale
 """
@@ -550,15 +864,15 @@ class Exponentiate(calculation.Calculation):
                     arguments=[arguments.calculation, arguments.variance.rename('errorvar')],
                     description="Return the the exponentiation of a previous result.")
 
-class AuxillaryResult(calculation.Calculation):
+class AuxiliaryResult(calculation.Calculation):
     """
     Produce an additional output, but then pass the main result on.
     """
     def __init__(self, subcalc_main, subcalc_aux, auxname, keeplastonly=True):
         if keeplastonly:
-            super(AuxillaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
+            super(AuxiliaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
         else:
-            super(AuxillaryResult, self).__init__([subcalc_main.unitses[0]] + subcalc_aux.unitses + subcalc_main.unitses[1:])
+            super(AuxiliaryResult, self).__init__([subcalc_main.unitses[0]] + subcalc_aux.unitses + subcalc_main.unitses[1:])
         self.subcalc_main = subcalc_main
         self.subcalc_aux = subcalc_aux
         self.auxname = auxname
@@ -574,14 +888,14 @@ class AuxillaryResult(calculation.Calculation):
     def apply(self, region, *args, **kwargs):
         subapp_main = self.subcalc_main.apply(region, *args, **kwargs)
         subapp_aux = self.subcalc_aux.apply(region, *args, **kwargs)
-        return AuxillaryResultApplication(region, subapp_main, subapp_aux, self.keeplastonly)
+        return AuxiliaryResultApplication(region, subapp_main, subapp_aux, self.keeplastonly)
 
     def partial_derivative(self, covariate, covarunit):
         """
         Returns a new calculation object that calculates the partial
         derivative with respect to a given variable; currently only covariates are supported.
         """
-        return AuxillaryResult(self.subcalc_main.partial_derivative(covariate, covarunit),
+        return AuxiliaryResult(self.subcalc_main.partial_derivative(covariate, covarunit),
                                self.subcalc_aux.partial_derivative(covariate, covarunit), self.auxname)
         
     def column_info(self):
@@ -597,15 +911,31 @@ class AuxillaryResult(calculation.Calculation):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculation, arguments.calculation.describe("An auxillary calculation, placed behind the main calculation."), arguments.label],
+                    arguments=[arguments.calculation, arguments.calculation.describe("An auxiliary calculation, placed behind the main calculation."), arguments.label],
                     description="Add an additional result to the columns.")
 
-class AuxillaryResultApplication(calculation.Application):
+
+class AuxillaryResult(AuxiliaryResult):
+    """Deprecated variation of AuxiliaryResult
+
+    Emits a FutureWarning whenever used. Exists for backwards compatibility
+    and legacy support.
     """
-    Perform both main and auxillary calculation, and order as main[0], aux, main[1:]
+    def init(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            "`AuxillaryResult` is deprecated, please use `AuxiliaryResult`",
+            FutureWarning
+        )
+        super().__init__(*args, **kwargs)
+
+
+class AuxiliaryResultApplication(calculation.Application):
+    """
+    Perform both main and auxiliary calculation, and order as main[0], aux, main[1:]
     """
     def __init__(self, region, subapp_main, subapp_aux, keeplastonly):
-        super(AuxillaryResultApplication, self).__init__(region)
+        super(AuxiliaryResultApplication, self).__init__(region)
         self.subapp_main = subapp_main
         self.subapp_aux = subapp_aux
         self.keeplastonly = keeplastonly
@@ -622,6 +952,22 @@ class AuxillaryResultApplication(calculation.Application):
     def done(self):
         self.subapp_aux.done()
         return self.subapp_main.done()
+
+
+class AuxillaryResultApplication(AuxiliaryResultApplication):
+    """Deprecated variation of AuxiliaryResultApplication
+
+    Emits a FutureWarning whenever used. Exists for backwards compatibility
+    and legacy support.
+    """
+    def init(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            "`AuxillaryResultApplication` is deprecated, please use `AuxiliaryResultApplication`",
+            FutureWarning
+        )
+        super().__init__(*args, **kwargs)
+
 
 class KeepOnly(calculation.Calculation):
     """

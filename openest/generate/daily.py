@@ -246,9 +246,10 @@ class YearlyAverageDay(Calculation):
                     for var in temps2._variables:
                         if var not in ['time', 'year']:
                             diagnostic.record(region, year, var, float(np.nansum(temps2._variables[var].values)) / len(temps2._variables[var].values))
+                    diagnostic.record(region, year, 'zero', float(np.nansum(curve(temps2) == 0)) / len(temps2.variables))
                 else:
                     diagnostic.record(region, year, 'avgv', float(np.nansum(temps2)) / len(temps2))
-                diagnostic.record(region, year, 'zero', float(np.nansum(curve(temps2) == 0)) / len(temps2))
+                    diagnostic.record(region, year, 'zero', float(np.nansum(curve(temps2) == 0)) / len(temps2))
 
             if not np.isnan(result):
                 yield year, result
