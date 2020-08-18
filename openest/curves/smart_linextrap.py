@@ -60,11 +60,12 @@ class LinearExtrapolationCurve(SmartCurve):
         values = self.curve(ds)
         indeps = np.stack((ds[indepvar] for indepvar in self.indepvars), axis=-1)
 
-        return linextrap.replace_oob(values, indeps, self.curve.get_univariate(), self.bounds, self.margins, self.scaling)
+        return linextrap.replace_oob(values, indeps, self.curve.univariate, self.bounds, self.margins, self.scaling)
 
-    def get_univariate(self):
+    @property
+    def univariate(self):
         """Return a UnivariateCurve version of this curve."""
-        return linextrap.LinearExtrapolationCurve(self.curve.get_univariate(), self.bounds, self.margins,
+        return linextrap.LinearExtrapolationCurve(self.curve.univariate, self.bounds, self.margins,
                                                   self.scaling, lambda xs: xs[:, 0])
                                                   
     
