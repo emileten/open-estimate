@@ -174,6 +174,7 @@ class SumByTimePolynomialCurve(SmartCurve):
     def __init__(self, coeffmat, variables, allow_raising=False, descriptions=None):
         super(SumByTimePolynomialCurve, self).__init__()
         self.coeffmat = coeffmat # K x T
+        assert len(self.coeffmat.shape) == 2
         self.variables = variables
         self.allow_raising = allow_raising
         if descriptions is None:
