@@ -1,4 +1,5 @@
 import os, csv, random
+import bottleneck as bn
 import numpy as np
 import xarray as xr
 from . import formatting, arguments, diagnostic, checks
@@ -238,8 +239,7 @@ class YearlyAverageDay(Calculation):
             curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
 
             temps2 = self.weather_change(region, temps)
-            dailyresults = curve(temps2)
-            result = np.nansum(dailyresults) / np.sum(np.logical_not(np.isnan(dailyresults)))
+            result = bn.nanmean(curve(temps2))
 
             if not self.norecord and diagnostic.is_recording():
                 if isinstance(temps2, xr.Dataset):
