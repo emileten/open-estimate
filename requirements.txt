@@ -2,6 +2,7 @@ numpy
 scipy
 emcee
 statsmodels
+bottleneck
 xarray
 pandas
 metacsv
