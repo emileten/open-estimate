@@ -239,6 +239,7 @@ class YearlyAverageDay(Calculation):
             curve = self.curvegen.get_curve(region, year, *args, weather=temps) # Passing in original (not weather-changed) data
 
             temps2 = self.weather_change(region, temps)
+            # Daily curve results annualized:
             result = bn.nanmean(curve(temps2))
 
             if not self.norecord and diagnostic.is_recording():
