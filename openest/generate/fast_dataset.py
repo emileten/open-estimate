@@ -222,17 +222,27 @@ class FastDataArray(xr.DataArray):
             return FastDataArray(data, newcoords, self.parentds)
 
     def sel(self, **kwargs):
+        return self.sel_apply(self.sel_setup(**kwargs))
+
+    def sel_setup(self, **kwargs):
         newcoords = tuple([self.original_coords[ii] for ii in range(len(self.original_coords)) if self.original_coords[ii] not in kwargs])
         if newcoords == self.original_coords:
-            return self
+            return None, None
 
         indices = [slice(None)] * len(self.original_coords)
         for dim in kwargs:
             axis = self.original_coords.index(dim)
             indices[axis] = self.parentds[dim]._values == kwargs[dim]
 
-        return FastDataArray(self._data[tuple(indices)], newcoords, self.parentds)
+        return indices, newcoords
 
+    def sel_apply(self, setup):
+        indices, newcoords = setup
+        if indices is None:
+            return self
+        
+        return FastDataArray(self._data[tuple(indices)], newcoords, self.parentds)
+    
     def isel(self, **kwargs):
         newcoords = tuple([self.original_coords[ii] for ii in range(len(self.original_coords)) if self.original_coords[ii] not in kwargs])
         if newcoords == self.original_coords:
@@ -245,6 +255,7 @@ class FastDataArray(xr.DataArray):
 
         return FastDataArray(self._data[tuple(indices)], newcoords, self.parentds)
 
+    
     def __array__(self):
         return np.asarray(self._values)
 
