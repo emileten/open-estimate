@@ -173,6 +173,7 @@ class SumByTimePolynomialCurve(SmartCurve):
     def __init__(self, coeffmat, variables, allow_raising=False, descriptions=None):
         super(SumByTimePolynomialCurve, self).__init__()
         self.coeffmat = coeffmat # K x T
+        assert len(self.coeffmat.shape) == 2
         self.variables = variables
         self.allow_raising = allow_raising
         if descriptions is None:
@@ -354,15 +355,15 @@ class ShiftedCurve(SmartCurve):
         self.offset = offset
 
     def __call__(self, ds):
-        return self.curve(ds) - self.offset
+        return self.curve(ds) + self.offset
 
     @property
     def univariate(self):
         return curve.ShiftedCurve(self.curve.univariate, self.offset)
     
     def format(self, lang):
-        return formatting.build_recursive({'latex': r"(%s - " + str(self.offset) + ")",
-                                           'julia': r"(%s - " + str(self.offset) + ")"},
+        return formatting.build_recursive({'latex': r"(%s + " + str(self.offset) + ")",
+                                           'julia': r"(%s + " + str(self.offset) + ")"},
                                           lang, self.curve)
 
 class ClippedCurve(curve.ClippedCurve, SmartCurve):
