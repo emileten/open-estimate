@@ -4,6 +4,7 @@
 #   GNU General Public License, Ver. 3 (see docs/license.txt)
 ################################################################################
 
+
 __copyright__ = "Copyright 2014, The Open Aggregator"
 __license__ = "GPL"
 

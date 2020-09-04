@@ -10,7 +10,6 @@ know which variables they want.
 """
 
 import numpy as np
-import xarray as xr
 from . import juliatools, latextools, formatting, diagnostic, formattools
 from statsmodels.distributions.empirical_distribution import StepFunction
 from openest.models import curve
@@ -374,7 +373,7 @@ class ClippedCurve(curve.ClippedCurve, SmartCurve):
 class OtherClippedCurve(curve.OtherClippedCurve, SmartCurve):
     @property
     def univariate(self):
-        return curve.ClippedCurve(self.clipping_curve.univariate, self.curve.univariate, self.clipy)
+        return curve.OtherClippedCurve(self.clipping_curve.univariate, self.curve.univariate, self.clipy)
 
 class MinimumCurve(curve.MinimumCurve, SmartCurve):
     @property

@@ -11,7 +11,7 @@ tas = np.arange(-40, 50, .01)
 fillins = np.arange(-40, 50, .1)
     
 for ii in range(polymins.shape[0]):
-    print ii
+    print(ii)
     
     curve = ZeroInterceptPolynomialCurve([-np.inf, np.inf], [allcalcs['tas'][ii], allcalcs['tas2'][ii], allcalcs['tas3'][ii], allcalcs['tas4'][ii]])
     mintemp = polymins['analytic'][ii]

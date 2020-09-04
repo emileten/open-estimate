@@ -487,8 +487,8 @@ def reorder_coord(ds, dim, indices):
                 allindices = [slice(None)] * len(dims)
                 allindices[tindex] = indices
                 newvars[var] = (dims, ds[var].values[tuple(allindices)])
-        except Exception as ex:
-            print(("Failed to reorder %s for %s" % (var, self.reader)))
+        except Exception:
+            print("Failed to reorder %s for %s" % (var, ds))
             raise
 
     coords = ds.coords

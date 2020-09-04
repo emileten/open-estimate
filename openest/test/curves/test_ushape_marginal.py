@@ -8,7 +8,7 @@ polymins = pd.read_csv("polymins.csv")
 allcalcs = pd.read_csv("allcalcs.csv")
 
 for ii in range(polymins.shape[0]):
-    print ii
+    print(ii)
 
     mintemp = polymins['analytic'][ii]
     tas = np.arange(-40, 50, .01) # numeric appears to have problem with low inward clipping
