@@ -943,7 +943,7 @@ class AuxiliaryResultApplication(calculation.Application):
     def push(self, ds):
         for yearresult in self.subapp_main.push(ds):
             for yearresult_aux in self.subapp_aux.push(ds):
-                next # Just take the last one
+                pass # Just take the last one
             if self.keeplastonly:
                 yield list(yearresult[0:2]) + [yearresult_aux[1]] + list(yearresult[2:])
             else:
