@@ -146,6 +146,9 @@ class FastDataset(xr.Dataset):
                 
         return FastDataset(newdata_vars, newcoords, self.attrs)
 
+    def load(self):
+        pass # always ready
+    
     def __getitem__(self, name):
         if name not in self._variables:
             if name == 'time.year' and 'time' in self._variables:
@@ -472,6 +475,40 @@ def assert_index_equal(one, two):
             assert np.array_equal(two, one), "Not equal: %s <> %s" % (str(two), str(one))
             return one
 
+def reorder_coord(ds, dim, indices):
+    assert dim in ['time', 'region'] # assume a time x region ds
+    assert dim in ds.coords
+    
+    newvars = {}
+    for var in ds.variables:
+        try:
+            dims = ds[var].coords
+            if len(dims) == 1:
+                if dim not in dims:
+                    newvars[var] = ds[var]
+                else:
+                    newvars[var] = ([dim], ds[var].values[indices])
+            elif len(dims) == 2 and dim in dims:
+                if dims.index(dim) == 0:
+                    newvars[var] = (dims, ds[var].values[:, indices])
+                else:
+                    newvars[var] = (dims, ds[var].values[indices, :])
+            else:
+                tindex = list(dims).index(dim)
+                allindices = [slice(None)] * len(dims)
+                allindices[tindex] = indices
+                newvars[var] = (dims, ds[var].values[tuple(allindices)])
+        except Exception:
+            print("Failed to reorder %s for %s" % (var, ds))
+            raise
+
+    coords = ds.coords
+    coords[dim] = ds[dim][indices]
+    newds = ds.__class__(newvars, coords=coords) # work for Dataset or FastDataset
+    newds.load()
+
+    return newds
+    
 FastDataArray.__array_priority__ = 80
 xr.core.ops.inject_binary_ops(FastDataArray)
     

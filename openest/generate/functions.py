@@ -868,11 +868,15 @@ class AuxiliaryResult(calculation.Calculation):
     """
     Produce an additional output, but then pass the main result on.
     """
-    def __init__(self, subcalc_main, subcalc_aux, auxname):
-        super(AuxiliaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
+    def __init__(self, subcalc_main, subcalc_aux, auxname, keeplastonly=True):
+        if keeplastonly:
+            super(AuxiliaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
+        else:
+            super(AuxiliaryResult, self).__init__([subcalc_main.unitses[0]] + subcalc_aux.unitses + subcalc_main.unitses[1:])
         self.subcalc_main = subcalc_main
         self.subcalc_aux = subcalc_aux
         self.auxname = auxname
+        self.keeplastonly = keeplastonly
 
     def format(self, lang, *args, **kwargs):
         beforeauxlen = len(formatting.format_labels)
@@ -884,7 +888,7 @@ class AuxiliaryResult(calculation.Calculation):
     def apply(self, region, *args, **kwargs):
         subapp_main = self.subcalc_main.apply(region, *args, **kwargs)
         subapp_aux = self.subcalc_aux.apply(region, *args, **kwargs)
-        return AuxiliaryResultApplication(region, subapp_main, subapp_aux)
+        return AuxiliaryResultApplication(region, subapp_main, subapp_aux, self.keeplastonly)
 
     def partial_derivative(self, covariate, covarunit):
         """
@@ -899,7 +903,10 @@ class AuxiliaryResult(calculation.Calculation):
         infos_aux = self.subcalc_aux.column_info()
         infos_aux[0]['name'] = self.auxname
 
-        return [infos_main[0], infos_aux[0]] + infos_main[1:]
+        if self.keeplastonly:
+            return [infos_main[0], infos_aux[0]] + infos_main[1:]
+        else:
+            return [infos_main[0]] + infos_aux + infos_main[1:]
 
     @staticmethod
     def describe():
@@ -927,16 +934,20 @@ class AuxiliaryResultApplication(calculation.Application):
     """
     Perform both main and auxiliary calculation, and order as main[0], aux, main[1:]
     """
-    def __init__(self, region, subapp_main, subapp_aux):
+    def __init__(self, region, subapp_main, subapp_aux, keeplastonly):
         super(AuxiliaryResultApplication, self).__init__(region)
         self.subapp_main = subapp_main
         self.subapp_aux = subapp_aux
+        self.keeplastonly = keeplastonly
 
     def push(self, ds):
         for yearresult in self.subapp_main.push(ds):
             for yearresult_aux in self.subapp_aux.push(ds):
-                next # Just take the last one
-            yield list(yearresult[0:2]) + [yearresult_aux[1]] + list(yearresult[2:])
+                pass # Just take the last one
+            if self.keeplastonly:
+                yield list(yearresult[0:2]) + [yearresult_aux[1]] + list(yearresult[2:])
+            else:
+                yield list(yearresult[0:2]) + list(yearresult_aux[1:]) + list(yearresult[2:])
 
     def done(self):
         self.subapp_aux.done()

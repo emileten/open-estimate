@@ -36,6 +36,7 @@ class CurveCurve(UnivariateCurve):
 
 class FlatCurve(CurveCurve):
     def __init__(self, yy):
+        self.yy = yy
         super(FlatCurve, self).__init__([-np.inf, np.inf], lambda x: yy)
 
 class LinearCurve(CurveCurve):
@@ -149,7 +150,7 @@ class OtherClippedCurve(ClippedCurve):
         clipping = self.clipping_curve(xs)
         ys = [y if y is not None else 0 for y in ys]
         clipping = [y if not np.isnan(y) else 0 for y in clipping]
-        return ys * (clipping > self.clipy)
+        return ys * (np.array(clipping) > self.clipy)
 
 class MinimumCurve(UnivariateCurve):
     def __init__(self, curve1, curve2):
@@ -183,6 +184,7 @@ class SelectiveInputCurve(UnivariateCurve):
 class PiecewiseCurve(UnivariateCurve):
     def __init__(self, curves, knots, xtrans=lambda x: x):
         super(PiecewiseCurve, self).__init__(knots)
+        assert len(curves) == len(knots) - 1
         self.curves = curves
         self.knots = knots
         self.xtrans = xtrans # for example, to select first column

@@ -1,4 +1,6 @@
 import numpy as np
+import xarray as xr
+from openest.generate import fast_dataset
 from openest.curves.basic import UnivariateCurve
 
 
@@ -33,11 +35,10 @@ class UShapedCurve(UnivariateCurve):
 
     def __call__(self, xs):
         values = self.curve(xs)
-        tas = np.array(self.gettas(xs))
+        tas = tas_original = np.array(self.gettas(xs))
 
         # Add in the grid for completeness
         if len(self.fillxxs) > 0:
-            tas_saved = tas
             tas = np.concatenate((tas, self.fillxxs))
             values = np.concatenate((values, self.fillyys))
 
@@ -65,10 +66,10 @@ class UShapedCurve(UnivariateCurve):
             tasorder = np.empty(len(increasing))
             tasorder[order] = increasing
             # Return just the given values
-            return tasorder[:len(xs)]
+            return tasorder[:len(tas_original)]
         else:
             if len(self.fillxxs) > 0:
-                tokeeps = order < len(tas_saved)
+                tokeeps = order < len(tas_original)
                 lowkeeps = tokeeps[orderedtas < self.midtemp]
                 highkeeps = tokeeps[orderedtas >= self.midtemp]
 
@@ -157,7 +158,10 @@ class UShapedClipping(UnivariateCurve):
             highindicesofordered = np.maximum.accumulate(highindicesofordered)
 
         # Construct the results
-        if len(xs.shape) == 2:
+        if isinstance(xs, xr.Dataset):
+            newxs = fast_dataset.reorder_coord(xs, 'time', np.concatenate((order[lowindicesofordered], order[highindicesofordered])))
+            increasingresults = self.tmarginal_curve(newxs)  # ordered low..., high...
+        elif len(xs.shape) == 2:
             increasingresults = np.concatenate((self.tmarginal_curve(xs[order[lowindicesofordered], :]),
                                                 self.tmarginal_curve(xs[order[highindicesofordered], :])))  # ordered low..., high...
         else:
