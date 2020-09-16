@@ -61,7 +61,7 @@ class ConstantCurve(SmartCurve):
         return np.repeat(self.constant, len(ds[self.dimension]))
 
     def format(self, lang):
-        return {'main': formatting.FormatElement(str(self.contant))}
+        return {'main': formatting.FormatElement(str(self.constant))}
     
 class LinearCurve(CurveCurve):
     def __init__(self, slope, variable):
