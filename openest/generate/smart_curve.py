@@ -247,6 +247,8 @@ class CubicSplineCurve(CoefficientsCurve):
     def __init__(self, coeffs, knots, variables, allow_raising=False):
         super(CubicSplineCurve, self).__init__(coeffs, variables)
         self.allow_raising = allow_raising
+        self.knots = knots
+
     
     def __call__(self, ds):
         result = np.zeros(ds[self.variables[0]].shape)
