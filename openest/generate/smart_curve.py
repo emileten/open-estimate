@@ -260,6 +260,7 @@ class CubicSplineCurve(CoefficientsCurve):
             return result
         except Exception as ex:
             if self.allow_raising:
+                import traceback;print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
                 return curve_module.CubicSplineCurve(self.knots, self.coeffs)(ds._variables[self.variables[0]]._data)
 
             raise ex
