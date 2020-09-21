@@ -258,11 +258,11 @@ class CubicSplineCurve(CoefficientsCurve):
                 result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
 
             return result
-        except Exception as ex:
+        except KeyError as ex:
+            # This should only catch KeyErrors coming from coming from
+            # ds._variables[x].
             if self.allow_raising:
-                import traceback;print("".join(traceback.format_exception(ex.__class__, ex, ex.__traceback__)))  # CATBELL
                 return curve_module.CubicSplineCurve(self.knots, self.coeffs)(ds._variables[self.variables[0]]._data)
-
             raise ex
 
     @property
