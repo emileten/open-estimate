@@ -12,7 +12,7 @@ know which variables they want.
 import numpy as np
 from . import juliatools, latextools, formatting, diagnostic, formattools
 from statsmodels.distributions.empirical_distribution import StepFunction
-from openest.models import curve
+from openest.models import curve as curve_module
     
 class SmartCurve(object):
     def __init__(self):
@@ -61,7 +61,7 @@ class ConstantCurve(SmartCurve):
         return np.repeat(self.constant, len(ds[self.dimension]))
 
     def format(self, lang):
-        return {'main': formatting.FormatElement(str(self.contant))}
+        return {'main': formatting.FormatElement(str(self.constant))}
     
 class LinearCurve(CurveCurve):
     def __init__(self, slope, variable):
@@ -123,7 +123,7 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
 
     @property
     def univariate(self):
-        return curve.ZeroInterceptPolynomialCurve([-np.inf, np.inf], self.coeffs)
+        return curve_module.ZeroInterceptPolynomialCurve([-np.inf, np.inf], self.coeffs)
     
     def format(self, lang):
         coeffvar = formatting.get_variable()
@@ -247,6 +247,8 @@ class CubicSplineCurve(CoefficientsCurve):
     def __init__(self, coeffs, knots, variables, allow_raising=False):
         super(CubicSplineCurve, self).__init__(coeffs, variables)
         self.allow_raising = allow_raising
+        self.knots = knots
+
     
     def __call__(self, ds):
         result = np.zeros(ds[self.variables[0]].shape)
@@ -256,15 +258,16 @@ class CubicSplineCurve(CoefficientsCurve):
                 result += self.coeffs[ii] * ds._variables[self.variables[ii]]._data
 
             return result
-        except Exception as ex:
+        except KeyError as ex:
+            # This should only catch KeyErrors coming from coming from
+            # ds._variables[x].
             if self.allow_raising:
-                return curve.CubicSplineCurve(self.knots, self.coeffs)(ds._variables[self.variables[0]]._data)
-
+                return curve_module.CubicSplineCurve(self.knots, self.coeffs)(ds._variables[self.variables[0]]._data)
             raise ex
 
     @property
     def univariate(self):
-        return curve.CubicSplineCurve(self.knots, self.coeffs)
+        return curve_module.CubicSplineCurve(self.knots, self.coeffs)
 
 class TransformCoefficientsCurve(SmartCurve):
     """Use a transformation of ds to produce each predictor."""
@@ -359,26 +362,26 @@ class ShiftedCurve(SmartCurve):
 
     @property
     def univariate(self):
-        return curve.ShiftedCurve(self.curve.univariate, self.offset)
+        return curve_module.ShiftedCurve(self.curve.univariate, self.offset)
     
     def format(self, lang):
         return formatting.build_recursive({'latex': r"(%s + " + str(self.offset) + ")",
                                            'julia': r"(%s + " + str(self.offset) + ")"},
                                           lang, self.curve)
 
-class ClippedCurve(curve.ClippedCurve, SmartCurve):
+class ClippedCurve(curve_module.ClippedCurve, SmartCurve):
     @property
     def univariate(self):
-        return curve.ClippedCurve(self.curve.univariate, self.cliplow)
+        return curve_module.ClippedCurve(self.curve.univariate, self.cliplow)
 
-class OtherClippedCurve(curve.OtherClippedCurve, SmartCurve):
+class OtherClippedCurve(curve_module.OtherClippedCurve, SmartCurve):
     @property
     def univariate(self):
-        return curve.OtherClippedCurve(self.clipping_curve.univariate, self.curve.univariate, self.clipy)
+        return curve_module.OtherClippedCurve(self.clipping_curve.univariate, self.curve.univariate, self.clipy)
 
-class MinimumCurve(curve.MinimumCurve, SmartCurve):
+class MinimumCurve(curve_module.MinimumCurve, SmartCurve):
     @property
     def univariate(self):
-        return curve.MinimumCurve(self.curve1.univariate, self.curve2.univariate)
+        return curve_module.MinimumCurve(self.curve1.univariate, self.curve2.univariate)
 
 
