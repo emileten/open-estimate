@@ -3,7 +3,6 @@ scipy
 xarray
 emcee
 statsmodels
-bottleneck
 xarray
 pandas
 metacsv
