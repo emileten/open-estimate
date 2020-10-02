@@ -1,7 +1,13 @@
 import os, csv, random
-import bottleneck as bn
 import numpy as np
 import xarray as xr
+
+try:
+    import bottleneck as bn
+except ImportError:
+    # Use numpy instead...
+    bn = np
+
 from . import formatting, arguments, diagnostic, checks
 from .calculation import Calculation, Application, ApplicationByYear
 from .formatting import FormatElement
