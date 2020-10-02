@@ -20,3 +20,5 @@ or ``pip install . -e`` if you would like to edit the code locally.
 You can install this package directly from its github repo with ``pip install git+https://github.com/ClimateImpactLab/open-estimate.git``
 
 Full Documentation can be found `here <http://openest.readthedocs.io/en/master/>`_.
+
+``bottleneck`` is an optional dependency, improving the performance of some functions.
