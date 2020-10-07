@@ -58,7 +58,7 @@ class LinearExtrapolationCurve(SmartCurve):
             A sequence of values after clipping.
         """
         values = self.curve(ds)
-        indeps = np.stack((ds[indepvar]._values for indepvar in self.indepvars), axis=-1)
+        indeps = np.stack((ds[indepvar].values for indepvar in self.indepvars), axis=-1)
 
         return linextrap.replace_oob(values, indeps, self.curve.univariate, self.bounds, self.margins, self.scaling)
 
