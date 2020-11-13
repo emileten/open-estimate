@@ -241,7 +241,39 @@ class SumByTimePolynomialCurve(SmartCurve):
             result[funcvars[variable]] = formatting.FormatElement(self.descriptions.get(variable, "Unknown"))
 
         return result
-    
+
+class SumByTimeCoefficientsCurve(SmartCurve):
+    def __init__(self, coeffmat, transforms, descriptions, diagnames=None):
+        super(SumByTimeCoefficientsCurve, self).__init__()
+        self.coeffmat = coeffmat # K x T
+        assert len(self.coeffmat.shape) == 2
+        self.transforms = transforms
+        self.descriptions = descriptions
+        self.diagnames = diagnames
+
+        assert isinstance(transforms, list) and len(transforms) == coeffmat.shape[0], "Transforms do not match coefficients: %s <> %s" % (transforms, coeffmat.shape)
+        assert diagnames is None or isinstance(diagnames, list) and len(diagnames) == len(transforms)
+
+    def __call__(self, ds):
+        maxtime = self.coeffmat.shape[1]
+
+        result = None
+        for ii in range(len(self.transforms)):
+            predictor = self.transforms[ii](ds)._data[:maxtime]
+            if self.diagnames:
+                diagnostic.record(ds.region, ds.year, self.diagnames[ii], np.sum(predictor._data))
+            if result is None:
+                result = np.sum(self.coeffmat[ii, :] * predictor)
+            else:
+                result += np.sum(self.coeffmat[ii, :] * predictor)
+                
+        return result
+
+    def get_univariate(self):
+        raise NotImplementedError("Probably want to define a matrix-taking curve before this.")
+
+    def format(self, lang):
+        raise NotImplementedError()
     
 class CubicSplineCurve(CoefficientsCurve):
     def __init__(self, coeffs, knots, variables, allow_raising=False):
