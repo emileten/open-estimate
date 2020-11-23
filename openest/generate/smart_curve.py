@@ -246,7 +246,7 @@ class SumByTimeCoefficientsCurve(SmartCurve):
     def __init__(self, coeffmat, transforms, descriptions, diagnames=None):
         super(SumByTimeCoefficientsCurve, self).__init__()
         self.coeffmat = coeffmat # K x T
-        assert len(self.coeffmat.shape) == 2
+        assert len(coeffmat.shape) == 2 or np.all(coeffmat == 0)
         self.transforms = transforms
         self.descriptions = descriptions
         self.diagnames = diagnames
@@ -255,13 +255,17 @@ class SumByTimeCoefficientsCurve(SmartCurve):
         assert diagnames is None or isinstance(diagnames, list) and len(diagnames) == len(transforms)
 
     def __call__(self, ds):
+        if np.all(self.coeffmat == 0):
+            # Happens with edge case of conditional suffixes
+            return 0
+            
         maxtime = self.coeffmat.shape[1]
 
         result = None
         for ii in range(len(self.transforms)):
-            predictor = self.transforms[ii](ds)._data[:maxtime]
+            predictor = self.transforms[ii](ds)._data.ravel()[:maxtime]
             if self.diagnames:
-                diagnostic.record(ds.region, ds.year, self.diagnames[ii], np.sum(predictor._data))
+                diagnostic.record(ds.region, ds.year, self.diagnames[ii], np.sum(predictor))
             if result is None:
                 result = np.sum(self.coeffmat[ii, :] * predictor)
             else:
