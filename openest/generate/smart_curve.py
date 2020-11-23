@@ -170,6 +170,19 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
 
     
 class SumByTimePolynomialCurve(SmartCurve):
+    """Equivalent to `ZeroInterceptPolynomialCurve`, but with a different coefficient per timestep.
+
+    Parameters
+    ----------
+    coeffmat : array_like
+        Matrix of K (order) x T (timesteps)
+    variables : list of str or function
+        Name of variable in DataSet or getter function for each exponent term
+    allow_raising : bool, optional
+        Can we just raise the linear term to an exponent, or should each bein the ds (default)
+    descriptions : dict of str => str
+        Description of each getter function
+    """
     def __init__(self, coeffmat, variables, allow_raising=False, descriptions=None):
         super(SumByTimePolynomialCurve, self).__init__()
         self.coeffmat = coeffmat # K x T
@@ -243,6 +256,19 @@ class SumByTimePolynomialCurve(SmartCurve):
         return result
 
 class SumByTimeCoefficientsCurve(SmartCurve):
+    """Equivalent to `TransformCoefficientsCurve`, but with a different coefficient per timestep.
+
+    Parameters
+    ----------
+    coeffmat : array_like
+        Matrix of K (#predictors) x T (timesteps)
+    transforms : list of functions
+        Functions of DataSet to return each predictor
+    descriptions : list of str
+        Descriptions of each transformation/predictor
+    diagnames : list of str
+        Keys to be used for each predictor in the diagnostic files, or None for no-recording
+    """
     def __init__(self, coeffmat, transforms, descriptions, diagnames=None):
         super(SumByTimeCoefficientsCurve, self).__init__()
         self.coeffmat = coeffmat # K x T
