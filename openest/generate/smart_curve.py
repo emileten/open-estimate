@@ -170,6 +170,19 @@ class ZeroInterceptPolynomialCurve(CoefficientsCurve):
 
     
 class SumByTimePolynomialCurve(SmartCurve):
+    """Equivalent to `ZeroInterceptPolynomialCurve`, but with a different coefficient per timestep.
+
+    Parameters
+    ----------
+    coeffmat : array_like
+        Matrix of K (order) x T (timesteps)
+    variables : list of str or function
+        Name of variable in DataSet or getter function for each exponent term
+    allow_raising : bool, optional
+        Can we just raise the linear term to an exponent, or should each bein the ds (default)
+    descriptions : dict of str => str
+        Description of each getter function
+    """
     def __init__(self, coeffmat, variables, allow_raising=False, descriptions=None):
         super(SumByTimePolynomialCurve, self).__init__()
         self.coeffmat = coeffmat # K x T
@@ -241,7 +254,56 @@ class SumByTimePolynomialCurve(SmartCurve):
             result[funcvars[variable]] = formatting.FormatElement(self.descriptions.get(variable, "Unknown"))
 
         return result
-    
+
+class SumByTimeCoefficientsCurve(SmartCurve):
+    """Equivalent to `TransformCoefficientsCurve`, but with a different coefficient per timestep.
+
+    Parameters
+    ----------
+    coeffmat : array_like
+        Matrix of K (#predictors) x T (timesteps)
+    transforms : list of functions
+        Functions of DataSet to return each predictor
+    descriptions : list of str
+        Descriptions of each transformation/predictor
+    diagnames : list of str
+        Keys to be used for each predictor in the diagnostic files, or None for no-recording
+    """
+    def __init__(self, coeffmat, transforms, descriptions, diagnames=None):
+        super(SumByTimeCoefficientsCurve, self).__init__()
+        self.coeffmat = coeffmat # K x T
+        assert len(coeffmat.shape) == 2 or np.all(coeffmat == 0)
+        self.transforms = transforms
+        self.descriptions = descriptions
+        self.diagnames = diagnames
+
+        assert isinstance(transforms, list) and len(transforms) == coeffmat.shape[0], "Transforms do not match coefficients: %s <> %s" % (transforms, coeffmat.shape)
+        assert diagnames is None or isinstance(diagnames, list) and len(diagnames) == len(transforms)
+
+    def __call__(self, ds):
+        if np.all(self.coeffmat == 0):
+            # Happens with edge case of conditional suffixes
+            return 0
+            
+        maxtime = self.coeffmat.shape[1]
+
+        result = None
+        for ii in range(len(self.transforms)):
+            predictor = self.transforms[ii](ds)._data.ravel()[:maxtime]
+            if self.diagnames:
+                diagnostic.record(ds.region, ds.year, self.diagnames[ii], np.sum(predictor))
+            if result is None:
+                result = np.sum(self.coeffmat[ii, :] * predictor)
+            else:
+                result += np.sum(self.coeffmat[ii, :] * predictor)
+                
+        return result
+
+    def get_univariate(self):
+        raise NotImplementedError("Probably want to define a matrix-taking curve before this.")
+
+    def format(self, lang):
+        raise NotImplementedError()
     
 class CubicSplineCurve(CoefficientsCurve):
     def __init__(self, coeffs, knots, variables, allow_raising=False):
