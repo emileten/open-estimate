@@ -209,6 +209,7 @@ class SumByTimePolynomialCurve(SmartCurve):
                 
         return result
 
+    @property
     def univariate(self):
         raise NotImplementedError("Probably want to define a matrix-taking curve before this.")
 
@@ -299,6 +300,7 @@ class SumByTimeCoefficientsCurve(SmartCurve):
                 
         return result
 
+    @property
     def univariate(self):
         raise NotImplementedError("Probably want to define a matrix-taking curve before this.")
 
