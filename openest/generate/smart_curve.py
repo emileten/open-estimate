@@ -355,7 +355,7 @@ class TransformCoefficientsCurve(SmartCurve):
         self.transforms = transforms
         self.descriptions = descriptions
         self.diagnames = diagnames
-        self.univariate_curve = univariate_curve
+        self._univariate_curve = univariate_curve
 
         assert isinstance(transforms, list) and len(transforms) == len(coeffs), "Transforms do not match coefficients: %s <> %s" % (transforms, coeffs)
         assert diagnames is None or isinstance(diagnames, list) and len(diagnames) == len(transforms)
@@ -388,8 +388,8 @@ class TransformCoefficientsCurve(SmartCurve):
 
     @property
     def univariate(self):
-        if self.univariate_curve is not None:
-            return self.univariate_curve
+        if self._univariate_curve is not None:
+            return self._univariate_curve
 
         raise NotImplementedError("univariate transform not specified")
 
