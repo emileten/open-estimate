@@ -209,7 +209,8 @@ class SumByTimePolynomialCurve(SmartCurve):
                 
         return result
 
-    def get_univariate(self):
+    @property
+    def univariate(self):
         raise NotImplementedError("Probably want to define a matrix-taking curve before this.")
 
     def format(self, lang):
@@ -299,7 +300,8 @@ class SumByTimeCoefficientsCurve(SmartCurve):
                 
         return result
 
-    def get_univariate(self):
+    @property
+    def univariate(self):
         raise NotImplementedError("Probably want to define a matrix-taking curve before this.")
 
     def format(self, lang):
@@ -332,14 +334,28 @@ class CubicSplineCurve(CoefficientsCurve):
         return curve_module.CubicSplineCurve(self.knots, self.coeffs)
 
 class TransformCoefficientsCurve(SmartCurve):
-    """Use a transformation of ds to produce each predictor."""
-    
-    def __init__(self, coeffs, transforms, descriptions, diagnames=None):
+    """Use a transformation of ds to produce each predictor.
+
+    Parameters
+    ----------
+    coeffs : array_like
+        Vector of coefficients on each [transformed] predictor
+    transforms : list of functions
+        Functions of DataSet to return each predictor
+    descriptions : list of str
+        Descriptions of each transformation/predictor
+    diagnames : list of str (optional)
+        Keys to be used for each predictor in the diagnostic files, or None for no-recording
+    univariate_curve : UnivariateCurve (optional)
+        If a univariate function is requested, can we produce one?
+    """
+    def __init__(self, coeffs, transforms, descriptions, diagnames=None, univariate_curve=None):
         super(TransformCoefficientsCurve, self).__init__()
         self.coeffs = coeffs
         self.transforms = transforms
         self.descriptions = descriptions
         self.diagnames = diagnames
+        self._univariate_curve = univariate_curve
 
         assert isinstance(transforms, list) and len(transforms) == len(coeffs), "Transforms do not match coefficients: %s <> %s" % (transforms, coeffs)
         assert diagnames is None or isinstance(diagnames, list) and len(diagnames) == len(transforms)
@@ -369,7 +385,14 @@ class TransformCoefficientsCurve(SmartCurve):
             result[funcvars[ii]] = formatting.FormatElement(self.descriptions[ii])
 
         return result
-    
+
+    @property
+    def univariate(self):
+        if self._univariate_curve is not None:
+            return self._univariate_curve
+
+        raise NotImplementedError("univariate transform not specified")
+
 class SelectiveInputCurve(SmartCurve):
     """Assumes input is a matrix, and only pass selected input columns to child curve."""
     
