@@ -6,9 +6,9 @@ from .formatting import FormatElement
 make_generator: we encapsulate this function, passing in data and opporting on outputs
 func: default operation is to multiple (scale), but can do other things (e.g., - for re-basing)
 """
-class Scale(calculation.Calculation):
+class Scale(calculation.RecursiveCalculation):
     def __init__(self, subcalc, scale_dict, from_units, to_units, func=lambda x, y: x*y, latexpair=(r"\bar{I}", "Region-specific scaling")):
-        super(Scale, self).__init__([to_units] + subcalc.unitses)
+        super().__init__([subcalc], [to_units] + subcalc.unitses)
         assert(subcalc.unitses[0] == from_units)
 
         self.subcalc = subcalc
@@ -62,9 +62,9 @@ class Scale(calculation.Calculation):
 """
 Transform all results by a function.
 """
-class Transform(calculation.Calculation):
+class Transform(calculation.RecursiveCalculation):
     def __init__(self, subcalc, from_units, to_units, func, description, long_description):
-        super(Transform, self).__init__([to_units] + subcalc.unitses)
+        super().__init__([subcalc], [to_units] + subcalc.unitses)
         assert(subcalc.unitses[0] == from_units)
 
         self.subcalc = subcalc
@@ -315,7 +315,7 @@ class InstaZScore(calculation.CustomFunctionalCalculation):
                     description="Translate all results to z-scores against results up to a given year.")
 
 
-class Sum(calculation.Calculation):
+class Sum(calculation.RecursiveCalculation):
     """Sum two or more subcalculations
 
     Parameters
@@ -329,12 +329,11 @@ class Sum(calculation.Calculation):
             assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
             fullunitses.extend(subcalcs[ii].unitses)
         if unshift:
-            super(Sum, self).__init__([subcalcs[0].unitses[0]] + fullunitses)
+            super().__init__(subcalcs, [subcalcs[0].unitses[0]] + fullunitses)
         else:
-            super(Sum, self).__init__([subcalcs[0].unitses[0]])
+            super().__init__(subcalcs, [subcalcs[0].unitses[0]])
 
         self.unshift = unshift
-        self.subcalcs = subcalcs
 
     def format(self, lang, *args, **kwargs):
         mains = []
@@ -402,11 +401,6 @@ class Sum(calculation.Calculation):
             fullinfos.extend(infos)
         return [dict(name='sum', title=title, description=description)] + fullinfos
 
-    def enable_deltamethod(self):
-        self.deltamethod = True
-        for subcalc in self.subcalcs:
-            subcalc.enable_deltamethod()
-
     def partial_derivative(self, covariate, covarunit):
         """
         Returns a new calculation object that calculates the partial
@@ -443,7 +437,7 @@ class Sum(calculation.Calculation):
                     description="Sum the results of multiple previous calculations.")
 
 
-class Product(calculation.Calculation):
+class Product(calculation.RecursiveCalculation):
     """Product of two or more subcalculations
 
     Note that this does not support delta-method runs.
@@ -459,12 +453,11 @@ class Product(calculation.Calculation):
         units_product = [" * ".join([s.unitses[0] for s in subcalcs])]
         if unshift:
             fullunitses = [unit for calc in subcalcs for unit in calc.unitses]
-            super().__init__(units_product + fullunitses)
+            super().__init__(subcalcs, units_product + fullunitses)
         else:
-            super().__init__(units_product)
+            super().__init__(subcalcs, units_product)
 
         self.unshift = unshift
-        self.subcalcs = subcalcs
 
     def format(self, lang, *args, **kwargs):
         mains = []
@@ -583,7 +576,7 @@ class Product(calculation.Calculation):
                     description="Product of results from multiple previous calculations.")
 
 
-class FractionSum(calculation.Calculation):
+class FractionSum(calculation.RecursiveCalculation):
     """Sum of subcalculations weighted on fractions of unity.
 
     Parameters
@@ -612,11 +605,10 @@ class FractionSum(calculation.Calculation):
                 assert subcalcs[0].unitses[0] == subcalcs[ii].unitses[0], "%s <> %s" % (subcalcs[0].unitses[0], subcalcs[ii].unitses[0])
             fullunitses.extend(subcalcs[ii].unitses)
         if unshift:
-            super().__init__([subcalcs[0].unitses[0]] + fullunitses)
+            super().__init__(subcalcs, [subcalcs[0].unitses[0]] + fullunitses)
         else:
-            super().__init__([subcalcs[0].unitses[0]])
+            super().__init__(subcalcs, [subcalcs[0].unitses[0]])
         self.unshift = unshift
-        self.subcalcs = subcalcs
 
     def format(self, lang, *args, **kwargs):
         mains = []
@@ -760,10 +752,9 @@ class FractionSum(calculation.Calculation):
 """
 ConstantScale
 """
-class ConstantScale(calculation.Calculation):
+class ConstantScale(calculation.RecursiveCalculation):
     def __init__(self, subcalc, coeff):
-        super(ConstantScale, self).__init__([subcalc.unitses[0]] + subcalc.unitses)
-        self.subcalc = subcalc
+        super().__init__([subcalc], [subcalc.unitses[0]] + subcalc.unitses)
         self.coeff = coeff
 
     def format(self, lang, *args, **kwargs):
@@ -799,12 +790,12 @@ class ConstantScale(calculation.Calculation):
                     arguments=[arguments.calculation, arguments.coefficient],
                     description="Multiply the result by a constant factor.")
 
-class Positive(calculation.Calculation):
+class Positive(calculation.RecursiveCalculation):
     """
     Return 0 if subcalc is less than 0
     """
     def __init__(self, subcalc):
-        super(Positive, self).__init__([subcalc.unitses[0]] + subcalc.unitses)
+        super().__init__([subcalc], [subcalc.unitses[0]] + subcalc.unitses)
         self.subcalc = subcalc
 
     def apply(self, region, *args, **kwargs):
@@ -828,10 +819,10 @@ class Positive(calculation.Calculation):
                     arguments=[arguments.calculation],
                     description="Return the maximum of a previous result or 0.")
 
-class Exponentiate(calculation.Calculation):
+class Exponentiate(calculation.RecursiveCalculation):
     def __init__(self, subcalc, errorvar):
         assert subcalc.unitses[0][:3] == 'log'
-        super(Exponentiate, self).__init__([subcalc.unitses[0][3:].strip()] + subcalc.unitses)
+        super().__init__([subcalc], [subcalc.unitses[0][3:].strip()] + subcalc.unitses)
         self.subcalc = subcalc
         self.errorvar = errorvar
 
@@ -864,15 +855,15 @@ class Exponentiate(calculation.Calculation):
                     arguments=[arguments.calculation, arguments.variance.rename('errorvar')],
                     description="Return the the exponentiation of a previous result.")
 
-class AuxiliaryResult(calculation.Calculation):
+class AuxiliaryResult(calculation.RecursiveCalculation):
     """
     Produce an additional output, but then pass the main result on.
     """
     def __init__(self, subcalc_main, subcalc_aux, auxname, keeplastonly=True):
         if keeplastonly:
-            super(AuxiliaryResult, self).__init__([subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
+            super().__init__([subcalc_main, subcalc_aux], [subcalc_main.unitses[0], subcalc_aux.unitses[0]] + subcalc_main.unitses[1:])
         else:
-            super(AuxiliaryResult, self).__init__([subcalc_main.unitses[0]] + subcalc_aux.unitses + subcalc_main.unitses[1:])
+            super().__init__([subcalc_main, subcalc_aux], [subcalc_main.unitses[0]] + subcalc_aux.unitses + subcalc_main.unitses[1:])
         self.subcalc_main = subcalc_main
         self.subcalc_aux = subcalc_aux
         self.auxname = auxname
@@ -969,14 +960,14 @@ class AuxillaryResultApplication(AuxiliaryResultApplication):
         super().__init__(*args, **kwargs)
 
 
-class KeepOnly(calculation.Calculation):
+class KeepOnly(calculation.RecursiveCalculation):
     """
     Keep only a subset of the calculation results, with given names.
     """
     def __init__(self, subcalc, names):
         self.subcalc = subcalc
         self.iskept = [info['name'] in names for info in subcalc.column_info()]
-        super(KeepOnly, self).__init__(self.keeplist(subcalc.unitses))
+        super().__init__([subcalc], self.keeplist(subcalc.unitses))
 
     def keeplist(self, lst):
         assert len(lst) == len(self.iskept), "Given %d <> %d when choosing which to keep." % (len(lst), len(self.iskept))
@@ -1011,7 +1002,7 @@ class KeepOnlyApplication(calculation.Application):
     def done(self):
         return self.subapp.done()
 
-class Clip(calculation.Calculation):
+class Clip(calculation.RecursiveCalculation):
     """Clip the values in a subcalculation.
 
     Given a (min, max) interval of values in a subcalculation, values outside
@@ -1021,12 +1012,12 @@ class Clip(calculation.Calculation):
 
     Parameters
     ----------
-    subcalc : openest.generate.calculation.Application
+    subcalc : openest.generate.calculation.Calculation
     subcalc_min : float
     subcalc_max : float
     """
     def __init__(self, subcalc, subcalc_min, subcalc_max):
-        super().__init__([subcalc.unitses[0]] + subcalc.unitses)
+        super().__init__([subcalc], [subcalc.unitses[0]] + subcalc.unitses)
         self.subcalc = subcalc
         self.min = float(subcalc_min)
         self.max = float(subcalc_max)
@@ -1103,3 +1094,41 @@ class Clip(calculation.Calculation):
         return dict(input_timerate='any', output_timerate='same',
                     arguments=[arguments.calculation, arguments.numeric.rename('min'), arguments.numeric.rename('max')],
                     description="Return the clipped values of a previous result.")
+
+class Reword(calculation.RecursiveCalculation):
+    """Changes the label and/or description of a subcalculation.
+
+    Parameters:
+    subcalc : openest.generate.calculation.Calculation
+    name : str
+    description : str (optional)
+    """
+    def __init__(self, subcalc, name=None, title=None, description=None):
+        super().__init__([subcalc], subcalc.unitses)
+        self.subcalc = subcalc
+        self.name = name
+        self.title = title
+        self.description = description
+
+    def format(self, lang, *args, **kwargs):
+        return self.subcalc.format(lang, *args, **kwargs)
+        
+    def apply(self, region, *args, **kwargs):
+        return self.subcalc.apply(region, *args, **kwargs)
+
+    def column_info(self):
+        infos = self.subcalc.column_info()
+        if self.name is not None:
+            infos[0]['name'] = self.name
+        if self.title is not None:
+            infos[0]['title'] = self.title
+        if self.description is not None:
+            infos[0]['description'] = self.description
+        return infos
+
+    @staticmethod
+    def describe():
+        return dict(input_timerate='any', output_timerate='same',
+                    arguments=[arguments.calculation, arguments.label.rename('name').optional(),
+                               arguments.label.rename('title').optional(), arguments.description.optional()],
+                    description="Change the name and/or description of a result.")
