@@ -2,7 +2,7 @@
 Abstract and concrete classes to delegate data and iterate calculations.
 """
 
-import copy
+import copy, collections
 import numpy as np
 import xarray as xr
 
@@ -89,7 +89,7 @@ class Calculation(object):
 class RecursiveCalculation(Calculation):
     """Calculation that contains subcalculations.
 
-    This is a light-weight ABC mainly for passing messages down the tree.
+    This is a light-weight base class mainly for passing messages down the tree.
 
     Parameters
     ----------
@@ -427,8 +427,10 @@ class ApplicationPassCall(Application):
         self.handler_kw = handler_kw
 
         # Set up a buffer for results, if they don't come in at the same time
-        if isinstance(subapp, list):
-            self.results_buffer = [[] for ss in subapp]
+        if isinstance(subapp, collections.Iterable):
+            self.results_buffer = [[] for _ in subapp]
+        else:
+            self.results_buffer = None
 
     def push(self, ds):
         """
@@ -442,13 +444,11 @@ class ApplicationPassCall(Application):
         ------
         Iterable each with (year, value, ...).
         """
-        if isinstance(self.subapp, list):
-            iterators = [subapp.push(ds) for subapp in self.subapp]
+        if isinstance(self.subapp, collections.Iterable):
             # Collect all results from each subapp
             for ii, subapp in enumerate(self.subapp):
                 for yearresult in subapp.push(ds):
                     self.results_buffer[ii].append(yearresult)
-
 
             while all([len(subres) > 0 for subres in self.results_buffer]):
                 yearresults = [subres.pop(0) for subres in self.results_buffer]
