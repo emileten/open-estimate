@@ -2,7 +2,7 @@
 Abstract and concrete classes to delegate data and iterate calculations.
 """
 
-import copy
+import copy, collections
 import numpy as np
 import xarray as xr
 
@@ -86,8 +86,34 @@ class Calculation(object):
         """
         raise NotImplementedError()
 
+class RecursiveCalculation(Calculation):
+    """Calculation that contains subcalculations.
 
-class FunctionalCalculation(Calculation):
+    This is a light-weight base class mainly for passing messages down the tree.
+
+    Parameters
+    ----------
+    subcalcs : sequence of openest.generate.calculation.Calculation-like
+    unitses : sequence of str
+        Post-calculation units.
+    """
+    def __init__(self, subcalcs, unitses):
+        super().__init__(unitses)
+        self.subcalcs = subcalcs
+
+    def cleanup(self):
+        """Pass cleanup signal to subcalculations."""
+        for subcalc in self.subcalcs:
+            subcalc.cleanup()
+
+    def enable_deltamethod(self):
+        """Pass deltamethod signal to subcalculations."""
+        self.deltamethod = True
+        for subcalc in self.subcalcs:
+            subcalc.enable_deltamethod()
+
+            
+class FunctionalCalculation(RecursiveCalculation):
     """
     Calculation that calls a handler when it's applied
 
@@ -111,9 +137,9 @@ class FunctionalCalculation(Calculation):
 
     def __init__(self, subcalc, from_units, to_units, unshift, *handler_args, **handler_kw):
         if unshift:
-            super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses)
+            super().__init__([subcalc], [to_units] + subcalc.unitses)
         else:
-            super(FunctionalCalculation, self).__init__([to_units] + subcalc.unitses[1:])
+            super().__init__([subcalc], [to_units] + subcalc.unitses[1:])
 
         assert(subcalc.unitses[0] == from_units)
         self.subcalc = subcalc
@@ -139,17 +165,6 @@ class FunctionalCalculation(Calculation):
 
     def handler(self, year, result, *handler_args, **handler_kw):
         raise NotImplementedError()
-
-    def cleanup(self):
-        """Pass cleanup signal to subcalculations
-        """
-        # Pass on signal for end
-        print("completing make")
-        self.subcalc.cleanup()
-
-    def enable_deltamethod(self):
-        self.deltamethod = True
-        self.subcalc.enable_deltamethod()
 
 
 class Application(object):
@@ -411,6 +426,12 @@ class ApplicationPassCall(Application):
         self.handler_args = handler_args
         self.handler_kw = handler_kw
 
+        # Set up a buffer for results, if they don't come in at the same time
+        if isinstance(subapp, collections.Iterable):
+            self.results_buffer = [[] for _ in subapp]
+        else:
+            self.results_buffer = None
+
     def push(self, ds):
         """
         Parameters
@@ -423,30 +444,18 @@ class ApplicationPassCall(Application):
         ------
         Iterable each with (year, value, ...).
         """
-        if isinstance(self.subapp, list):
-            iterators = [subapp.push(ds) for subapp in self.subapp]
-            while True:
-                yearresults = []
-                # Call next on every iterator
-                for iterator in iterators:
-                    try:
-                        yearresult = next(iterator)
-                    except StopIteration:
-                        yearresult = None
-                    yearresults.append(yearresult)
+        if isinstance(self.subapp, collections.Iterable):
+            # Collect all results from each subapp
+            for ii, subapp in enumerate(self.subapp):
+                for yearresult in subapp.push(ds):
+                    self.results_buffer[ii].append(yearresult)
 
-                if yearresults[0] is None:
-                    # Ignore the result
-                    return
-                else:
-                    year = yearresults[0][0] if yearresults[0] is not None else None
-                    anyresults = False
-                    for yearresult in yearresults:
-                        if yearresult is not None:
-                            assert yearresult[0] == year, "%s <> %s" % (str(yearresult[0]), str(year))
-                            anyresults = True
-                    if not anyresults:
-                        return  # No results
+            while all([len(subres) > 0 for subres in self.results_buffer]):
+                yearresults = [subres.pop(0) for subres in self.results_buffer]
+
+                year = yearresults[0][0]
+                for yearresult in yearresults[1:]:
+                    assert yearresult[0] == year, "%s <> %s" % (str(yearresult[0]), str(year))
 
                 newresult = self.handler(year, yearresults, *self.handler_args, **self.handler_kw)
                 if isinstance(newresult, tuple):
