@@ -318,11 +318,11 @@ def merge(dss):
                     continue
                 all_data_vars[key] = ds.original_data_vars[key]
         else:
-            for key in ds._dims:
+            for key in ds.coords:
                 if key in all_coords:
-                    all_coords[key] = assert_index_equal(all_coords[key], ds._dims[key])
+                    all_coords[key] = assert_index_equal(all_coords[key], ds.coords[key])
                 else:
-                    all_coords[key] = ds._dims[key]
+                    all_coords[key] = ds.coords[key]
             for key in ds._variables:
                 if key in all_coords:
                     all_coords[key] = assert_index_equal(all_coords[key], ds._variables[key])
@@ -397,12 +397,12 @@ def concat(objs, dim=None):
                     else:
                         data_vars[key] = ds.original_data_vars[key]
         else:
-            for key in ds._dims:
-                if key == dim or (hasattr(ds._dims[key], 'dims') and dim in ds._dims[key].dims):
+            for key in ds.coords:
+                if key == dim or (hasattr(ds.coords[key], 'dims') and dim in ds.coords[key].dims):
                     if key not in dimcoords:
-                        dimcoords[key] = [ds._dims[key]._data]
+                        dimcoords[key] = [ds.coords[key]._data]
                     else:
-                        dimcoords[key].append(ds._dims[key]._data)
+                        dimcoords[key].append(ds.coords[key]._data)
                 elif key in ds.coords:
                     if key in coords:
                         coords[key] = assert_index_equal(coords[key], ds.coords[key])
@@ -410,9 +410,9 @@ def concat(objs, dim=None):
                         coords[key] = ds.coords[key]
                 else:
                     if key in coords:
-                        coords[key] = assert_index_equal(coords[key], ds._dims[key])
+                        coords[key] = assert_index_equal(coords[key], ds.coords[key])
                     else:
-                        coords[key] = ds._dims[key]
+                        coords[key] = ds.coords[key]
             for key in ds._variables:
                 if key == dim:
                     dimcoords[key].append(ds._variables[key]._data)
@@ -450,18 +450,18 @@ def concat(objs, dim=None):
 
 def assert_index_equal(one, two):
     if np.array(one).dtype != np.array(two).dtype:
-        if not isinstance(one, int) and np.array(one).dtype == np.int32 and one[0] == 1 and one[-1] == len(one):
+        if not isinstance(one, (int, np.integer)) and np.array(one).dtype in [np.int32, np.int64] and one[0] == 1 and one[-1] == len(one):
             one = len(one)
-        if not isinstance(two, int) and np.array(two).dtype == np.int32 and two[0] == 1 and two[-1] == len(two):
+        if not isinstance(two, (int, np.integer)) and np.array(two).dtype in [np.int32, np.int64] and two[0] == 1 and two[-1] == len(two):
             two = len(two)
         
-    if isinstance(one, int) and isinstance(two, int):
+    if isinstance(one, (int, np.integer)) and isinstance(two, (int, np.integer)):
         assert two == one
         return one
-    elif isinstance(one, int):
+    elif isinstance(one, (int, np.integer)):
         assert len(two) == one
         return two
-    elif isinstance(two, int):
+    elif isinstance(two, (int, np.integer)):
         assert len(one) == two
         return one
     else:
