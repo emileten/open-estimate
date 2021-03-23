@@ -1,6 +1,6 @@
 import numpy as np
 from . import juliatools, latextools, calculation, diagnostic, arguments, formatting
-from .formatting import FormatElement
+from .formatting import FormatElement, ParameterFormatElement
 
 """Scale the results by the value in scale_dict, or the mean value (if it is set).
 make_generator: we encapsulate this function, passing in data and opporting on outputs
@@ -188,26 +188,31 @@ class SpanInstabase(Instabase):
     skip_on_missing: If we never encounter the year and this is false,
       still print out the existing results.
     """
-    def __init__(self, subcalc, year1, year2, func=lambda x, y: x / y, units='portion', skip_on_missing=True, unshift=True):
+    def __init__(self, subcalc, year1, year2, func=lambda x, y: x - y, units='portion', skip_on_missing=True, unshift=True, baseline_diagname='baseline'):
+        print(baseline_diagname)
         super(SpanInstabase, self).__init__(subcalc, (year1 + year2) / 2, func, units, skip_on_missing, unshift)
         self.year1 = year1
         self.year2 = year2
         self.denomterms = []
+        self.baseline_diagname = baseline_diagname
 
     def format_handler(self, equation, lang, baseyear, func, skip_on_missing):
         eqvar = formatting.get_variable(equation)
+        baselinevar = formatting.get_parametername(self.baseline_diagname, lang)
         if lang == 'latex':
-            result = latextools.call(func, "Re-basing function", eqvar,
-                                     r"Average\left[%s\right]_{%d \le t le %d}" % (formatting.get_repstr(eqvar), self.year1, self.year2))
+            result = latextools.call(func, "Re-basing function", eqvar, baselinevar)
+            #r"Average\left[%s\right]_{%d \le t le %d}" % (formatting.get_repstr(eqvar), self.year1, self.year2)
         elif lang == 'julia':
-            result = juliatools.call(func, "Re-basing function", eqvar,
-                                     "mean(%s[(year .>= %d) & (year .<= %d)])" % (formatting.get_repstr(eqvar), self.year1, self.year2))
+            result = juliatools.call(func, "Re-basing function", eqvar, baselinevar)
+            #"mean(%s[(year .>= %d) & (year .<= %d)])" % (formatting.get_repstr(eqvar), self.year1, self.year2)
         if isinstance(eqvar, str):
             result['main'].dependencies.append(eqvar)
             result[eqvar] = equation
         else:
             # FormatElement
             result['main'].dependencies.extend(eqvar.dependencies)
+        result[self.baseline_diagname] = ParameterFormatElement(self.baseline_diagname, formatting.get_parametername(self.baseline_diagname, lang))
+        result['main'].dependencies.append(self.baseline_diagname)
 
         formatting.add_label('rebased', result)
         return result
@@ -234,7 +239,7 @@ class SpanInstabase(Instabase):
 
                 # Print out all past results, re-based
                 for pastresult in self.pastresults:
-                    diagnostic.record(self.region, pastresult[0], 'baseline', self.denom)
+                    diagnostic.record(self.region, pastresult[0], self.baseline_diagname, self.denom)
                     if self.unshift:
                         yield [pastresult[0], func(pastresult[1], self.denom)] + list(pastresult[1:])
                     else:
@@ -246,7 +251,7 @@ class SpanInstabase(Instabase):
                 if year >= self.year1:
                     self.denomterms.append(result)
             else:
-                diagnostic.record(self.region, year, 'baseline', self.denom)
+                diagnostic.record(self.region, year, self.baseline_diagname, self.denom)
                 # calculate this and tack it on
                 if self.unshift:
                     yield [year, func(result, self.denom)] + list(yearresult[1:])
@@ -256,10 +261,10 @@ class SpanInstabase(Instabase):
     @staticmethod
     def describe():
         return dict(input_timerate='any', output_timerate='same',
-                    arguments=[arguments.calculation, arguments.year.describe("The starting year"),
-                               arguments.year.describe("The ending year"),
+                    arguments=[arguments.calculation, arguments.year.rename('year1').describe("The starting year"),
+                               arguments.year.rename('year2').describe("The ending year"),
                                arguments.input_reduce.optional(), arguments.output_unit.optional(),
-                               arguments.skip_on_missing.optional()],
+                               arguments.skip_on_missing.optional(), arguments.label.rename('baseline_diagname').optional()],
                     description="Translate all results relative to a span of baseline years.")
 
 class InstaZScore(calculation.CustomFunctionalCalculation):
@@ -1013,14 +1018,14 @@ class Clip(calculation.RecursiveCalculation):
     Parameters
     ----------
     subcalc : openest.generate.calculation.Calculation
-    subcalc_min : float
-    subcalc_max : float
+    clip_min : float
+    clip_max : float
     """
-    def __init__(self, subcalc, subcalc_min, subcalc_max):
+    def __init__(self, subcalc, clip_min, clip_max):
         super().__init__([subcalc], [subcalc.unitses[0]] + subcalc.unitses)
         self.subcalc = subcalc
-        self.min = float(subcalc_min)
-        self.max = float(subcalc_max)
+        self.min = float(clip_min)
+        self.max = float(clip_max)
 
     def apply(self, region, *args, **kwargs):
         """Apply calculation to all subcalculations (`self.subcalc`)
@@ -1045,6 +1050,17 @@ class Clip(calculation.RecursiveCalculation):
         subapp = self.subcalc.apply(region, *args, **kwargs)
         return calculation.ApplicationPassCall(region, subapp, generate, unshift=True)
 
+    def format(self, lang, *args, **kwargs):
+        elements = self.subcalc.format(lang, *args, **kwargs)
+        if lang == 'latex':
+            elements['main'] = FormatElement("\\min(\\max(%s, %f), %f)" % (elements['main'].repstr, self.min, self.min),
+                                             elements['main'].dependencies)
+        elif lang == 'julia':
+            elements['main'] = FormatElement("min(max(%s, %f), %f)" % (elements['main'].repstr, self.min, self.min),
+                                             elements['main'].dependencies)
+            
+        return elements
+    
     def column_info(self):
         """Get column information of values output from this calculation.
 
@@ -1111,7 +1127,9 @@ class Reword(calculation.RecursiveCalculation):
         self.description = description
 
     def format(self, lang, *args, **kwargs):
-        return self.subcalc.format(lang, *args, **kwargs)
+        result = self.subcalc.format(lang, *args, **kwargs)
+        formatting.add_label(self.name, result)
+        return result
         
     def apply(self, region, *args, **kwargs):
         return self.subcalc.apply(region, *args, **kwargs)

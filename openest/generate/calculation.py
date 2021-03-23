@@ -29,6 +29,7 @@ class Calculation(object):
         """Returns a dictionary of FormatElements.
         Only keys in the tree of dependencies will be output.
         """
+        print(self.__class__)
         raise NotImplementedError()
 
     def test(self):
