@@ -449,31 +449,18 @@ def concat(objs, dim=None):
     return FastDataset(data_vars, coords, attrs)
 
 def assert_index_equal(one, two):
-    if np.array(one).dtype != np.array(two).dtype:
-        if not isinstance(one, (int, np.integer)) and np.array(one).dtype in [np.int32, np.int64] and one[0] == 1 and one[-1] == len(one):
-            one = len(one)
-        if not isinstance(two, (int, np.integer)) and np.array(two).dtype in [np.int32, np.int64] and two[0] == 1 and two[-1] == len(two):
-            two = len(two)
-        
-    if isinstance(one, (int, np.integer)) and isinstance(two, (int, np.integer)):
-        assert two == one
-        return one
-    elif isinstance(one, (int, np.integer)):
-        assert len(two) == one
+    if np.array_equal(one, two):
+        return one # Don't worry about anything else in this case
+
+    if np.min(one) == 0 and np.min(two) == 1:
+        assert np.array_equal(two, one + 1), "Not equal: %s <> %s" % (str(two), str(one))
         return two
-    elif isinstance(two, (int, np.integer)):
-        assert len(one) == two
+    if np.min(one) == 1 and np.min(two) == 0:
+        assert np.array_equal(two + 1, one), "Not equal: %s <> %s" % (str(two), str(one))
         return one
-    else:
-        if np.min(one) == 0 and np.min(two) == 1:
-            assert np.array_equal(two, one + 1), "Not equal: %s <> %s" % (str(two), str(one))
-            return two
-        if np.min(one) == 1 and np.min(two) == 0:
-            assert np.array_equal(two + 1, one), "Not equal: %s <> %s" % (str(two), str(one))
-            return one
-        else:
-            assert np.array_equal(two, one), "Not equal: %s <> %s" % (str(two), str(one))
-            return one
+
+    assert np.array(one).dtype == np.array(two).dtype, "Cannot compare %s to %s" % (np.array(one).dtype, np.array(two).dtype)
+    assert np.array_equal(two, one), "Not equal: %s <> %s" % (str(two), str(one))
 
 def reorder_coord(ds, dim, indices):
     assert dim in ['time', 'region'] # assume a time x region ds
