@@ -17,7 +17,7 @@ def as_name(coord):
     return coord
 
 class FastDataset(xr.Dataset):
-    # __slots__ = ['original_data_vars', 'original_coords', '_variables', '_dims', '_attrs']
+    __slots__ = ['original_data_vars', 'original_coords', '_variables', '_dims', '_attrs']
 
     def __init__(self, data_vars, coords=None, attrs=None):
         # Do not call __init__ on Dataset, to avoid time cost
@@ -164,6 +164,8 @@ class FastDataset(xr.Dataset):
         return self._variables[name]
     
     def __getattr__(self, name):
+        if name == '__dict__':
+            raise AttributeError("FastDataset is a __slots__ class.") # bipass __new__ check
         if name in self._variables:
             return self._variables[name]
         elif name in self.attrs:
