@@ -201,10 +201,8 @@ class SpanInstabase(Instabase):
         baselinevar = formatting.get_parametername(self.baseline_diagname, lang)
         if lang == 'latex':
             result = latextools.call(func, "Re-basing function", eqvar, baselinevar)
-            #r"Average\left[%s\right]_{%d \le t le %d}" % (formatting.get_repstr(eqvar), self.year1, self.year2)
         elif lang == 'julia':
             result = juliatools.call(func, "Re-basing function", eqvar, baselinevar)
-            #"mean(%s[(year .>= %d) & (year .<= %d)])" % (formatting.get_repstr(eqvar), self.year1, self.year2)
         if isinstance(eqvar, str):
             result['main'].dependencies.append(eqvar)
             result[eqvar] = equation

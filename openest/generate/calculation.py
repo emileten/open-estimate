@@ -29,8 +29,7 @@ class Calculation(object):
         """Returns a dictionary of FormatElements.
         Only keys in the tree of dependencies will be output.
         """
-        print(self.__class__)
-        raise NotImplementedError()
+        raise NotImplementedError("%s does not implement .format" % self.__class__)
 
     def test(self):
         return self.apply('test')
@@ -59,8 +58,7 @@ class Calculation(object):
         Returns a new calculation object that calculates the partial
         derivative with respect to a given variable; currently only covariates are supported.
         """
-        print(self.__class__)
-        raise NotImplementedError()
+        raise NotImplementedError("%s does not implement .partial_derivative" % self.__class__)
 
     @staticmethod
     def describe():
