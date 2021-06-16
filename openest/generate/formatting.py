@@ -107,8 +107,10 @@ def format_julia(elements, parameters=None, include_comments=True):
         content = [main.repstr]
         
     for key, element in iter:
-        if element is None and key in map(lambda elt: elt.extname, functions_known.values()):
-            element = {elt.extname: elt for elt in functions_known.values()}[key]
+        if element is None and key in map(lambda elt: elt if isinstance(elt, str) else elt.extname, functions_known.values()):
+            element = {(elt if isinstance(elt, str) else elt.extname): elt for elt in functions_known.values()}[key]
+            if isinstance(element, str):
+                element = ParameterFormatElement(key, element)
         if element is None and key in parameters:
             element = ParameterFormatElement(key, get_parametername(key, 'julia'))
 
@@ -195,7 +197,7 @@ def get_variable(element=None):
 
     varvar = variables_vars[variables_count % len(variables_vars)]
     if variables_count / len(variables_vars) > 0:
-        varvar += str(variables_count / len(variables_vars) + 1)
+        varvar += str(int(variables_count / len(variables_vars)) + 1)
     variables_count += 1
     return varvar
 
