@@ -17,6 +17,8 @@ def as_name(coord):
     return coord
 
 class FastDataset(xr.Dataset):
+    __slots__ = ['original_data_vars', 'original_coords', '_variables', '_dims', '_attrs']
+
     def __init__(self, data_vars, coords=None, attrs=None):
         # Do not call __init__ on Dataset, to avoid time cost
         if coords is None:
@@ -69,7 +71,7 @@ class FastDataset(xr.Dataset):
     def mean(self, dim=None):
         return self.reduce(np.mean, dim=dim)
 
-    def reduce(self, func, dim=None):
+    def reduce(self, func, dim=None, **kwargs):
         if dim is not None:
             assert isinstance(dim, str)
             
@@ -162,6 +164,8 @@ class FastDataset(xr.Dataset):
         return self._variables[name]
     
     def __getattr__(self, name):
+        if name == '__dict__':
+            raise AttributeError("FastDataset is a __slots__ class.") # bipass __new__ check
         if name in self._variables:
             return self._variables[name]
         elif name in self.attrs:
@@ -170,6 +174,8 @@ class FastDataset(xr.Dataset):
             
 
 class FastDataArray(xr.DataArray):
+    __slots__ = ['original_coords', 'parentds', '_values', '_data']
+
     def __init__(self, data, coords, parentds):
         # Do not call __init__ on DataArray, to avoid time cost
         self.original_coords = coords
@@ -197,17 +203,12 @@ class FastDataArray(xr.DataArray):
     def coords(self):
         return self.original_coords
     
-    @staticmethod
-    def _binary_op(f, reflexive=False, join=None, **ignored_kwargs):
-        @functools.wraps(f)
-        def func(self, other):
-            other_values = getattr(other, '_values', other)
+    def _binary_op(self, other, f, reflexive=False, join=None, **ignored_kwargs):
+        other_values = getattr(other, '_values', other)
 
-            values = f(self._values, other_values)
+        values = f(self._values, other_values)
 
-            return FastDataArray(values, self.original_coords, self.parentds)
-        
-        return func
+        return FastDataArray(values, self.original_coords, self.parentds)
 
     def reduce(self, func, dim=None, axis=None, keep_attrs=False, **kwargs):
         data = func(self._values)
@@ -497,7 +498,6 @@ def reorder_coord(ds, dim, indices):
     return newds
     
 FastDataArray.__array_priority__ = 80
-xr.core.ops.inject_binary_ops(FastDataArray)
     
 if __name__ == '__main__':
     ds = FastDataset({'x': ('time', np.ones(3))}, {'time': np.arange(3)})
