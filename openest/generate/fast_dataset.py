@@ -11,6 +11,7 @@ classes. Thus, FastDataset was born.
 import copy, functools
 import xarray as xr
 import numpy as np
+import numba 
 
 def as_name(coord):
     assert isinstance(coord, str), "Not a string: %s (%s)" % (coord, coord.__class__)
@@ -228,6 +229,7 @@ class FastDataArray(xr.DataArray):
     def sel(self, **kwargs):
         return self.sel_apply(self.sel_setup(**kwargs))
 
+    @jit(nopython=True) # Set "nopython" mode for best performance, equivalent to @njit        
     def sel_setup(self, **kwargs):
         newcoords = tuple([self.original_coords[ii] for ii in range(len(self.original_coords)) if self.original_coords[ii] not in kwargs])
         if newcoords == self.original_coords:
